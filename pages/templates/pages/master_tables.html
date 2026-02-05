@@ -11,24 +11,8 @@
   </div>
 </div>
 
-<form class="form-filter-group">
-  <div class="filter-item">
-    <label for="projectid" style="width: 100px;">프로젝트 목록:</label>
-    <select name="projectid" id="projectid" disabled>
-      {% for project in projects %}
-        <option value="{{ project.projectid }}"
-          {% if projectid == project.projectid %} selected {% endif %}
-        >
-          {{ project.projectnm }}
-        </option>
-      {% endfor %}
-    </select>
-  </div>
-</form>
-
 <div style="display: flex; gap: 20px; min-height: 80%;">
-
-  <!-- 왼쪽 -->
+  <!-- 왼쪽: 테이블 목록 -->
   <div style="flex: 1.5;">
     <h3>테이블 목록</h3>
     <div class="table-container">
@@ -36,19 +20,22 @@
         <table class="basic-table">
           <thead>
             <tr>
+              <th>프로젝트</th>
               <th>스키마</th>
               <th>물리명</th>
               <th>논리명</th>
-              <th>타입</th>
             </tr>
           </thead>
           <tbody>
             {% for table in tables %}
-              <tr>
+              <tr data-table="{{ table.tableuid }}" data-project="{{ table.projectid }}">
+                <td>{{ table.projectnm }}</td>
                 <td>{{ table.schema_name }}</td>
                 <td>{{ table.physical_name }}</td>
                 <td>{{ table.logical_name|default:"-" }}</td>
-                <td>{{ table.source_type|default:"-" }}</td>
+
+                <!-- 숨김 JSON 데이터 포함 -->
+                <td style="display:none;" id="{{ table.tableuid }}">{{ table|json_script:table.tableuid }}</td>
               </tr>
             {% endfor %}
           </tbody>
@@ -61,41 +48,173 @@
     </div>
   </div>
 
-  <!-- 오른쪽 -->
+  <!-- 오른쪽: 테이블 상세 -->
   <div style="flex: 1.5; padding-left: 20px;">
     <h3>테이블 상세</h3>
-    <div style="color:#888; padding:20px;">
-      왼쪽에서 테이블을 선택하세요.
-    </div>
-  </div>
+    <form id="table-detail-form">
+      <input id="tableuid" name="tableuid" type="hidden">
+      <input type="hidden" id="json" name="json">
 
-</div>
+      <!-- 프로젝트 select box -->
+      <div class="form-group-left">
+        <label>프로젝트:</label>
+        <select id="projectid_detail" name="projectid">
+          <option value="">-- 프로젝트 선택 --</option>
+          {% for project in projects %}
+            <option value="{{ project.projectid }}">{{ project.projectnm }}</option>
+          {% endfor %}
+        </select>
+      </div>
 
-<!-- 로딩 오버레이 -->
-<div id="formatLoading" style="display:none;">
-  <div class="loading-content">
-    <div class="spinner"></div>
-    <div id="loading-text" style="text-align: center;"></div>
-    <div>잠시만 기다려 주세요.</div>
+      <div class="form-group-left"><label>스키마:</label><input id="schema_name" name="schema_name" type="text"></div>
+      <div class="form-group-left"><label>물리명:</label><input id="physical_name" name="physical_name" type="text"></div>
+      <div class="form-group-left"><label>논리명:</label><input id="logical_name" name="logical_name" type="text"></div>
+      <div class="form-group-left"><label>별칭:</label><input id="aliases" name="aliases" type="text"></div>
+      <div class="form-group-left"><label>타입:</label><input id="source_type" name="source_type" type="text"></div>
+      <div class="form-group-left"><label>주요 키:</label><input id="primary_key" name="primary_key" type="text"></div>
+      <div class="form-group-left"><label>기본 시간 컬럼:</label><input id="default_time_column" name="default_time_column" type="text"></div>
+      <div class="form-group-left"><label>그레인:</label><input id="grain" name="grain" type="text"></div>
+      <div class="form-group-left"><label>목적:</label><input id="purpose" name="purpose" type="text"></div>
+      <div class="form-group-left"><label>쿼리 예제:</label><textarea id="query_examples" name="query_examples" spellcheck="false" style="resize: none; height: 60px;"></textarea></div>
+      <div class="form-group-left"><label>설명:</label><textarea id="description" name="description" spellcheck="false" style="resize: none; height: 60px;"></textarea></div>
+      <div class="form-group-left"><label>부모 스키마:</label><input id="parent_schema" name="parent_schema" type="text"></div>
+      <div class="form-group-left"><label>부모 테이블:</label><input id="parent_table" name="parent_table" type="text"></div>
+      <div class="form-group-left"><label>부모 컬럼:</label><input id="parent_column" name="parent_column" type="text"></div>
+      <div class="form-group-left"><label>자식 컬럼:</label><input id="child_column" name="child_column" type="text"></div>
+
+      <!-- 버튼 그룹 -->
+      <div class="button-group" style="margin-top: 10px;">
+        <button id="reset-btn" type="button" class="icon-btn">
+          <div class="icon-wrapper"><img src="{% static 'icons/new.svg' %}" class="icon-img new-icon" title="신규"><span class="icon-label">신규</span></div>
+        </button>
+        <button id="save-btn" type="button" class="icon-btn">
+          <div class="icon-wrapper"><img src="{% static 'icons/save.svg' %}" class="icon-img save-icon" title="저장"><span class="icon-label">저장</span></div>
+        </button>
+        <button id="delete-btn" type="button" class="icon-btn">
+          <div class="icon-wrapper"><img src="{% static 'icons/delete.svg' %}" class="icon-img del-icon" title="삭제"><span class="icon-label">삭제</span></div>
+        </button>
+      </div>
+    </form>
   </div>
 </div>
 
 <script>
-// 쿠키 정보
-function getCookie(name) {
-  let cookieValue = null;
-  if (document.cookie && document.cookie !== '') {
-    const cookies = document.cookie.split(';');
-    for (let cookie of cookies) {
-      cookie = cookie.trim();
-      if (cookie.startsWith(name + '=')) {
-        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-        break;
+/* -----------------------------
+   테이블 클릭 시 상세 정보 표시 + 선택 강조
+----------------------------- */
+document.querySelectorAll('.basic-table tbody tr').forEach(row => {
+  row.addEventListener('click', function() {
+    // 선택 강조
+    document.querySelectorAll('table tr.selected-row').forEach(r => r.classList.remove('selected-row'));
+    this.classList.add('selected-row');
+
+    const jsonEl = document.getElementById(this.dataset.table);
+    if(!jsonEl) return;
+    const tableData = JSON.parse(jsonEl.textContent || '{}');
+
+    const fields = ['tableuid','schema_name','physical_name','logical_name','aliases','source_type','primary_key','default_time_column','grain','purpose','query_examples','description', 'parent_schema','parent_table','parent_column','child_column','json'];
+    fields.forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.value = tableData[id] || '';
+    });
+
+    // 프로젝트 selectbox 업데이트
+    const pidEl = document.getElementById('projectid_detail');
+    if(pidEl) pidEl.value = tableData.projectid || '';
+  });
+});
+
+/* -----------------------------
+   상세 초기화 함수
+----------------------------- */
+function clearTableDetail() {
+  const fields = ['tableuid','schema_name','physical_name','logical_name','aliases','source_type','primary_key','default_time_column','grain','purpose','query_examples','description', 'parent_schema','parent_table','parent_column','child_column','json'];
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.value = '';
+  });
+
+  // 프로젝트 select 초기화
+  const pidEl = document.getElementById('projectid_detail');
+  if(pidEl) pidEl.value = '';
+}
+
+/* -----------------------------
+   신규 버튼 클릭
+----------------------------- */
+document.getElementById('reset-btn').addEventListener('click', clearTableDetail);
+
+/* -----------------------------
+   저장 버튼 클릭
+----------------------------- */
+document.getElementById('save-btn').addEventListener('click', async () => {
+    const form = document.getElementById('table-detail-form');
+    const formData = new FormData(form);
+
+    try {
+        const res = await fetch("{% url 'master_tables_save' %}", {
+            method: "POST",
+            credentials: "include",
+            headers: { "X-CSRFToken": getCookie('csrftoken') },
+            body: formData,
+        });
+
+        const data = await res.json(); // <- 반드시 json으로 파싱
+        if (data.result === "success") {
+            alert(data.message || "저장 완료");
+            location.reload(); // 저장 후 새로고침 or 테이블 갱신
+        } else {
+            alert(data.error || "저장 실패"); // <- undefined 방지
+        }
+    } catch (err) {
+        alert("저장 실패: " + err.message);
+    }
+});
+/* -----------------------------
+   삭제 버튼 클릭
+----------------------------- */
+document.getElementById('delete-btn').addEventListener('click', function() {
+  const tableuid = document.getElementById('tableuid').value;
+  if(!tableuid) return alert("삭제할 테이블을 선택해주세요.");
+
+  if(!confirm("정말 삭제하시겠습니까?")) return;
+
+  fetch("{% url 'master_tables_delete' %}", {
+    method: "POST",
+    credentials: "include",
+    headers: { "X-CSRFToken": getCookie('csrftoken') },
+    body: JSON.stringify({ tableuid: tableuid })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if(data.result === "success"){  // ← 여기를 수정
+      alert("삭제되었습니다.");
+      clearTableDetail();
+      location.reload(); // 삭제 후 갱신
+    } else {
+      alert("삭제 실패: " + (data.error || "알 수 없는 오류"));  // 안전하게 처리
+    }
+  })
+  .catch(err => alert("삭제 중 오류 발생: " + err));
+});
+
+/* -----------------------------
+   CSRF 토큰
+----------------------------- */
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
       }
     }
+    return cookieValue;
   }
-  return cookieValue;
-}
 </script>
 
 {% endblock %}

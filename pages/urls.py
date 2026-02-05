@@ -31,7 +31,7 @@ from .views import (home, hide_popup, search_help
                   , myinfo, myinfo_update_username, myinfo_update_contact
                   , password_reset
 
-                  , master_tables
+                  , master_tables, master_tables_save, master_tables_delete
                     )
                     
 # urls.py
@@ -106,4 +106,6 @@ urlpatterns = [
     path('password-reset/', password_reset, name='password_reset'),
 
     path('master/tables/', master_tables, name = 'master_tables'),
+    path('master/tables_save/', master_tables_save, name = 'master_tables_save'),
+    path('master/tables_delete/', master_tables_delete, name = 'master_tables_delete'),
 ]

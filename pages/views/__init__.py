@@ -30,7 +30,7 @@ from .register_qna import register_qna, register_qna_submit
 from .myinfo import myinfo, myinfo_update_username, myinfo_update_contact
 from .password_reset import password_reset
 
-from .master_tables import master_tables
+from .master_tables import master_tables, master_tables_save, master_tables_delete
 
 __all__ = [
      "home"
@@ -100,4 +100,6 @@ __all__ = [
   , "password_reset"
 
   , "master_tables"
+  , "master_tables_save"
+  , "master_tables_delete"
 ]
