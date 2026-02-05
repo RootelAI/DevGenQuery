@@ -1,0 +1,101 @@
+{% extends 'pages/base.html' %}
+{% load static %}
+{% block title %}테이블 관리{% endblock %}
+
+{% block content %}
+
+<div class="page-title">
+  <div style="display: flex; align-items: center;">
+    <div class="gradient-bar"></div>
+    <div>테이블 관리</div>
+  </div>
+</div>
+
+<form class="form-filter-group">
+  <div class="filter-item">
+    <label for="projectid" style="width: 100px;">프로젝트 목록:</label>
+    <select name="projectid" id="projectid" disabled>
+      {% for project in projects %}
+        <option value="{{ project.projectid }}"
+          {% if projectid == project.projectid %} selected {% endif %}
+        >
+          {{ project.projectnm }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+</form>
+
+<div style="display: flex; gap: 20px; min-height: 80%;">
+
+  <!-- 왼쪽 -->
+  <div style="flex: 1.5;">
+    <h3>테이블 목록</h3>
+    <div class="table-container">
+      {% if tables %}
+        <table class="basic-table">
+          <thead>
+            <tr>
+              <th>스키마</th>
+              <th>물리명</th>
+              <th>논리명</th>
+              <th>타입</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for table in tables %}
+              <tr>
+                <td>{{ table.schema_name }}</td>
+                <td>{{ table.physical_name }}</td>
+                <td>{{ table.logical_name|default:"-" }}</td>
+                <td>{{ table.source_type|default:"-" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div style="padding: 20px; color: #888;">
+          테이블이 없습니다.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- 오른쪽 -->
+  <div style="flex: 1.5; padding-left: 20px;">
+    <h3>테이블 상세</h3>
+    <div style="color:#888; padding:20px;">
+      왼쪽에서 테이블을 선택하세요.
+    </div>
+  </div>
+
+</div>
+
+<!-- 로딩 오버레이 -->
+<div id="formatLoading" style="display:none;">
+  <div class="loading-content">
+    <div class="spinner"></div>
+    <div id="loading-text" style="text-align: center;"></div>
+    <div>잠시만 기다려 주세요.</div>
+  </div>
+</div>
+
+<script>
+// 쿠키 정보
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+</script>
+
+{% endblock %}

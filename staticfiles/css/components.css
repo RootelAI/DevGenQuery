@@ -1,0 +1,370 @@
+/* components.css */
+
+/* page title 영역 시작 */
+.page-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* ← 오른쪽 아이콘 배치 */
+  margin-bottom: 20px;
+  font-weight: bold;
+  font-size: 1.3rem;
+  color: var(--pagetitle-font-color) ;
+}
+
+.page-title .gradient-bar {
+  width: 6px;
+  height: 40px; /* 원하는 길이로 조절 가능 */
+  background: linear-gradient(180deg, var(--primary-600) 0%, var(--primary-800) 100%);
+  margin-right: 10px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+/* page title 영역 끝 */
+
+
+/* 폼에서 사용하는 Filer -- 시작  */
+/* 공통 조건 선택 영역 (콤보박스 폼) */
+.form-filter {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+}
+
+/* label 스타일 조정 (선택적으로 커스터마이징 가능) */
+.form-filter label {
+  font-size: 17px;
+  /* font-weight: bold; */
+  font-weight: 600;  /* 두껍게 */
+  white-space: nowrap;
+  margin-right: 10px;
+}
+
+/* 공통 select 박스 스타일 */
+.form-filter select {
+  width: 20%;          /* 또는 20% 대신 고정 폭 */
+  padding : 3px;
+  cursor: pointer;
+}
+
+/* 공통 input 스타일 */
+.form-filter input[type="date"], 
+.form-filter input[type="text"] {
+  padding: 4px;
+}
+
+/* 폼에서 사용하는 Filer -- 시작  */
+/* 전체 필터 그룹 (form 단위) */
+.form-filter-group {
+  display: flex;
+  gap: 50px;            /* 필터 간 간격 */
+  align-items: center;
+  margin-bottom: 20px;  /* 필터 줄 간 여백 */
+  flex-wrap: wrap;      /* 화면 작아질 때 자동 줄바꿈 */
+}
+
+/* 각 필터 항목 */
+.filter-item {
+  display: flex;
+  align-items: center;
+}
+
+/* 라벨 스타일 */
+.filter-item label {
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+  margin-right: 8px;
+  width: 80px;  /* 고정 너비로 정렬 통일 */
+  display: inline-block;
+}
+
+/* 셀렉트 박스 */
+.filter-item select {
+  width: 400px;
+  padding: 5px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* 라디오 버튼 그룹 텍스트 */
+.filter-item label.radio-label {
+  font-weight: 500;
+  color: #000000;        /* 선택 안된 옵션은 연한 회색 */
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+/* 체크된 라디오 버튼 텍스트 강조 */
+.filter-item input[type="radio"]:checked + .radio-label {
+  font-weight: 600;
+  color: #222;        /* 선택된 옵션은 진하게 */
+}
+
+/* 라디오 버튼 자체 여백 */
+.filter-item input[type="radio"] {
+  margin-right: 5px;
+  cursor: pointer;
+}
+
+/* 폼에서 사용하는 Filer -- 끝  **************************************************/
+
+/* 주로 좌측 목록 화면에서 사용하는 테이블에 대한 부분임 -- 시작  **************************************************/
+/* 테이블 스타일 */
+.table-container {
+    height: calc(100vh - 330px);
+    overflow-y: auto;   /* 테이블 컨테이너 내부 스크롤 (테이블을 감싸는 div에 설정해야 함) */   
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    overflow-y: auto;  /* 테이블 컨테이너 내부 스크롤 (테이블을 감싸는 div에 설정해야 함) */    
+}
+
+/* 헤더 스타일 */
+thead th {
+    background-color: var(--table-header);   /* 표 헤더의 배경색 */  
+    color: var(--table-header-text);  /* 표 헤더 안의 글자색 */
+    font-weight: 600;
+    position: sticky;  /* 스크롤 시 헤더 고정 */
+    top: 0;  /* 상단에 고정 */
+    z-index: 1;  /* 다른 콘텐츠보다 위에 나타나도록 설정 */
+    padding: 6px 12px;
+    border: 1px solid var(--border-color);
+}
+/* 짝수 번째 행 배경색 */
+tbody tr:nth-child(even) {
+    background-color: var(--tbody-even);
+}
+
+/* 마우스 hover 시 행 배경색 */
+tbody tr:hover {
+    background-color: var(--tbody-hover);
+}
+
+/* 테이블 셀 스타일 */
+td {
+    padding: 3px 12px;
+    border: 1px solid var(--border-color);
+    color : var(--tbody-font);
+}
+/*데이터의 세로정렬은 가운데로(한줄 입력과, 여러줄 입력일 경우 세로 위치가 미세하게 다름을 방지하기 위하여)*/
+td, th {
+    vertical-align: middle !important;
+}
+
+td .cell-center {
+    display: inline-block; /* td 안에서 inline-block으로 높이 기준 잡기 */
+    line-height: 1.4;      /* 여러 줄일 때 글자 간격 조정 */
+}
+
+/* ✅ 선택된 행 강조 스타일 */
+table tr.selected-row {
+  background-color: var(--selected-row-bg) !important;
+}
+
+/* 주로 좌측 목록 화면에서 사용하는 테이블에 대한 부분임 -- 끝  **************************************************/
+
+/* === 챕터 카드 스타일 === */
+.chapter-card-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px; /* 카드 간격 */
+}
+
+.chapter-card {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  cursor: pointer;
+  background-color: #f9f9f9;
+  transition: all 0.2s ease;
+  display: inline-block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ✅ 선택된 카드 */
+.chapter-card.selected {
+  border-color: var(--selected-row);      /* 테두리 */
+  background-color: var(--selected-row-bg);  /* 배경 */
+}
+
+/* ✅ 마우스 오버 시 */
+.chapter-card:hover {
+  background-color: var(--tbody-hover);
+}
+
+  /* useyn false인 챕터 카드 글씨 취소선 */
+  .chapter-card[data-useyn="false"] .card-title {
+    text-decoration: line-through;
+    color: #888; /* 선택 사항: 회색으로 표시 */
+  }
+
+/* 주로 우측 입력 항목에서 사용하는 그룹에 대한 부분임 -- 시작 (label과 항목을 위아래로 배열)************************/
+.form-group {
+    display: block; 
+    gap: 8px;
+    margin-bottom: 15px;
+
+}
+
+.form-group label {
+    width: 80px;
+    font-weight: 500;
+    color: var(--gray-700);
+    /* color: var(--errormessage-color); */
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100% !important;
+    margin: 4px 0 0 0 !important;  /* input 위쪽에 간격을 줍니다 */
+    padding: 4px;       /* 기본 패딩 */
+    box-sizing : border-box;
+}
+
+.form-group textarea {
+    resize: vertical;  /* 세로로 크기 조정 가능 */
+}
+
+/* readonly 상태일 때 배경색 회색 처리 */
+.form-group input[readonly] {
+    border: 1px solid var(--back-dark);   /* 회색 테두리 */
+    background-color: var(--back-color);  /* 회색 배경  */
+    cursor: not-allowed;           /* 커서를 금지 아이콘으로 변경 */
+}
+
+.form-group input[type="checkbox"]{
+    width : 20px !important;  
+}
+
+.form-group input[type="file"] {
+    margin: 4px 0 0 0 !important;  /* input 위쪽에 간격을 줍니다 */
+}
+/* 주로 우측 입력 항목에서 사용하는 그룹에 대한 부분임 -- 끝 (label과 항목을 위아래로 배열)************************/
+
+/* 주로 우측 입력 항목에서 사용하는 그룹에 대한 부분임 -- 시작 (label과 항목을 좌우로 배열)************************/
+.form-group-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 15px;
+    flex-wrap: wrap; /* 작은 화면에서 레이아웃이 깨지지 않도록 추가 */
+}
+
+.form-group-left label {
+    font-weight: 500;
+    color: var(--gray-700);
+    /* color : var(--errormessage-color); */
+    min-width: 80px;
+    flex-shrink: 0; /* 글자 잘림 방지 */    
+}
+
+.form-group-left input,
+.form-group-left textarea,
+.form-group-left select {
+    flex: 1;    /* 가용 공간을 채우도록 설정 */
+    /* margin: 4px 0 0 0 !important;  input 위쪽에 간격을 줍니다 */
+    padding: 4px; 
+    box-sizing : border-box;   
+}
+
+.form-group-left textarea {
+    resize: vertical;  /* 세로로 크기 조정 가능 */
+    min-height: 80px;
+}
+
+.form-group-left select {    
+    flex: 1 1 0;       /* 남는 공간 모두 차지 (basis 0) */
+    min-width: 0;     /* flex-item의 기본 min-width 제약 해제 */
+    width: auto !important; /* 혹시 다른 width 덮어쓰기 무시 */
+}
+
+.form-group-left input[type="checkbox"]{
+    width : 20px !important;  
+}
+/* 주로 우측 입력 항목에서 사용하는 그룹에 대한 부분임 -- 끝 (label과 항목을 좌우로 배열)************************/
+
+/* 조회 속도 느릴때 화면 overlay 로 조회중이란 메시지 뿌릴때 사용 시작 */
+#formatLoading {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: var(--white-shadow); /* 반투명 흰색 */
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999; /* 제일 위로 */
+}
+
+#formatLoading .loading-content {
+  background: var(--loadingback-color);
+  padding: 15px 25px;
+  border-radius: 8px;
+  color: var(--gray-600);
+  font-size: 16px;
+  font-weight: bold;
+  box-shadow: 0 2px 6px var(--black-shadow);
+}
+/* 조회 속도 느릴때 화면 overlay 로 조회중이란 메시지 뿌릴때 사용 끝 */
+
+/* 입력 폼 저장 / 삭제 등 메시지 관련 부분임 -- 시작 */
+  .messages {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 10px;
+  }
+  .messages li {
+    padding: 8px;
+    border-radius: 4px;
+    margin-bottom: 5px;
+  }
+  .messages .error {
+    background: var(--errorback-color);
+    color: var(--errormessage-color);
+  }
+  .messages .success {
+    background: var(--succesback-color);
+    color: var(--successmessage-color);
+  }
+/* 입력 폼 저장 / 삭제 등 메시지 관련 부분임 -- 끝 */
+
+/* Spinner */
+.spinner {
+    border: 3px solid var(--secondary-50);
+    border-top: 3px solid var(--spinner-color);
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 10px;
+}   
+
+/* A4 용지 */
+.a4-frame {
+  width: 210mm;  /* A4 가로 */
+  height: 297mm; /* A4 세로 */
+  background-color: white;
+  position: relative;
+  margin: 0 0;
+  padding: 3cm 2.54cm 2.54cm 2.54cm; /* 여백: A4 기본 여백 */
+  box-sizing: border-box;
+  border: 2px solid; /* 바깥 테두리 실선 */
+}
+
+.a4-frame::before {
+  content: "";
+  position: absolute;
+  top: 3cm;
+  left: 2.54cm;
+  right: 2.54cm;
+  bottom: 2.54cm;
+  border: 2px dashed;
+  pointer-events: none;
+  box-sizing: border-box;
+}

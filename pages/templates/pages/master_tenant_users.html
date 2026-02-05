@@ -1,0 +1,411 @@
+{% extends 'pages/base.html' %} 
+{% load static %}
+{% block title %}
+기업 사용자 관리
+{% endblock %}
+
+{% block content %}
+<style>
+/* 이 페이지 전용: 라디오 버튼과 라벨 간격 조정 */
+.form-filter-group .filter-item label {
+    width: auto;       /* 기존 80px 고정 제거 */
+    margin-right: 5px; /* 라벨과 첫 라디오 버튼 사이 간격 */
+}
+
+.form-filter-group .filter-item input[type="radio"] + .radio-label {
+    margin-left: 3px;  /* 라디오 버튼과 텍스트 사이 간격 */
+    margin-right: 10px; /* 다음 옵션과 간격 */
+}
+</style>
+
+<div class="page-title">
+  <div style="display: flex; align-items: center;">
+    <div class="gradient-bar"></div>
+    {% if request.session.user.roleid == 7 %}
+      <div>기업 사용자 관리: {{ tenantnm }}</div>
+    {% else %}
+      <div>기업 사용자 관리</div>
+    {% endif %}
+  </div>
+  {% if request.session.user.roleid == 7 %}
+  <button type="button" class="icon-btn" id="back-btn">
+    <img src="{% static 'icons/back.svg' %}" alt="뒤로가기" class="icon-img config-icon">
+  </button>
+  {% endif %}
+</div>
+
+<!-- 필터 그룹: radio 버튼으로 변경 -->
+<form class="form-filter-group">
+  <!-- 신규 필터 -->
+  <div class="filter-item">
+    <label>신규:</label>
+    <input type="radio" id="sep_all" name="sepFilter" value="all" checked>
+    <label class="radio-label" for="sep_all">전체</label>
+    
+    <input type="radio" id="sep_new" name="sepFilter" value="newusers">
+    <label class="radio-label" for="sep_new">신규</label>
+  </div>
+
+  <!-- 상태 필터 -->
+  <div class="filter-item">
+    <label>상태:</label>
+    <input type="radio" id="status_all" name="statusFilter" value="all" checked>
+    <label class="radio-label" for="status_all">전체</label>
+
+    <input type="radio" id="status_active" name="statusFilter" value="active">
+    <label class="radio-label" for="status_active">활성</label>
+
+    <input type="radio" id="status_inactive" name="statusFilter" value="inactive">
+    <label class="radio-label" for="status_inactive">비활성</label>
+  </div>
+  
+  <!-- 역할 필터 -->
+  <div class="filter-item">
+    <label>역할:</label>
+    <input type="radio" id="role_all" name="roleFilter" value="all" checked>
+    <label class="radio-label" for="role_all">전체</label>
+
+    <input type="radio" id="role_m" name="roleFilter" value="M">
+    <label class="radio-label" for="role_m">Manager</label>
+
+    <input type="radio" id="role_u" name="roleFilter" value="U">
+    <label class="radio-label" for="role_u">User</label>
+  </div>
+</form>
+
+
+<div style="display: flex; gap: 20px; min-height: 80%;">
+  <!-- 왼쪽: 사용자 목록 -->
+  <div style="flex: 1.5; padding-right: 20px;">
+    <h3>사용자 목록</h3>
+    <div class="table-container">
+      <table class="table table-bordered table-sm" id="tenant-users-table">
+        <thead>
+          <tr>
+            <th style="width: 30%;">이메일</th>
+            <th style="width: 20%;">사용자명</th>
+            <th style="width: 10%;">역할</th>
+            <th style="width: 10%;">사용</th>
+            <th style="width: 10%;">신규</th>
+            <th class="info"  style="width:20%;">생성일시</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in tenantusers %}
+          <tr data-sep="{{ user.sep }}"
+              data-tenantnewuid="{{ user.tenantnewuid }}"
+              data-tenantid="{{ user.tenantid }}"
+              data-useruid="{{ user.useruid }}"
+              data-usernm="{{ user.usernm }}"
+              data-email="{{ user.email }}"
+              data-rolecd="{{ user.rolecd }}"
+              data-useyn="{{ user.useyn }}"
+              data-creator="{{ user.creator }}"
+              data-creatornm="{{ user.creatornm}}"
+              data-createdts="{{ user.createdts }}">
+              <td>{{ user.email }}</td>
+              <td>{{ user.usernm }}</td>
+              <td class="info">
+                  {% if user.rolecd == "M" %}<span>Manager</span>
+                  {% else %}<span>User</span>
+                  {% endif %}
+              </td>
+              <td class="info" style="text-align: center;">
+                  {% if user.useyn %}<span>✔</span>
+                  {% endif %}
+              </td>
+              <td class="info">
+                  {% if user.sep  == "newusers" %}<span>신규</span>{% endif %}
+              </td>
+              <td class="info"><span class="text-muted">{{user.createdts}}</span></td>
+          </tr>
+          {% empty %}
+          <tr>
+              <td colspan="6" class="text-center text-muted py-4">등록된 사용자가 없습니다.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 오른쪽: 사용자 상세 -->
+  <div style="flex: 1.5; padding-left: 20px;">
+    <h3>사용자 상세</h3>
+    <form id="tenants-detail-form" enctype="multipart/form-data">
+      <input id="sep" name="sep" type="text" hidden>
+      <input id="tenantnewuid" name="tenantnewuid" type="text" hidden>
+      <input id="tenantid" name="tenantid" type="text" hidden>
+      <input id="useruid" name="useruid" type="text" hidden>
+      
+      <div class="form-group-left">
+        <label>이메일:</label>
+        <input id="email" name="email" type="text">
+      </div>
+
+      <div class="form-group-left">
+        <label>사용자명:</label>
+        <input id="usernm" name="usernm" type="text" disabled>
+      </div>
+
+      <!-- 역할 radio 버튼 -->
+      <div class="form-group-left">
+        <label>역할:</label>
+        <label><input type="radio" name="rolecd" value="M" id="rolecd-M"> Manager</label>
+        <label><input type="radio" name="rolecd" value="U" id="rolecd-U"> User</label>
+      </div>
+
+      <div class="form-group-left" style = "display: block;">
+        <label>사용:</label>
+        <input id="useyn" name="useyn" type="checkbox" style="margin-left: 50px;">
+      </div>
+
+      <div class="form-group-left">
+        <label>생성자:</label>
+        <input id="creator" name="creator" type="text" disabled>
+      </div>
+
+      <div class="form-group-left">
+        <label>생성일시:</label>
+        <input id="createdts" name="createdts" type="text" disabled>
+      </div>
+
+      <div class="button-group">
+        <button id="reset-btn" type="button" class="icon-btn">
+          <div class="icon-wrapper">
+            <img src="{% static 'icons/new.svg' %}" class="icon-img new-icon" title="신규">
+            <span class="icon-label">신규</span>
+          </div>  
+        </button>
+
+        <button id="save-btn" type="button" class="icon-btn">
+          <div class="icon-wrapper">
+            <img src="{% static 'icons/save.svg' %}" class="icon-img save-icon" title="저장">
+            <span class="icon-label">저장</span>
+          </div>   
+        </button>
+
+        <button id="delete-btn" type="button" class="icon-btn">
+          <div class="icon-wrapper">
+            <img src="{% static 'icons/delete.svg' %}" class="icon-img del-icon" title="삭제">
+            <span class="icon-label">삭제</span>
+          </div>   
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<!-- 로딩 오버레이 -->
+<div id="formatLoading">
+  <div class="loading-content">
+    <div class="spinner"></div>
+    <div id="loading-text" style="text-align: center;"></div>
+    <div>잠시만 기다려 주세요.</div>
+  </div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  document.getElementById("tenants-detail-form").reset();
+  document.getElementById("tenantid").value = {{ tenantid|safe }};
+});
+
+// ===== 필터 기능 (radio) =====
+function filterTable() {
+  const statusValue = document.querySelector('input[name="statusFilter"]:checked').value;
+  const roleValue = document.querySelector('input[name="roleFilter"]:checked').value;
+  const sepValue = document.querySelector('input[name="sepFilter"]:checked').value;
+
+  const tableRows = document.querySelectorAll(".table-container tbody tr");
+
+  tableRows.forEach(row => {
+    const useyn = row.dataset.useyn === "True";
+    const rolecd = row.dataset.rolecd;
+    const sep = row.dataset.sep;
+
+    let show = true;
+
+    if (statusValue === "active" && !useyn) show = false;
+    if (statusValue === "inactive" && useyn) show = false;
+    if (roleValue !== "all" && rolecd !== roleValue) show = false;
+    if (sepValue !== "all" && sep !== sepValue) show = false;
+
+    row.style.display = show ? "" : "none";
+  });
+}
+
+// ===== 선택 행 표시 =====
+let selectedRow = null;
+
+document.querySelectorAll("#tenant-users-table tbody tr").forEach(row => {
+  row.addEventListener("click", function () {
+    if (selectedRow) selectedRow.classList.remove("selected-row");
+    selectedRow = this;
+    selectedRow.classList.add("selected-row");
+
+    document.getElementById("sep").value = this.dataset.sep;
+    document.getElementById("tenantnewuid").value = this.dataset.tenantnewuid;
+    document.getElementById("tenantid").value = this.dataset.tenantid;
+    document.getElementById("useruid").value = this.dataset.useruid;
+    document.getElementById("usernm").value = this.dataset.usernm;
+    document.getElementById("email").value = this.dataset.email;
+    document.getElementById("useyn").checked = this.dataset.useyn === "True";
+    document.getElementById("creator").value = this.dataset.creatornm;
+    document.getElementById("createdts").value = this.dataset.createdts;
+
+    // 상세 역할 radio 체크
+    document.getElementById("rolecd-M").checked = this.dataset.rolecd === "M";
+    document.getElementById("rolecd-U").checked = this.dataset.rolecd === "U";
+  });
+});
+
+// ===== 초기화 버튼 =====
+document.getElementById("reset-btn").addEventListener("click", () => {
+  document.getElementById("tenants-detail-form").reset();
+  document.getElementById("useruid").value = "";
+  document.getElementById("sep").value = "";
+  document.getElementById("tenantnewuid").value = "";
+  if (selectedRow) selectedRow.classList.remove("selected-row");
+  selectedRow = null;
+});
+
+// ===== 저장 버튼 =====
+document.getElementById("save-btn").addEventListener("click", () => {
+  const form = document.getElementById("tenants-detail-form");
+  const formData = new FormData(form);
+  const roleSelected = document.querySelector('input[name="rolecd"]:checked');
+  if (roleSelected) formData.set('rolecd', roleSelected.value);
+
+  fetch("{% url 'master_tenant_users_save' %}", {
+    method: "POST",
+    credentials: "include",   // 👈 여기
+    body: formData,
+    headers: {
+      "X-CSRFToken": getCookie("csrftoken")
+    }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.result === "success") {
+      alert(data.message);
+      location.reload();
+    } else {
+      alert("저장 실패: " + (data.message || "서버 오류"));
+    }
+  })
+  .catch(err => {
+    alert("오류 발생: " + err.message);
+  });
+});
+
+// ===== 삭제 버튼 =====
+document.getElementById("delete-btn").addEventListener("click", () => {
+  const sep = document.getElementById("sep").value;
+  const tenantnewuid = document.getElementById("tenantnewuid").value;
+  const tenantid = document.getElementById("tenantid").value;
+  const useruid = document.getElementById("useruid").value;
+
+  if (!useruid) {
+    alert("삭제할 사용자를 선택하세요.");
+    return;
+  }
+
+  // 신규 사용자인지 확인
+  if (sep === "newusers") {
+    const approvenote = prompt("가입 거절 사유를 입력해주세요 :");
+    if (!approvenote) {
+      alert("삭제 이유를 입력해야 합니다.");
+      return;
+    }
+
+    if (!confirm("정말 삭제하시겠습니까?")) return;
+
+    // 신규 사용자 삭제 요청
+    fetch("{% url 'master_tenant_users_delete' %}", {
+      method: "POST",
+      credentials: "include",   // 👈 여기
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken")
+      },
+      body: JSON.stringify({ sep, tenantnewuid, tenantid, useruid, approvenote })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.result === "success") {
+        alert(data.message);
+        location.reload();
+      } else {
+        alert("삭제 실패: " + (data.message || "서버 오류"));
+      }
+    })
+    .catch(error => {
+      alert("오류 발생: " + error.message)
+    });
+  } else {
+    // 신규가 아닌 경우 기존 삭제 로직
+    if (!confirm("정말 삭제하시겠습니까?")) return;
+
+    fetch("{% url 'master_tenant_users_delete' %}", {
+      method: "POST",
+      credentials: "include",   // 👈 여기
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken")
+      },
+      body: JSON.stringify({ sep, tenantnewuid, tenantid, useruid })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.result === "success") {
+        alert(data.message);
+        location.reload();
+      } else {
+        alert("삭제 실패: " + (data.message || "서버 오류"));
+      }
+    })
+    .catch(error => {
+      alert("오류 발생: " + error.message)
+    });
+  }
+});
+
+// ===== 쿠키 가져오기 =====
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+// ===== 필터 이벤트 등록 =====
+document.addEventListener("DOMContentLoaded", function() {
+  document.querySelectorAll('input[name="statusFilter"]').forEach(r => r.addEventListener('change', filterTable));
+  document.querySelectorAll('input[name="roleFilter"]').forEach(r => r.addEventListener('change', filterTable));
+  document.querySelectorAll('input[name="sepFilter"]').forEach(r => r.addEventListener('change', filterTable));
+  filterTable(); // 기본 필터 적용
+
+  const tbody = document.querySelector(".table-container tbody");
+  const rows = Array.from(tbody.querySelectorAll("tr"));
+
+  rows.sort((a, b) => a.dataset.email.toLowerCase().localeCompare(b.dataset.email.toLowerCase()));
+  rows.forEach(row => tbody.appendChild(row));
+});
+
+// ===== 뒤로가기 버튼 =====
+document.getElementById("back-btn").addEventListener("click", () => {
+  window.location.href = `/master/tenants/`;
+});
+</script>
+
+{% endblock %}

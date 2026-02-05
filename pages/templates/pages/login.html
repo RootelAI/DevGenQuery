@@ -1,0 +1,22 @@
+{% extends 'pages/base.html' %}
+
+{% block title %}로그인{% endblock %}
+{% load static %}
+{% block content %}
+<div class="form-container">
+  <h1>로그인</h1>
+
+  <form method="post" action="{% url 'login' %}">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
+
+    <label for="email">이메일</label>
+    <input type="email" id="email" name="email" required placeholder="이메일 입력">
+
+    <label for="password">비밀번호</label>
+    <input type="password" id="password" name="password" required placeholder="비밀번호 입력">
+
+    <button type="submit" class="btn btn-primary">로그인</button>
+  </form>  
+
+{% endblock %}

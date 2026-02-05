@@ -1,0 +1,301 @@
+{% load static %}
+
+<style>
+.search_params_base_modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+}
+
+.search_params_base_modal_content {
+  position: relative;
+  background: var(--white);
+  border-radius: 10px;
+  padding: 20px;
+  width: 600px;
+  height: 90%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  border: 1px solid #ccc;
+}
+
+.search_params_base_modal_close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  border: none;
+  background: none;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.search_params-list-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  margin-top: 10px;
+}
+
+.params-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.params-table thead {
+  position: sticky;
+  top: 0;
+  background: var(--primary-500);
+  color: white;
+}
+
+.params-table th,
+.params-table td {
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.params-table tbody tr {
+  cursor: pointer;
+}
+
+.params-table tbody tr:hover {
+  background: var(--tbody-hover);
+}
+
+.params-table tbody tr.selected {
+  background: var(--selected-row-bg);
+  border: 2px solid var(--selected-row);
+  font-weight: bold;
+}
+
+.search-box {
+  margin-top: 10px;
+}
+
+.search-box input {
+  width: 97%;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.search_params-close-btn-wrapper {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+}
+</style>
+
+<div id="search_params_modal" class="search_params_base_modal">
+  <div class="search_params_base_modal_content">
+
+    <button class="search_params_base_modal_close" onclick="closeSearchModal()">&times;</button>
+
+    <h3 id="modal_title" style="text-align:center;">값 선택</h3>
+
+    <!-- 검색 -->
+    <div class="search-box">
+      <input
+        type="text"
+        id="search_input"
+        placeholder="검색어 입력"
+        oninput="filterRows()"
+      />
+    </div>
+
+    <p id="loading_text">데이터를 불러오는 중...</p>
+
+    <!-- 테이블 -->
+    <div class="search_params-list-wrapper" id="table_wrapper" style="display:none;">
+      <table class="params-table">
+        <thead id="table_header"></thead>
+        <tbody id="table_body"></tbody>
+      </table>
+    </div>
+
+    <div class="search_params-close-btn-wrapper">
+      <button class="icon-btn" onclick="saveSelectedValue()">
+        <img src="{% static 'icons/ok.svg' %}" class="icon-img config-icon">
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* =========================
+   전역 상태
+========================= */
+let modalState = {
+  datauid: null,
+  paramnm: null,
+  keycolnm: null,
+  nmcolnm: null,
+  originalData: [],
+  filteredData: [],
+  selectedRow: null,
+  columns: []
+};
+const datacolsMap = {{datacols_map_json|safe }};
+
+/* =========================
+   모달 열기
+========================= */
+function showsearch_paramsModal(datauid, paramnm, keycolnm, nmcolnm, params_value) {
+  resetModalState();
+
+  modalState.datauid = datauid;
+  modalState.paramnm = paramnm;
+  modalState.keycolnm = keycolnm;
+  modalState.nmcolnm = nmcolnm;
+
+  const modal = document.getElementById("search_params_modal");
+  const loading = document.getElementById("loading_text");
+  const wrapper = document.getElementById("table_wrapper");
+
+  modal.style.display = "flex";
+  loading.style.display = "block";
+  wrapper.style.display = "none";
+
+  const matched = params_value.find(v => v.datauid === datauid);
+
+  if (!matched || !Array.isArray(matched.value) || matched.value.length === 0) {
+    loading.textContent = "데이터가 없습니다.";
+    return;
+  }
+
+  modalState.originalData = matched.value;
+  modalState.filteredData = [...matched.value];
+  modalState.columns = Object.keys(matched.value[0]);
+  modalState.colDisplayMap = datacolsMap[modalState.datauid] || {};
+
+  renderTable();
+  loading.style.display = "none";
+  wrapper.style.display = "block";
+}
+
+/* =========================
+   테이블 렌더링
+========================= */
+function renderTable() {
+  const thead = document.getElementById("table_header");
+  const tbody = document.getElementById("table_body");
+
+  thead.innerHTML = "";
+  tbody.innerHTML = "";
+
+  // header
+  const tr = document.createElement("tr");
+  modalState.columns.forEach(col => {
+    const th = document.createElement("th");
+    // th.textContent = col;
+    th.textContent = modalState.colDisplayMap[col] || col;
+    tr.appendChild(th);
+  });
+  thead.appendChild(tr);
+
+  // body
+  modalState.filteredData.forEach(row => {
+    const tr = document.createElement("tr");
+
+    modalState.columns.forEach(col => {
+      const td = document.createElement("td");
+      td.textContent = row[col] ?? "";
+      tr.appendChild(td);
+    });
+
+    tr.onclick = () => selectRow(row, tr);
+    tbody.appendChild(tr);
+  });
+}
+
+/* =========================
+   검색 필터
+========================= */
+function filterRows() {
+  const keyword = document.getElementById("search_input").value.toLowerCase();
+
+  modalState.filteredData = keyword
+    ? modalState.originalData.filter(row =>
+        Object.values(row).some(v =>
+          String(v).toLowerCase().includes(keyword)
+        )
+      )
+    : [...modalState.originalData];
+
+  modalState.selectedRow = null;
+  renderTable();
+}
+
+/* =========================
+   행 선택
+========================= */
+function selectRow(row, tr) {
+  document.querySelectorAll("#table_body tr")
+    .forEach(r => r.classList.remove("selected"));
+
+  tr.classList.add("selected");
+  modalState.selectedRow = row;
+}
+
+/* =========================
+   값 저장
+========================= */
+function saveSelectedValue() {
+  const s = modalState.selectedRow;
+  if (!s) {
+    alert("값을 선택해주세요.");
+    return;
+  }
+
+  const displayValue = s[modalState.nmcolnm];
+  const keyValue = s[modalState.keycolnm];
+
+  const displayInput = document.querySelector(
+    `.param-value-display[data-paramnm="${modalState.paramnm}"]`
+  );
+  const hiddenInput = document.querySelector(
+    `.param-value-hidden[data-paramnm="${modalState.paramnm}"]`
+  );
+
+  if (displayInput && hiddenInput) {
+    displayInput.value = displayValue;
+    hiddenInput.value = keyValue;
+    displayInput.dataset.fromSearch = "true";
+  }
+
+  closeSearchModal();
+}
+
+/* =========================
+   모달 닫기 & 초기화
+========================= */
+function closeSearchModal() {
+  document.getElementById("search_params_modal").style.display = "none";
+  resetModalState();
+}
+
+function resetModalState() {
+  modalState = {
+    datauid: null,
+    paramnm: null,
+    keycolnm: null,
+    nmcolnm: null,
+    originalData: [],
+    filteredData: [],
+    selectedRow: null,
+    columns: []
+  };
+  document.getElementById("search_input").value = "";
+}
+
+/* ESC 닫기 */
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") closeSearchModal();
+});
+</script>

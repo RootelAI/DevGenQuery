@@ -1,0 +1,233 @@
+{% extends "pages/base.html" %}
+{% block title %}요청 관리{% endblock %}
+
+{% load static %}
+
+{% block content %}
+<style>
+  .selected {
+    border-color: var(--selected-row) !important;
+    background-color: var(--selected-row-bg) !important;
+  }
+  .request-label{
+    width: 180px;
+  }
+  .request-value{
+    width: 200px !important;
+    flex: none !important;
+    /* text-align: right !important; */
+  }
+  .form-group-left{
+    margin-bottom: 13px;
+  }
+</style>
+
+<div class="page-title">
+  <div style="display: flex; align-items: center;">
+    <div class="gradient-bar"></div>
+    <div>요청 관리</div>
+  </div>
+</div>
+
+
+<div style="display: flex; gap: 20px; min-height: 80%;">
+  <div style="flex: 0.4; padding: 0 20px;">
+    <h3>요청 목록</h3>
+    <div class="table-container">
+      {% if tenantreqs %}
+        <table class="table table-bordered table-sm">
+          <thead>
+            <tr>
+            <th style="width: 15%;">요청일시</th>
+            <th style="width: 17%;">사업자<br>등록번호</th>
+            <th style="width: 18%;">사업자명</th>
+            <th style="width: 12%;">과금<br>사용자수</th>
+          </tr>
+        </thead>
+        <tbody>
+            {% for tenantreq in tenantreqs %}
+            <tr class="tenantreqs"
+                data-tenantrequid="{{ tenantreq.tenantrequid }}"
+                data-bizregno="{{ tenantreq.bizregno }}"
+                data-tenantnm="{{ tenantreq.tenantnm }}"
+                data-billingusercnt="{{ tenantreq.billingusercnt }}"
+                data-llmlimityn="{{ tenantreq.llmlimityn|yesno:'√,-' }}"
+                data-managernm="{{ tenantreq.managernm }}"
+                data-managerdepart="{{ tenantreq.managerdepart }}"
+                data-managerposition="{{ tenantreq.managerposition }}"
+                data-email="{{ tenantreq.email }}"
+                data-telno="{{ tenantreq.telno }}"
+                data-bizregfilenm="{{ tenantreq.bizregfilenm }}"
+                data-bizregfileurl="{{ tenantreq.bizregfileurl }}"
+                data-creator="{{ tenantreq.creator }}"
+                data-createdts="{{ tenantreq.createdts }}">
+              <td class="info" >{{ tenantreq.createdts|default_if_none:'' }}</td>
+              <td class="info" >{{ tenantreq.bizregno|default_if_none:'' }}</td>
+              <td class="info" >{{ tenantreq.tenantnm|default_if_none:'' }}</td>
+              <td class="info" >{{ tenantreq.billingusercnt|default_if_none:'0' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- 우측 패널 -->
+  <div style="flex: 0.7; padding-left: 20px;">
+    <h3>요청 상세</h3>
+    <div>
+      <input type="hidden" id="tenantrequid" name="tenantrequid" />
+
+      <div class="form-group-left">
+        <span class="request-label">요청일시</span>
+        <div class="request-value">
+          <input class="request-value" style="text-align: right;" type="text" id="createdts" name="createdts" disabled>
+        </div>
+      </div>
+
+      <div class="form-group-left">
+        <span class="request-label">사용자수</span>
+        <div class="request-value">
+          <input class="request-value" style="text-align: right;" type="text" id="billingusercnt" name="billingusercnt" disabled>
+        </div>
+      </div>
+
+      <div class="form-group-left">
+        <span class="request-label">LLM사용제한여부</span>
+        <div class="request-value">
+          <input class="request-value" style="text-align: right;" type="text" id="llmlimityn" name="llmlimityn" disabled>
+        </div>
+      </div>
+
+      <div class="form-group-left">
+        <div class="info-left" style="align-self: flex-start;">
+          <h3>기업 정보</h3>
+          <!-- 기업 정보 시작 -->
+          <div class="tenant-info">
+            <div class="form-group-left">
+              <label class="request-label">회사(법인) 명칭:</label>
+              <div class="request-value">
+                <input class="request-value" style="text-align: right;" type="text" id="tenantnm" name="tenantnm" disabled>
+              </div>
+            </div>
+
+            <div class="form-group-left">
+              <label class="request-label">법인(사업자) 등록번호:</label>
+              <div class="request-value">
+                <input class="request-value" style="text-align: right;" type="text" id="bizregno" name="bizregno"  disabled>
+              </div>
+            </div>
+
+            <div style="margin-top: 10px;">
+              <input type="file" id="bizregfile" name="bizregfile" style="display:none">
+
+              <!-- 현재 파일 및 업로드 버튼 -->
+              <div style="display:none; align-items:center; gap:10px;">
+                <button type="button" id="upload-btn" class="icon-btn">
+                <img src="{% static 'icons/upload.svg' %}" title="업로드" class="icon-img new-icon">
+                </button>
+                <span id="current-bizregfile">사업자 등록증 사본 파일 없음</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+        <!-- 기업 정보 종료 -->
+
+        <div class="info-right" style="align-self: flex-start; margin-left: 200px;">
+          <h3>서비스 담당자 정보</h3>
+          <!-- 서비스 담당자 정보 시작 -->
+          <div class="manager-info" >
+            <div class="form-group-left">
+              <label class="request-label">성명:</label>
+              <div class="request-value">
+                <input class="request-value" style="text-align: right;" type="text" id="managernm" name="managernm" disabled>
+              </div>
+            </div>
+
+            <div class="form-group-left">
+              <label class="request-label">부서:</label>
+              <div class="request-value">
+                <input class="request-value" style="text-align: right;" type="text" id="managerdepart" name="managerdepart" disabled>
+              </div>
+            </div>
+
+            <div class="form-group-left">
+              <label class="request-label">직책:</label>
+              <div class="request-value">
+                <input class="request-value" style="text-align: right;" type="text" id="managerposition" name="managerposition" disabled>
+              </div>
+            </div>
+
+            <div class="form-group-left">
+              <label class="request-label">이메일주소:</label>
+              <div class="request-value">
+                <input class="request-value" style="text-align: right;" type="email" id="email" name="email" disabled>
+              </div>
+            </div>
+
+            <div class="form-group-left">
+              <label class="request-label">전화번호:</label>
+              <div class="request-value">
+                <input class="request-value" style="text-align: right;" type="tel" id="telno" name="telno" disabled>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+        <!-- 서비스 담당자 정보 종료 -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+
+// 페이지 로드 시 초기화
+document.addEventListener('DOMContentLoaded', function() {
+});
+
+
+document.querySelectorAll(".tenantreqs").forEach(tenantreq => {
+  tenantreq.addEventListener("click", function () {
+    // console.log("선택")
+    // 🔹 기존 선택 제거
+    document.querySelectorAll(".tenantreqs").forEach(c => c.classList.remove("selected"));
+
+    // 🔹 현재 선택 카드 강조
+    this.classList.add("selected");
+
+    const tenantrequid = this.dataset.tenantrequid;
+    const bizregno = this.dataset.bizregno;
+    const tenantnm = this.dataset.tenantnm;
+    const billingusercnt = this.dataset.billingusercnt;
+    const llmlimityn = this.dataset.llmlimityn;
+    const managernm = this.dataset.managernm;
+    const managerdepart = this.dataset.managerdepart;
+    const managerposition = this.dataset.managerposition;
+    const email = this.dataset.email;
+    const telno = this.dataset.telno;
+    const bizregfilenm = this.dataset.bizregfilenm;
+    const bizregfileurl = this.dataset.bizregfileurl;
+    const creator = this.dataset.creator;
+    const creatornm = this.dataset.creatornm;
+    const createdts = this.dataset.createdts;
+
+    document.getElementById("tenantrequid").value = tenantrequid;
+    document.getElementById("bizregno").value = bizregno;
+    document.getElementById("tenantnm").value = tenantnm;
+    document.getElementById("billingusercnt").value = billingusercnt;
+    document.getElementById("llmlimityn").value = llmlimityn;
+    document.getElementById("managernm").value = managernm;
+    document.getElementById("managerdepart").value = managerdepart;
+    document.getElementById("managerposition").value = managerposition;
+    document.getElementById("email").value = email;
+    document.getElementById("telno").value = telno;
+    document.getElementById("createdts").value = createdts;
+
+  })
+})
+
+</script>
+{% endblock %}

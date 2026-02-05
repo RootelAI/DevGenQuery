@@ -1,0 +1,406 @@
+{% extends 'pages/base.html' %}
+{% load static %}
+{% block title %}Q&A{% endblock %}
+
+{% block content %}
+
+<style>
+/* 읽기 전용 input 및 textarea 배경색 변경 */
+input[readonly], textarea[readonly] {
+    background-color: #f0f0f0;  /* 연한 회색 */
+    color: #555;                /* 글자 색상도 약간 어둡게 */
+    border: 1px solid #ccc;     /* 테두리 색상 */
+}
+</style>
+
+<div class="page-title">
+  <div style="display: flex; align-items: center;">
+    <div class="gradient-bar"></div>
+    <div>Q&A</div>
+  </div>
+</div>
+
+<div style="display: flex; gap: 20px; min-height: 80%;">
+
+
+  <!-- LEFT TABLE -->
+  <div style="flex: 1.5;">
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="margin: 0;">Q&A 목록</h3>
+      <a href="{% url 'faq_view' %}" class="btn btn-link">
+        FAQ
+      </a>
+  </div>
+    <div class="table-container">
+      <table class="table table-bordered table-sm" id="qnas-table" style="cursor:pointer;">
+        <thead>
+          <tr>
+            <th style="width: 50%;">제목</th>
+            <th style="width: 10%;">상태</th>
+            <th style="width:20%;">생성자</th>
+            <th style="width:20%">생성일시</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for qna in qnas %}
+          <tr class="qna-row"
+              data-qnauid="{{ qna.qnauid }}"
+              data-title="{{ qna.title }}"
+              data-question="{{ qna.question }}"
+              data-isprivate="{{ qna.isprivate }}"
+              data-creatornm="{{ qna.creatornm }}"
+              data-createdts="{{ qna.createdts }}"
+              data-answer="{{ qna.answer }}"
+              data-answernm="{{ qna.answernm }}"
+              data-answerdts="{{ qna.answerdts }}"
+              data-can-click="{{ qna.can_click }}">
+              
+            <td>
+                {{ qna.title }}
+                {% if qna.isprivate %}
+                    <img src="{% static 'icons/lock.svg' %}" 
+                         style="width:14px; height:14px; margin-left:5px;">
+                {% endif %}
+            </td>
+
+            <td>
+              {% if qna.answer %}<span>답변완료</span>
+              {% else %}<span>대기중</span>
+              {% endif %}
+            </td>
+
+            <td>{{ qna.creatornm }}</td>
+            <td>{{ qna.createdts }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+
+  <!-- RIGHT DETAIL PANEL -->
+  <div style="flex: 1.5;">
+    <h3>Q&A 상세내용</h3>
+
+    <form id="qnaDetailForm" method="POST" action="{% url 'qna_save' %}">
+      {% csrf_token %}
+      <input type="hidden" name="qnauid" id="qnauid">
+
+      <div class="form-group-left">
+        <label>제목:</label>
+        <input type="text" name="title" id="title">
+      </div>
+
+      <div class="form-group-left">
+        <label>질문:</label>
+        <textarea name="question" id="question" rows="4"></textarea>
+      </div>
+
+      <div class="form-group-left">
+        <label>비공개:</label>
+        <input type="checkbox" name="isprivate" id="isprivate" style="flex: 0;">
+      </div>
+
+      <div class="form-group-left">
+        <label>생성자:</label>
+        <input type="text" name="creatornm" id="creatornm" readonly>
+      </div>
+
+      <div class="form-group-left">
+        <label>생성일시:</label>
+        <input type="text" name="createdts" id="createdts" readonly>
+      </div>
+
+      <!-- 답변 3개 영역 -->
+      <div id="answer-wrapper" class="hidden">
+        <div class="form-group-left">
+          <label>답변:</label>
+          <textarea name="answer" id="answer" rows="6"></textarea>
+        </div>
+
+        <div class="form-group-left">
+          <label>답변자:</label>
+          <input type="text" name="answernm" id="answernm" readonly>
+        </div>
+
+        <div class="form-group-left">
+          <label>답변일시:</label>
+          <input type="text" name="answerdts" id="answerdts" readonly>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <div class="button-group">
+          {% if roleid and roleid != 0 %}
+          <button id="reset-btn" type="button" class="icon-btn">
+            <div class="icon-wrapper">
+              <img src="{% static 'icons/new.svg' %}" class="icon-img new-icon" title="신규">
+              <span class="icon-label">신규</span>
+            </div>
+          </button>
+
+          <!-- 저장 버튼 -->
+          <button id="save-btn" type="button" class="icon-btn">
+            <div class="icon-wrapper">
+              <img src="{% static 'icons/save.svg' %}" class="icon-img save-icon" title="저장">
+              <span class="icon-label">저장</span>
+            </div>
+          </button>
+
+          <!-- 삭제 버튼 -->
+          <button id="delete-btn" type="button" class="icon-btn">
+            <div class="icon-wrapper">
+              <img src="{% static 'icons/delete.svg' %}" class="icon-img del-icon" title="삭제">
+              <span class="icon-label">삭제</span>
+            </div>            
+          </button>
+          {% endif %}
+            {% if roleid == 7 %}
+          <button id="answer-btn" type="button" class="icon-btn">
+            <div class="icon-wrapper">
+              <img src="{% static 'icons/doc.svg' %}" class="icon-img config-icon" title="답변">
+              <span class="icon-label">답변</span>
+            </div>            
+          </button>
+          {% endif %}
+      </div>
+
+    </form>
+  </div>
+
+</div>
+
+<!-- 답변 모달 -->
+<div id="answerModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center;">
+    <div style="background:#fff; padding:20px; border-radius:8px; width:500px; position:relative;">
+        <h3 id="answerModalTitle" style="text-align:center;">답변 작성</h3>
+        <form method="POST" action="{% url 'qna_answer_save' %}" id="answerForm">
+            {% csrf_token %}
+            <input type="hidden" name="qnauid" id="answerQnauid">
+
+            <div style="margin-bottom:10px;">
+                <label>제목:</label><br>
+                <input type="text" id="answerTitle" readonly style="width:100%;">
+            </div>
+
+            <div style="margin-bottom:10px;">
+                <label>질문:</label><br>
+                <textarea id="answerQuestion" readonly style="width:100%; height:80px;"></textarea>
+            </div>
+
+            <div style="margin-bottom:10px;">
+                <label>답변:</label><br>
+                <textarea name="answer" id="answerText" required style="width:100%; height:120px;"></textarea>
+            </div>
+
+            <div style="text-align:center;">
+                <button type="button" id="answerCancelBtn" class="btn btn-secondary">취소</button>
+                <button type="submit" class="btn btn-primary">저장</button>
+                <button type="button" id="answerDeleteBtn" class="btn btn-danger">답변 삭제</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<script>
+let selectedRow = null;
+
+// 페이지 로드 시 답변 영역 숨김
+document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("answer-wrapper").classList.add("hidden");
+});
+
+// =======================
+// LEFT ROW CLICK EVENT
+// =======================
+document.querySelectorAll(".qna-row").forEach(row => {
+    row.addEventListener("click", () => {
+
+        if (row.dataset.canClick === "False") {
+            alert("비공개 Q&A입니다. 본인 글만 확인 가능합니다.");
+            return;
+        }
+
+        // --- 선택된 row 강조 ---
+        if (selectedRow) selectedRow.classList.remove("selected-row");
+        selectedRow = row;
+        selectedRow.classList.add("selected-row");
+
+        // --- 값 세팅 ---
+        document.getElementById("qnauid").value = row.dataset.qnauid;
+        document.getElementById("title").value = row.dataset.title;
+        document.getElementById("question").value = row.dataset.question;
+
+        // 비공개 체크
+        document.getElementById("isprivate").checked = (row.dataset.isprivate === "True");
+
+        document.getElementById("creatornm").value = row.dataset.creatornm;
+        document.getElementById("createdts").value = row.dataset.createdts;
+
+        // 답변 유무에 따라 표시/숨김
+        let answerWrapper = document.getElementById("answer-wrapper");
+        if (!row.dataset.answer || row.dataset.answer === "None") {
+            answerWrapper.classList.add("hidden");
+            document.getElementById("answer").value = "";
+            document.getElementById("answernm").value = "";
+            document.getElementById("answerdts").value = "";
+        } else {
+            answerWrapper.classList.remove("hidden");
+            document.getElementById("answer").value = row.dataset.answer;
+            document.getElementById("answernm").value = row.dataset.answernm || "";
+            document.getElementById("answerdts").value = row.dataset.answerdts || "";
+        }
+    });
+});
+
+// =======================
+// 초기화 버튼 (신규 버튼) 클릭
+// =======================
+document.getElementById("reset-btn").addEventListener("click", () => {
+    // 선택 강조 제거
+    if (selectedRow) {
+        selectedRow.classList.remove("selected-row");
+        selectedRow = null;
+    }
+
+    // 폼 초기화
+    document.getElementById("qnauid").value = "";
+    document.getElementById("title").value = "";
+    document.getElementById("question").value = "";
+    document.getElementById("isprivate").checked = false;
+    document.getElementById("creatornm").value = "";
+    document.getElementById("createdts").value = "";
+
+    // 답변 영역 숨김 및 초기화
+    let answerWrapper = document.getElementById("answer-wrapper");
+    answerWrapper.classList.add("hidden");
+    document.getElementById("answer").value = "";
+    document.getElementById("answernm").value = "";
+    document.getElementById("answerdts").value = "";
+});
+
+// =======================
+// 저장 버튼 클릭
+// =======================
+document.getElementById("save-btn").addEventListener("click", () => {
+    const form = document.getElementById("qnaDetailForm");
+
+    // 제목과 질문 필수 체크
+    const title = document.getElementById("title").value.trim();
+    const question = document.getElementById("question").value.trim();
+
+    if (!title) {
+        alert("제목을 입력해주세요.");
+        return;
+    }
+
+    if (!question) {
+        alert("질문을 입력해주세요.");
+        return;
+    }
+
+    // 폼 제출
+    form.submit();
+});
+
+// =======================
+// 삭제 버튼 클릭
+// =======================
+document.getElementById("delete-btn").addEventListener("click", () => {
+    const qnauid = document.getElementById("qnauid").value;
+    if (!qnauid) {
+        alert("삭제할 Q&A를 선택해주세요.");
+        return;
+    }
+
+    if (confirm("정말 삭제하시겠습니까?")) {
+        // 삭제를 위한 hidden form 생성 후 제출
+        const deleteForm = document.createElement("form");
+        deleteForm.method = "POST";
+        deleteForm.action = "{% url 'qna_delete' %}";
+
+        const csrfInput = document.createElement("input");
+        csrfInput.type = "hidden";
+        csrfInput.name = "csrfmiddlewaretoken";
+        csrfInput.value = "{{ csrf_token }}";
+        deleteForm.appendChild(csrfInput);
+
+        const idInput = document.createElement("input");
+        idInput.type = "hidden";
+        idInput.name = "qnauid";
+        idInput.value = qnauid;
+        deleteForm.appendChild(idInput);
+
+        document.body.appendChild(deleteForm);
+        deleteForm.submit();
+    }
+});
+
+// 답변 버튼 클릭
+const answerBtn = document.getElementById("answer-btn");
+if(answerBtn){
+    answerBtn.addEventListener("click", () => {
+        if (!selectedRow) {
+            alert("답변할 Q&A를 선택해주세요.");
+            return;
+        }
+
+        // 모달 보이기
+        const modal = document.getElementById("answerModal");
+        modal.style.display = "flex";
+
+        // 선택된 Q&A 정보 세팅
+        document.getElementById("answerQnauid").value = selectedRow.dataset.qnauid;
+        document.getElementById("answerTitle").value = selectedRow.dataset.title;
+        document.getElementById("answerQuestion").value = selectedRow.dataset.question;
+
+        // answer 기본값 처리
+        const answerValue = selectedRow.dataset.answer;
+        document.getElementById("answerText").value = (!answerValue || answerValue === "None") ? "" : answerValue;
+    });
+}
+
+// 모달 취소 버튼
+document.getElementById("answerCancelBtn").addEventListener("click", () => {
+    document.getElementById("answerModal").style.display = "none";
+});
+
+// 답변 삭제 버튼 클릭
+document.getElementById("answerDeleteBtn").addEventListener("click", () => {
+    const qnauid = document.getElementById("answerQnauid").value;
+
+    if (!qnauid) {
+        alert("삭제할 Q&A를 선택해주세요.");
+        return;
+    }
+
+    if (!confirm("정말 이 Q&A 답변을 삭제하시겠습니까?")) return;
+
+    // POST 요청을 위한 form 생성
+    const deleteForm = document.createElement("form");
+    deleteForm.method = "POST";
+    deleteForm.action = "{% url 'qna_answer_delete' %}";
+
+    // CSRF 토큰
+    const csrfInput = document.createElement("input");
+    csrfInput.type = "hidden";
+    csrfInput.name = "csrfmiddlewaretoken";
+    csrfInput.value = "{{ csrf_token }}";
+    deleteForm.appendChild(csrfInput);
+
+    // qnauid 전송
+    const idInput = document.createElement("input");
+    idInput.type = "hidden";
+    idInput.name = "qnauid";
+    idInput.value = qnauid;
+    deleteForm.appendChild(idInput);
+
+    document.body.appendChild(deleteForm);
+    deleteForm.submit();
+});
+
+</script>
+
+{% endblock %}

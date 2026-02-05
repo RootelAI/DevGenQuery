@@ -1,0 +1,35 @@
+/* Tom Select input 통일 스타일 */
+#signup_tenant + .ts-wrapper .ts-control {
+    width: 90%;                         /* 기존 input 너비와 동일 */
+    padding: 1px;                      /* 기존 input 패딩 */
+    font-size: 14px;                     /* 글자 크기 통일 */
+    border: 1px solid var(--border-color); /* 기존 input 테두리 색상 */
+    border-radius: 6px;                  /* 기존 input 테두리 둥글기 */
+    background-color: var(--white);      /* 배경 통일 */
+    box-shadow: none;                     /* 포커스 그림자 제거 */
+    border: none !important;          /* 테두리 제거 */
+}
+
+/* 포커스 시 테두리 강조 대신 기존 input과 통일 */
+#signup_tenant + .ts-wrapper .ts-control:focus {
+    border-color: var(--border-color);
+    outline: none;
+    box-shadow: none;
+}
+
+/* 선택된 아이템 스타일 */
+#signup_tenant + .ts-wrapper .ts-control .item {
+    background: transparent;
+    color: #333;
+}
+
+/* 드롭다운 옵션 디자인 */
+#signup_tenant + .ts-wrapper .ts-dropdown {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+#signup_tenant + .ts-wrapper .ts-dropdown .option:hover {
+    background: #f5f5f5;
+}

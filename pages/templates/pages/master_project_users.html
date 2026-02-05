@@ -1,0 +1,405 @@
+{% extends 'pages/base.html' %}
+{% load custom_filters %}
+{% load static %}
+{% block title %}
+프로젝트 사용자 관리
+{% endblock %}
+
+{% block content %}
+
+<div class="page-title">
+  <div style="display: flex; align-items: center;">
+    <div class="gradient-bar"></div>
+    <div>프로젝트 사용자 관리</div>
+  </div>
+  {% if request.session.user.roleid == 7 or request.session.user.tenantmanager == 'Y' %}
+  <button type="button" class="icon-btn" id="back-btn">
+    <img src="{% static 'icons/back.svg' %}" alt="뒤로가기" class="icon-img config-icon">
+  </button>
+  {% endif %}
+</div>
+
+<form method="get" action="" class="form-filter-group">
+  <div class="filter-item">
+    <label for="projectid" style="width: 100px;">프로젝트 목록:</label>
+    <select name="projects" id="projects" onchange="this.form.submit()">
+      <option value="">-- 프로젝트 선택 --</option>
+      {% for project in projects %}
+        <option value="{{ project.projectid }}"
+          {% if projectid|stringformat:"s" == project.projectid|stringformat:"s" %}
+            selected
+          {% elif projects|length == 1 %}
+            selected
+          {% endif %}
+        >
+          {{ project.projectnm }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+</form>
+
+<div style="display: flex; gap: 20px; min-height: 80%;">
+  <!-- 왼쪽 -->
+  <div style="flex: 1.5;">
+    <h3>사용자 목록</h3>
+    <div class="table-container">
+      <table class="table table-bordered table-sm">
+        <thead>
+          <tr>
+            <th style="width: 30%;">이메일</th>
+            <th style="width: 20%;">사용자명</th>
+            <th style="width: 10%;">역할</th>
+            <th style="width: 10%;">사용</th>
+            <th class="info"  style="width:20%;">생성일시</th>
+            <!-- <th class="info"  style="width:10%"></th> -->
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in projectusers %}
+          <tr data-projectid="{{ user.projectid }}"
+              data-useruid="{{ user.useruid }}"
+              data-usernm="{{ user.usernm }}"
+              data-email="{{ user.email }}"
+              data-rolecd="{{ user.rolecd }}"
+              data-useyn="{{ user.useyn }}"
+              data-creator="{{ user.creator }}"
+              data-creatornm="{{ user.creatornm}}"
+              data-createdts="{{ user.createdts }}">
+              <td>{{ user.email }}
+                  <!-- {% if not user.useyn %}<small class="text-muted">(비활성)</small>{% endif %} -->
+              </td>
+              <td>
+                  {{ user.usernm }}
+                  <!-- {% if not user.useyn %}<small class="text-muted">(비활성)</small>{% endif %} -->
+              </td>
+              <td class="info">
+                  {% if user.rolecd == "M" %}<span>Manager</span>
+                  {% else %}<span>User</span>
+                  {% endif %}
+                  <!-- {% if not user.useyn %}<small class="text-muted">(비활성)</small>{% endif %} -->
+              </td>
+              <td class="info"style="text-align: center;">
+                  {% if user.useyn %}<span>✔</span>
+                  {% endif %}
+              </td>
+              <td class="info"><span class="text-muted">{{user.createdts}}</span></td>
+              <!-- <td class="info"><button class="btn-tbl btn-primary projects-select-btn" type="button">선택</button></td> -->
+          </tr>
+          {% empty %}
+          <tr>
+              <td colspan="6" class="text-center text-muted py-4">등록된 사용자가 없습니다.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    
+  </div>
+
+  <!-- 오른쪽 -->
+  <div style="flex: 1.5; padding-left: 20px;">
+    <h3>사용자 상세</h3>
+    <input id="projectid" name="projectid" type="text" value="{{ projectid}}" hidden>
+    <form id="projects-detail-form" enctype="multipart/form-data">
+      <input id="useruid" name="useruid" type="text" hidden>
+      
+      <div class="form-group-left">
+        <label>이메일:</label>
+  
+        <!-- 수동 입력 -->
+        <input id="email" name="email" type="text" placeholder="직접 입력 또는 조회">
+        <button type="button" class="icon-btn" style="margin-left:5px;" onclick="openUserModal()">
+          조회
+        </button>
+      </div>
+   
+      <div class="form-group-left">
+        <label>사용자명:</label>
+        <input id="usernm" name="usernm" type="text" disabled>
+      </div>
+
+      <!-- ✅ 역할 드롭박스 추가 -->
+      <div class="form-group-left">
+        <label>역할:</label>
+        <div>
+          <label>
+            <input type="radio" name="rolecd" value="M" id="role-m">
+            Manager
+          </label>
+          <label style="margin-left: 10px;">
+            <input type="radio" name="rolecd" value="U" id="role-u">
+            User
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group-left"style = "display: block;">
+        <label>사용:</label>
+        <input id="useyn" name="useyn" type="checkbox" style="margin-left: 50px;">
+      </div>
+
+      <div class="form-group-left">
+        <label>생성자:</label>
+        <input id="creator" name="creator" type="text" disabled>
+      </div>
+
+      <div class="form-group-left">
+        <label>생성일시:</label>
+        <input id="createdts" name="createdts" type="text" disabled>
+      </div>
+
+      <div class="button-group">
+        <button id="reset-btn" type="button" class="icon-btn">
+          <div class="icon-wrapper">
+            <img src="{% static 'icons/new.svg' %}" class="icon-img new-icon" title="신규">
+            <span class="icon-label">신규</span>
+          </div> 
+        </button>
+
+        <!-- 저장 버튼 -->
+        <button id="save-btn" type="button" class="icon-btn">
+          <div class="icon-wrapper">
+            <img src="{% static 'icons/save.svg' %}" class="icon-img save-icon" title="저장">
+            <span class="icon-label">저장</span>
+          </div>  
+        </button>
+
+        <!-- 삭제 버튼 -->
+        <button id="delete-btn" type="button" class="icon-btn">
+          <div class="icon-wrapper">
+            <img src="{% static 'icons/delete.svg' %}" class="icon-img del-icon" title="삭제">
+            <span class="icon-label">삭제</span>
+          </div>  
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- 사용자 검색 Modal -->
+<!-- 사용자 검색 Modal -->
+<div id="user-modal" style="
+    display:none; 
+    position:fixed; 
+    top:0; left:0; 
+    width:100%; height:100%;
+    background: rgba(0,0,0,0.5); 
+    justify-content:center; 
+    align-items:center;
+    z-index: 1050; /* overlay 전체 위 */
+">
+  <div style="
+      background:#fff; 
+      padding:20px; 
+      width:500px; 
+      max-height:80%; 
+      overflow:auto; 
+      border-radius:8px;
+      position: relative;  /* z-index 적용 위해 필요 */
+      z-index: 1060;       /* 내부 컨텐츠가 overlay 위 */
+  ">
+    <h4>사용자 선택</h4>
+    <table style="width:100%; border-collapse: collapse;">
+      <thead>
+        <tr style="background:#f0f0f0;">
+          <th style="padding:8px; border:1px solid #ccc;">이름</th>
+          <th style="padding:8px; border:1px solid #ccc;">이메일</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in tenantusers %}
+        <tr class="user-item" style="cursor:pointer;" 
+            data-email="{{ u.email }}" data-usernm="{{ u.usernm }}">
+          <td style="padding:6px; border:1px solid #ccc;">{{ u.usernm }}</td>
+          <td style="padding:6px; border:1px solid #ccc;">{{ u.email }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div style="text-align:right; margin-top:10px;">
+      <button type="button" onclick="closeUserModal()">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 로딩 오버레이 -->
+<div id="formatLoading">
+  <div class="loading-content">
+    <div class="spinner"></div>
+    <div id="loading-text" style="text-align: center;"></div>
+    <div >잠시만 기다려 주세요.</div>
+  </div>
+</div>
+
+<script>
+// Modal 열기/닫기
+function openUserModal() {
+  document.getElementById('user-modal').style.display = 'flex';
+}
+function closeUserModal() {
+  document.getElementById('user-modal').style.display = 'none';
+}
+
+// 사용자 선택 시 폼에 값 채우기
+document.querySelectorAll('#user-modal .user-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.getElementById('email').value = item.dataset.email;
+    document.getElementById('usernm').value = item.dataset.usernm;
+    closeUserModal();
+  });
+});
+
+// 페이지 로드 시 초기화 진행
+window.addEventListener('load', function() {
+  document.getElementById("projects-detail-form").reset();
+});
+
+function handleEmailSelect(selectedEmail) {
+  const emailInput = document.getElementById('email');
+  if (selectedEmail) {
+    emailInput.value = selectedEmail;
+  }
+}
+
+// 행 클릭 이벤트로 변경
+document.querySelectorAll("table tbody tr[data-useruid]").forEach(row => {
+  row.addEventListener("click", function () {
+    // 기존 선택된 행 있으면 제거
+    const prevSelected = document.querySelector("tr.selected-row");
+    if (prevSelected) prevSelected.classList.remove("selected-row");
+
+    // 클릭한 행 선택 처리
+    row.classList.add("selected-row");
+
+    // 우측 폼에 값 채우기
+    document.getElementById("useruid").value = row.dataset.useruid;
+    document.getElementById("usernm").value = row.dataset.usernm;
+    document.getElementById("email").value = row.dataset.email;
+    // document.getElementById("rolecd").value = row.dataset.rolecd;
+    if(row.dataset.rolecd === "M") {
+      document.getElementById("role-m").checked = true;
+    } else {
+      document.getElementById("role-u").checked = true;
+    }
+    document.getElementById("useyn").checked = row.dataset.useyn === "True";
+    document.getElementById("creator").value = row.dataset.creatornm;
+    document.getElementById("createdts").value = row.dataset.createdts;
+  });
+});
+
+// 초기화 버튼
+document.getElementById("reset-btn").addEventListener("click", () => {
+  document.getElementById("projects-detail-form").reset();
+  // 라디오 버튼 체크 해제
+  document.getElementById("role-m").checked = false;
+  document.getElementById("role-u").checked = false;
+
+  document.getElementById("useruid").value = "";
+  if (selectedRow) selectedRow.classList.remove("selected-row");
+  selectedRow = null;
+});
+
+// 저장 버튼
+document.getElementById("save-btn").addEventListener("click", () => {
+  const form = document.getElementById("projects-detail-form");
+  const formData = new FormData(form);
+  const projectid = document.getElementById('projectid').value;
+
+  // projectid 추가
+  formData.append('projectid', projectid);
+
+  // showLoading('save')
+
+  fetch("{% url 'master_project_users_save' %}", {
+    method: "POST",
+    credentials: "include",   // 👈 여기
+    body: formData,
+    headers: {
+      "X-CSRFToken": getCookie("csrftoken")
+    }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.result === "success") {
+      alert(data.message);
+      // hideLoading('save')
+      location.reload();
+    } else {
+      alert("저장 실패: " + (data.message || "서버 오류"));
+      // hideLoading('save')
+    }
+  })
+  .catch(err => {
+    alert("오류 발생: " + err.message);
+    // hideLoading('save')
+  });
+});
+
+// 삭제 버튼
+document.getElementById("delete-btn").addEventListener("click", () => {
+  const projectid = document.getElementById("projectid").value;
+  const useruid = document.getElementById("useruid").value;
+  
+  if (!useruid) {
+    alert("삭제할 사용자를 선택하세요.");
+    return;
+  }
+
+  if (!confirm("정말 삭제하시겠습니까?")) return;
+
+  // showLoading('delete')
+
+  fetch("{% url 'master_project_users_delete' %}", {
+    method: "POST",
+    credentials: "include",   // 👈 여기
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken")
+    },
+    body: JSON.stringify({ projectid, useruid })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.result === "success") {
+      alert(data.message);
+      // hideLoading('delete')
+      location.reload();
+    } else {
+      alert("삭제 실패: " + (data.message || "서버 오류"));
+      // hideLoading('delete')
+    }
+  })
+  .catch(error => {
+    alert("오류 발생: " + error.message)
+    // hideLoading('delete')
+  });
+});
+
+// 쿠키 정보
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+
+document.getElementById("back-btn").addEventListener("click", () => {
+  // 항상 object 관리 페이지로 이동
+  const backUrl = `/master/projects/`;
+  window.location.href = backUrl; // 새로고침 포함한 완전한 이동
+
+});
+</script>
+
+{% endblock %}

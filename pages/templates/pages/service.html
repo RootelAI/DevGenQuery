@@ -1,0 +1,215 @@
+{% extends 'pages/base.html' %}
+{% load static %}
+{% block title %}서비스소개{% endblock %}
+
+{% block content %}
+
+<style>
+/* 공통 서비스 섹션 */
+.service-section {
+    max-width: 950px;
+    margin: 50px auto 0 auto;
+}
+.service-section h2 {
+    padding: 10px 15px;
+    color: #091747;
+    font-family: 'Noto Sans', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    margin: 5px 0;
+    text-align: left;
+}
+.service-section p {
+    color: #091747;
+    font-family: 'Noto Sans', sans-serif;
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 1.6;
+    margin-top: 10px;
+}
+
+/* 서비스 카드 */
+.service-cards {
+    display: flex;
+    gap: 15px;
+    margin: 40px auto;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+.service-card {
+    flex: 1;
+    min-width: 220px;
+    max-width: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    background: #f7f9fc;
+    border: 1px solid #d8dfeb;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.service-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+}
+.service-card h3 {
+    color: #091747;
+    font-family: 'Noto Sans', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    text-align: left;
+}
+.service-card ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    color: black;
+    line-height: 1.6;
+    text-align: left;
+    font-family: 'Noto Sans', sans-serif;
+    font-size: 14px;
+}
+.service-card ul li {
+    display: flex;
+    align-items: flex-start;
+    gap: 5px;
+    margin-bottom: 5px;
+}
+.service-card ul li span:first-child {
+    color: #555;
+    font-size: 12px;
+}
+
+.necessity-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 800px;
+    font-family: 'Noto Sans', sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    margin-top: 20px;
+}
+
+.necessity-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 25px;
+    padding: 15px;               /* 안쪽 여백 추가 */
+    border: 1px solid #e0e0e0;   /* 연한 회색 테두리 */
+    border-radius: 8px;          /* 모서리 둥글게 */
+    /* background-color: #fff;       */
+}
+.necessity-card img {
+    width: 80px;
+    height: 80px;
+    display: block;
+}
+.necessity-card .title {
+    flex-shrink: 0;
+    width: 120px;
+    margin-top: 20px;
+    font-size: 20px;
+    font-weight: 700;
+}
+.necessity-card .desc {
+    text-align: left;
+    font-size: 16px;
+}
+.necessity-card .desc div:first-child span {
+    color: red;
+}
+</style>
+
+<!-- 서비스 소개 섹션 -->
+<div class="service-section">
+    <h2>GenQuery로 무엇을 할 수 있을까요?</h2>
+    <p>- GenQuery는 DB 연동 기반의 문서 자동 작성 솔루션입니다.</p>
+</div>
+
+<div class="service-section">
+    <h2>기존 Reporting 도구와 GenQuery의 차이는 무엇인가요?</h2>
+    <p>
+        - 기존 Reporting 도구는 데이터 시각화를 통해 유용한 정보제공 제공하는데 초점을 둡니다. <br>
+        - GenQuery는 문서의 구조와 내용을 미리 정의하여 정기 보고서나 제출용 문서를 자동 작성할 수 있도록 지원합니다. 
+    </p>
+</div>
+
+<!-- GenQuery 필요성 섹션 (service-section으로 통일) -->
+<div class="service-section">
+    <h2>GenQuery 필요성</h2>
+    <div class="necessity-cards">
+
+        <div class="necessity-card">
+            <img src="{% static 'images/Service01.png' %}" alt="표준화">
+            <div class="title">표준화</div>
+            <div class="desc">
+                <div style="font-weight: 600;"><span>✔</span> 일관된 보고서 품질과 표준 유지</div>
+                <div>- 사전에 정의된 표준 템플릿과 데이터셋 활용</div>
+                <div>- 동일한 형식으로 높은 품질과 일관성 있는 문서 작성 가능</div>
+            </div>
+        </div>
+
+        <div class="necessity-card">
+            <img src="{% static 'images/Service02.png' %}" alt="정확성">
+            <div class="title">정확성</div>
+            <div class="desc">
+                <div style="font-weight: 600;"><span>✔</span> 데이터 기반의 높은 정확성 확보</div>
+                <div>- 수동 입력 및 복사·붙여넣기 과정에서 발생하는 오류 최소화</div>
+                <div>- AI가 데이터를 직접 처리하여 문서의 신뢰성과 무결성 강화</div>
+            </div>
+        </div>
+
+        <div class="necessity-card">
+            <img src="{% static 'images/Service03.png' %}" alt="효율성">
+            <div class="title">효율성</div>
+            <div class="desc">
+                <div style="font-weight: 600;"><span>✔</span> 문서 작성 업무의 획기적인 효율 향상</div>
+                <div>- 반복적이고 시간 소모적인 문서 작성 업무 자동화</div>
+                <div>- 클릭 몇 번만으로 문서를 생성하여 검토 및 핵심 업무에 집중할 수 있는 환경 제공</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="service-section">
+    <h2>GenQuery 주요 사용 대상</h2>
+
+</div>
+
+<!-- 서비스 카드 -->
+<div class="service-cards">
+    <div class="service-card">
+        <h3>산업·품질 관리 분야</h3>
+        <ul>
+            <li><span>■</span>정기 안전점검 결과 보고서 (산업안전보건)</li>
+            <li><span>■</span>ISO 인증 유지용 내부심사 보고서</li>
+            <li><span>■</span>연간 교육훈련 기록 (직원 GMP, SOP 교육 이수 현황)</li>
+        </ul>
+    </div>
+
+    <div class="service-card">
+        <h3>의약품 관련 정기 문서</h3>
+        <ul>
+            <li><span>■</span>APQR (Annual Product Quality Review)</li>
+            <li><span>■</span>품질 관리 검토서 - 월별/분기별</li>
+            <li><span>■</span>GMP 자체점검 보고서</li>
+            <li><span>■</span>안정성 시험 보고서 - 설정된 시험 주기별</li>
+            <li><span>■</span>밸리데이션 재검증 보고서 - 주기적</li>
+        </ul>
+    </div>
+
+    <div class="service-card">
+        <h3>고객사 Report</h3>
+        <ul>
+            <li><span>■</span>고객사가 정기적으로 작성하여 보관하는 문서</li>
+            <li><span>■</span>서비스를 사용하는 각 고객사를 위한 정기적인 리포팅 작성</li>
+        </ul>
+    </div>
+</div>
+
+{% endblock %}

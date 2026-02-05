@@ -1,0 +1,440 @@
+{% extends 'pages/base.html' %}
+{% load static %}
+{% block title %}기업 관리{% endblock %}
+
+{% block content %}
+<div class="page-title">
+  <div style="display: flex; align-items: center;">
+    <div class="gradient-bar"></div>
+    <div>기업 관리</div>
+  </div>
+
+</div>
+
+
+<div style="display: flex; gap: 20px; min-height: 80%;">
+  <!-- 왼쪽 -->
+  <div style="flex: 1.5;" >
+    <h3>기업 목록</h3>
+    <div class="table-container">
+      <table class="table table-bordered table-sm" id="tenants-table">
+        <thead>
+          <tr>
+            <th style="width: 50%;">기업명</th>
+            <th style="width: 20%;">요금제</th>
+            <th class="info"  style="width: 10%;">사용</th>
+            <th class="info"  style="width:20%;">생성일시</th>
+            <!-- <th class="info"  style="width:10%"></th> -->
+          </tr>
+        </thead>
+        <tbody>
+          {% for tenant in tenants %}
+          <tr data-tenantid="{{ tenant.tenantid }}"
+              data-tenantnm="{{ tenant.tenantnm }}"
+              data-useyn="{{ tenant.useyn }}"
+              data-creator="{{ tenant.creator }}"
+              data-creatornm="{{ tenant.creatornm}}"
+              data-createdts="{{ tenant.createdts }}"  
+              data-billingmodelcd="{{ tenant.billingmodelcd }}"        
+              data-billingusercnt="{{ tenant.billingusercnt|default:'' }}"
+              data-email="{{ tenant.decemail }}"
+              data-telno="{{ tenant.dectelno }}"
+              data-llmlimityn="{% if tenant.llmlimityn %}True{% else %}False{% endif %}"
+              data-iconfilenm="{{ tenant.iconfilenm|default:'' }}"
+              data-iconfileurl="{{ tenant.iconfileurl|default:'' }}"
+              >
+              <td>{{ tenant.tenantnm }}
+              </td>
+              <td class="info">
+                  {% if tenant.billingmodelcd == "Pr" %}<span>Pro</span>
+                  {% elif tenant.billingmodelcd == "Te" %}<span>Teams</span>
+                  {% elif tenant.billingmodelcd == "En" %}<span>Enterprise</span>
+                  {% else %}<span>Free</span>
+                  {% endif %}
+              </td>
+              <td class="info" style="text-align: center;">
+                  {% if tenant.useyn %}<span>✔</span>
+                  {% endif %}
+              </td>
+              <td class="info"><span>{{tenant.createdts}}</span></td>
+              <!-- <td class="info"><button class="btn-tbl btn-primary tenants-select-btn" type="button">선택</button></td> -->
+          </tr>
+          {% empty %}
+          <tr>
+              <td colspan="4" class="text-center text-muted py-4">등록된 기업이 없습니다.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- 오른쪽 -->
+  <div style="flex: 1.5; padding-left: 20px;">
+    <h3>기업 상세</h3>
+    <form id="tenants-detail-form" enctype="multipart/form-data">
+      <input id="tenantid" name="tenantid" type="text" hidden>
+      
+      <div class="form-group-left">
+        <label>기업명:</label>
+        <input id="tenantnm" name="tenantnm" type="text">
+      </div>
+
+      <div class="form-group-left" style = "display: block;">
+        <label>사용:</label>
+        <input id="useyn" name="useyn" type="checkbox" style="margin-left: 50px;">
+      </div>
+
+      <div class="form-group-left">
+        <label>요금제:</label>
+        <label><input type="radio" name="billingmodelcd" value="Fe" id="billingmodelcd-Fr">Free</label>
+        <label><input type="radio" name="billingmodelcd" value="Pr" id="billingmodelcd-Pr">Pro</label>
+        <label><input type="radio" name="billingmodelcd" value="Te" id="billingmodelcd-Te">Teams</label>
+        <label><input type="radio" name="billingmodelcd" value="En" id="billingmodelcd-En">Enterprise</label>
+      </div>
+      
+      <div class = "form-group-left"> 
+        <label>사용자수:</label>
+        <input type="number" name="billingusercnt" id="billingusercnt">
+      </div>
+
+      <div class = "form-group"> 
+        <label>LLM사용제한여부:</label>
+        <input type="checkbox" name="llmlimityn" id="llmlimityn">
+      </div>
+
+      <div class="form-group-left">
+        <label>이메일주소:</label>
+        <input id="email" name="email" type="text">
+      </div>
+
+      <div class="form-group-left">
+        <label>전화번호:</label>
+        <input id="telno" name="telno" type="text">
+      </div>
+
+      <div class="form-group-left">
+        <label>기업 이미지:</label>
+        <!-- 숨겨진 실제 파일 input -->
+        <input type="file" name="iconfile" id="iconfile" style="display:none;">
+        
+        <!-- 현재 템플릿 및 업로드 버튼 -->
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button type="button" id="icon-upload-btn" class="icon-btn">
+            <img src="{% static 'icons/upload.svg' %}" title="업로드" class="icon-img new-icon">
+          </button>
+          <!-- 파일명 표시 + 다운로드 가능 -->
+          <span id="current-iconfile-name" style="cursor:pointer; text-decoration: underline; color: blue;">
+            이미지 파일 없음
+          </span>
+        </div>
+      </div>
+      
+      <div class="form-group-left">
+        <label>생성자:</label>
+        <input id="creator" name="creator" type="text" disabled>
+      </div>
+
+      <div class="form-group-left">
+        <label>생성일시:</label>
+        <input id="createdts" name="createdts" type="text" disabled>
+      </div>
+
+      <div class="button-group">
+        <button id="reset-btn" type="button" class="icon-btn">
+          <div class="icon-wrapper">
+            <img src="{% static 'icons/new.svg' %}" class="icon-img new-icon" title="신규">
+            <span class="icon-label">신규</span>
+          </div>   
+        </button>
+
+        <!-- 저장 버튼 -->
+        <button id="save-btn" type="button" class="icon-btn">
+          <div class="icon-wrapper">
+            <img src="{% static 'icons/save.svg' %}" class="icon-img save-icon" title="저장">
+            <span class="icon-label">저장</span>
+          </div>  
+        </button>
+
+        <!-- 삭제 버튼 -->
+        <button id="delete-btn" type="button" class="icon-btn">
+          <div class="icon-wrapper">
+            <img src="{% static 'icons/delete.svg' %}" class="icon-img del-icon" title="삭제">
+            <span class="icon-label">삭제</span>
+          </div>
+        </button>
+      </div>
+
+      <div id="nav-buttons" class="button-group"  style="display: none;">
+        <button id="btn-tenant-projects" class="btn btn-link">프로젝트 설정 &#x279C;</button>
+        <button id="btn-tenant-users" class="btn btn-link">기업 사용자 설정 &#x279C;</button>           
+      </div>
+
+
+    </form>
+  </div>
+</div>
+
+<!-- 로딩 오버레이 -->
+<div id="formatLoading">
+  <div class="loading-content">
+    <div class="spinner"></div>
+    <div id="loading-text" style="text-align: center;"></div>
+    <div >잠시만 기다려 주세요.</div>
+  </div>
+</div>
+
+<script>
+// =============================
+// 기업 이미지 업로드 처리
+// =============================
+const iconFileInput = document.getElementById("iconfile");
+const iconUploadBtn = document.getElementById("icon-upload-btn");
+const currentIconFileName = document.getElementById("current-iconfile-name");
+
+// 업로드 버튼 클릭 -> 파일 선택
+iconUploadBtn.addEventListener("click", () => {
+  iconFileInput.click();
+});
+
+// 파일 선택 시 파일명 바로 표시
+iconFileInput.addEventListener("change", () => {
+  if (iconFileInput.files.length > 0) {
+    currentIconFileName.textContent = iconFileInput.files[0].name;
+    currentIconFileName.onclick = null; // 새 업로드 파일이므로 다운로드는 아직 없음
+  } else {
+    currentIconFileName.textContent = "이미지 파일 없음";
+    currentIconFileName.onclick = null;
+  }
+});
+
+// === 선택 행 표시용 변수 ===
+let selectedRow = null;
+
+// === 행 클릭 이벤트 ===
+document.querySelectorAll("#tenants-table tbody tr").forEach(row => {
+  row.addEventListener("click", function () {
+    // 이전 선택 해제
+    if (selectedRow) selectedRow.classList.remove("selected-row");
+    selectedRow = this;
+    selectedRow.classList.add("selected-row");
+
+    // 데이터 채우기
+    document.getElementById("tenantid").value = this.dataset.tenantid;
+    document.getElementById("tenantnm").value = this.dataset.tenantnm;
+    document.getElementById("useyn").checked = this.dataset.useyn === "True";
+    document.getElementById("creator").value = this.dataset.creatornm;
+    document.getElementById("createdts").value = this.dataset.createdts;
+    // document.getElementById("billingmodelcd").value = this.dataset.billingmodelcd;
+    document.getElementById("billingusercnt").value = this.dataset.billingusercnt;
+    document.getElementById("llmlimityn").checked = this.dataset.llmlimityn === "True";
+    document.getElementById("email").value = this.dataset.email;
+    document.getElementById("telno").value = this.dataset.telno;
+    
+
+    document.getElementById("billingmodelcd-Fr").checked = this.dataset.billingmodelcd === "Fr";
+    document.getElementById("billingmodelcd-Pr").checked = this.dataset.billingmodelcd === "Pr";
+    document.getElementById("billingmodelcd-Te").checked = this.dataset.billingmodelcd === "Te";
+    document.getElementById("billingmodelcd-En").checked = this.dataset.billingmodelcd === "En";
+
+    showActionButtons(this.dataset.tenantid);
+
+    // ================================
+    // 아이콘 파일 표시 및 다운로드 처리
+    // ================================
+    // 기존 선택 행 클릭 시
+    const iconFileName = this.dataset.iconfilenm;
+    const iconFileUrl = this.dataset.iconfileurl;
+
+    if (iconFileName && iconFileUrl) {
+      currentIconFileName.textContent = iconFileName;
+      currentIconFileName.style.color = "blue";
+      currentIconFileName.style.textDecoration = "underline";
+      currentIconFileName.style.cursor = "pointer";
+
+      currentIconFileName.onclick = async (e) => {
+        e.preventDefault(); // 혹시 기본 동작 방지
+        try {
+          const res = await fetch(iconFileUrl);
+          if (!res.ok) throw new Error("파일을 불러올 수 없습니다.");
+
+          const blob = await res.blob();
+          const url = window.URL.createObjectURL(blob);
+
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = iconFileName; // 화면에 보이는 이름
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+        } catch (err) {
+          alert("다운로드 실패: " + err.message);
+        }
+      };
+    } else {
+      currentIconFileName.textContent = "이미지 파일 없음";
+      currentIconFileName.style.color = "black";
+      currentIconFileName.style.textDecoration = "none";
+      currentIconFileName.style.cursor = "default";
+      currentIconFileName.onclick = null;
+    }
+  });
+});
+
+
+// ================================
+// 화면 처음 로딩 시 기본값
+// ================================
+currentIconFileName.textContent = "이미지 파일 없음";
+currentIconFileName.onclick = null;
+currentIconFileName.style.cursor = "default";
+currentIconFileName.style.textDecoration = "none";
+currentIconFileName.style.color = "black";
+
+
+// 초기화 버튼
+document.getElementById("reset-btn").addEventListener("click", () => {
+  const form = document.getElementById("tenants-detail-form");
+  form.reset();
+
+  document.getElementById("tenantid").value = "";
+
+  // 네비 버튼 숨김
+  const navButtons = document.getElementById("nav-buttons");
+  navButtons.style.display = "none";
+
+  // ================================
+  // 🔥 기업 이미지 영역 초기화 (중요)
+  // ================================
+  iconFileInput.value = ""; // file input 초기화
+
+  currentIconFileName.textContent = "이미지 파일 없음";
+  currentIconFileName.style.color = "black";
+  currentIconFileName.style.textDecoration = "none";
+  currentIconFileName.style.cursor = "default";
+  currentIconFileName.onclick = null;
+
+  // 선택 행 해제
+  if (selectedRow) {
+    selectedRow.classList.remove("selected-row");
+    selectedRow = null;
+  }
+});
+
+
+// 저장 버튼
+document.getElementById("save-btn").addEventListener("click", () => {
+  const form = document.getElementById("tenants-detail-form");
+  const formData = new FormData(form);
+
+  // showLoading('save')
+
+  fetch("{% url 'master_tenants_save' %}", {
+    method: "POST",
+    credentials: "include",   // 👈 여기
+    body: formData,
+    headers: {
+      "X-CSRFToken": getCookie("csrftoken")
+    }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.result === "success") {
+      alert(data.message);
+      // hideLoading('save')
+      location.reload();
+    } else {
+      alert("저장 실패: " + (data.message || "서버 오류"));
+      // hideLoading('save')
+    }
+  })
+  .catch(err => {
+    alert("오류 발생: " + err.message);
+    // hideLoading('save')
+  });
+});
+
+// 삭제 버튼
+document.getElementById("delete-btn").addEventListener("click", () => {
+  const tenantid = document.getElementById("tenantid").value;
+  
+  if (!tenantid) {
+    alert("삭제할 기업을 선택하세요.");
+    return;
+  }
+
+  if (!confirm("정말 삭제하시겠습니까?")) return;
+
+  // showLoading('delete')
+
+  fetch("{% url 'master_tenants_delete' %}", {
+    method: "POST",
+    credentials: "include",   // 👈 여기
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken")
+    },
+    body: JSON.stringify({ tenantid })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.result === "success") {
+      alert(data.message);
+      // hideLoading('delete')
+      location.reload();
+    } else {
+      alert("삭제 실패: " + (data.message || "서버 오류"));
+      // hideLoading('delete')
+    }
+  })
+  .catch(error => {
+    alert("오류 발생: " + error.message)
+    // hideLoading('delete')
+  });
+});
+
+// 하단 항목 표시
+function showActionButtons(chapteruid) {
+  const navButtons = document.getElementById("nav-buttons");
+  navButtons.style.display = "flex";
+
+  const tenantid = document.getElementById("tenantid").value;
+
+  // 프로젝트 설정 버튼
+  const btnProjects = document.getElementById("btn-tenant-projects");
+  btnProjects.onclick = (e) => {
+    e.preventDefault(); // ✅ form submit 방지
+    const url = "{% url 'master_projects' %}?tenantid=" + tenantid;
+    window.location.href = url; // 현재 창 이동
+  };
+
+  // 기업 사용자 설정 버튼
+  const btnUsers = document.getElementById("btn-tenant-users");
+  btnUsers.onclick = (e) => {
+    e.preventDefault(); // ✅ form submit 방지
+    const url = "{% url 'master_tenant_users' %}?tenantid=" + tenantid;
+    window.location.href = url; // 현재 창 이동   
+  };
+}
+
+
+// 쿠키 정보
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+</script>
+
+{% endblock %}

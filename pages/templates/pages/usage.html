@@ -1,0 +1,289 @@
+{% extends 'pages/base.html' %}
+{% load static %}
+{% block title %}서비스 이용{% endblock %}
+
+{% block content %}
+
+<div class="page-title">
+  <div style="display: flex; align-items: center;">
+    <div class="gradient-bar"></div>
+    <div>서비스 이용</div>
+  </div>
+</div>
+
+<style>
+.usage-container {
+    display: flex;
+    gap: 20px;
+    max-width: 950px;
+    margin: 0 100px; /* 위/아래 0, 좌우 자동 */
+    padding: 0 20px; /* 좌우 여백 20px */
+}
+
+/* 카드 행 */
+.card-row {
+    display: flex;
+    gap: 30px;
+}
+
+/* 카드 컬럼 */
+.card-column {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+/* -------------------------- */
+/* 카드 스타일 */
+/* -------------------------- */
+.usage-card {
+    background: #f7f9fc;
+    border: 1px solid #d8dfeb;
+    border-radius: 12px;
+    padding: 30px 20px;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    transition: 0.25s;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 350px;
+    width: 250px;
+}
+
+.usage-card:hover {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transform: translateY(-3px);
+}
+
+.usage-card-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #091747;
+    margin-bottom: 10px;
+}
+
+.usage-card-subtitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: #091747;
+    margin-bottom: 30px;
+}
+
+.usage-card-price {
+    font-size: 16px;
+    font-weight: 700;
+    color: #091747;
+    margin-bottom: 10px;
+}
+
+.usage-card-contents {
+    /* 2025-12-04 Min 추가 */
+    height: 150px;
+}
+
+.usage-card-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 10px;
+    /* 2025-12-04 Min 추가 */
+    height: 82px;
+    justify-content: flex-end;
+}
+
+.usage-card-buttons a {
+    display: block;
+    background-color: var(--primary-600);
+    color: var(--border-color);
+    padding: 8px 12px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.regist-tenant {
+    /* 2025-12-04 Min 추가 */
+    background-color: var(--info-color) !important;  /* Tenant 버튼 색 변경 */
+}
+
+
+.usage-card-description {
+    font-size: 14px;
+    color: #091747;
+    line-height: 1.6;
+    margin-top: 5px;
+    /* 2025-12-04 Min 추가 */
+    height: 67px;
+}
+
+/* 카드 아래 외부 설명글 */
+.card-extra-description {
+    font-size: 14px;
+    color: #091747;
+    line-height: 1.5;
+    text-align: left;
+    padding: 15px;
+    border: 1px solid #d8dfeb;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    margin: 20px 0 10px;
+    height: 80px;
+}
+</style>
+
+<div class="usage-container card-row">
+
+    <!-- 카드1 컬럼 -->
+    <div class="card-column" style="flex: 1;">
+        <div class="usage-card">
+            <div class="usage-card-contents">
+                <div class="usage-card-title">Free</div>
+                <div class="usage-card-subtitle">Try GenQuery</div>
+                <div class="usage-card-price">Free</div>
+            </div>
+            <div class="usage-card-buttons">
+                <a onclick="show_signup_base_modal('free')">회원가입</a>
+            </div>
+            <div class="usage-card-description">
+                <div>기본서버</div>
+                <div>DB 연동 불가</div>
+                <div>기간 지나면 자료 삭제</div>
+            </div>
+        </div>
+        <div class="card-extra-description">
+            <div>- 등록 자료는 30일 이내 보관 가능</div>
+            <div>- 등록 문서는 3개 이내로 제한</div>
+            <div>- 문서당 항목은 30개 이내로 제한</div>
+        </div>
+        <div class="card-extra-description">
+            <div>- LLM 사용 </div>
+            <div>&nbsp;&nbsp;일 프롬프트 수행 30회 이내 가능</div>
+        </div>
+    </div>
+
+    <!-- 카드2~4 컬럼 -->
+    <div class="card-column" style="flex: 3;">
+        <div class="card-row" style="gap: 30px;">
+            <!-- Pro -->
+            <div class="usage-card">
+                <div class="usage-card-contents">
+                    <div class="usage-card-title">Pro</div>
+                    <div class="usage-card-subtitle">Individual</div>
+                    <div class="usage-card-price">월 2만원 /인</div>
+                </div>
+                <div class="usage-card-buttons">
+                    <a onclick="show_signup_base_modal('pro')">회원가입</a>
+                </div>
+                <div class="usage-card-description">
+                    <div>기본서버</div>
+                    <div>DB 연동 불가</div>
+                </div>
+            </div>
+
+            <!-- Teams -->
+            <div class="usage-card">
+                <div class="usage-card-contents">
+                    <div class="usage-card-title">Teams</div>
+                    <div class="usage-card-subtitle">Multi-User</div>
+                    <div class="usage-card-price">
+                        <div>20명 이하</div>
+                        <div>월 5만원 /인</div>
+                    </div>
+                </div>
+                <div class="usage-card-buttons">
+                    <a class="regist-tenant" onclick="tenant_request('teams')">기업 등록</a>
+                    <a onclick="show_signup_base_modal('teams')">회원가입</a>
+                </div>
+                <div class="usage-card-description">
+                    <div>기본서버</div>
+                    <div>DB 연동 가능</div>
+                </div>
+            </div>
+
+            <!-- Enterprise -->
+            <div class="usage-card">
+                <div class="usage-card-contents">
+                    <div class="usage-card-title">Enterprise</div>
+                    <div class="usage-card-subtitle">Multi-User Enterprise</div>
+                    <div class="usage-card-price">
+                        <div>20명 이상</div>
+                        <div>월 10만원 /인</div>
+                    </div>
+                </div>
+                <div class="usage-card-buttons">
+                    <a class="regist-tenant" onclick="tenant_request('tenant')">기업 등록</a>
+                    <a onclick="show_signup_base_modal('enterprise')">회원가입</a>
+                </div>
+                <div class="usage-card-description">
+                    <div>별도 서버 지정</div>
+                    <div>DB 연동 가능</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 공통 설명 -->
+        <div class="card-extra-description">
+            <div>- 등록 자료는 보관 기간 제한 없음</div>
+            <div>- 등록 문서 개수 제한 없음</div>
+            <div>- 문서당 항목 개수 제한 없음</div>
+            <div>- AI 프롬프트 수행 제한 없음</div>
+        </div>
+        <div class="card-extra-description">
+            <div>- LLM 사용 용량  </div>
+            <div>&nbsp;&nbsp;인당 월 100만 입력 토큰</div>
+
+            <div>- LLM 추가 사용 비용  </div>
+            <div>&nbsp;&nbsp;100만 입력 토큰 당 5,000원 </div>
+
+        </div>
+
+    </div>
+
+    <!-- 카드5 컬럼 -->
+    <div class="card-column" style="flex: 1;">
+        <div class="usage-card">
+            <div class="usage-card-contents">
+                <div class="usage-card-title">Customizing</div>
+                <div class="usage-card-subtitle">Add Function</div>
+                <div class="usage-card-price">기능 추가에 따른</div>
+            </div>
+            <div class="usage-card-buttons">
+                <a href="{% url 'register_qna' %}">문의</a>
+            </div>
+            <div class="usage-card-description">
+            </div>
+        </div>
+    </div>
+
+</div>
+<!-- 화면 하단 중앙 버튼 영역 -->
+<div style="
+    position: fixed;
+    /* bottom: 5%; */
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 1000;
+    font-size: 14px;
+    color: #091747;
+    font-weight: 600;
+    margin-top: 5px;
+">
+    <span>문의:</span>
+    <a href="{% url 'register_qna' %}"  style="background-color: var(--info-color); color: var(--border-color); padding: 6px 12px; border-radius: 4px; text-decoration: none; cursor: pointer;">Mail</a>
+    <!-- Q&A 버튼 -->
+    <a href="{% url 'qna_view' %}" style="background-color: var(--info-color); color: var(--border-color); padding: 6px 12px; border-radius: 4px; text-decoration: none; cursor: pointer;">Q&A</a>
+</div>
+
+<script>
+    function tenant_request (type){
+        window.location.href = `/master/tenant_request/?type=${type}`;
+    }
+
+</script>
+
+{% endblock %}

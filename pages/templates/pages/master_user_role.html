@@ -1,0 +1,75 @@
+{% extends 'pages/base.html' %}
+{% load static %}
+{% block title %}사용자 권한 관리{% endblock %}
+{% block content %}
+
+<div class="page-title">
+  <div style="display: flex; align-items: center;">
+    <div class="gradient-bar"></div>
+    <div>사용자 권한 관리</div>
+  </div>
+
+</div>
+
+<div style="height: calc(100vh - 330px); overflow-y: auto;">
+    <table style="width: 50%;">
+        <thead>
+            <tr>
+                <th style="width: 50%;">이메일</th>
+                <th style="width: 30%;">역할</th>
+                <th style="width: 20%;"></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.email }}</td>
+                <td style="text-align: center;">
+                    <select name="roleid" style="width: 90%;" data-userid="{{ user.useruid }}">
+                        <option value="1" {% if user.roleid == 1 %}selected{% endif %}>일반유저</option>
+                        <option value="5" {% if user.roleid == 5 %}selected{% endif %}>Power User</option>
+                        <option value="7" {% if user.roleid == 7 %}selected{% endif %}>관리자</option>
+                    </select>
+                </td>
+                <td style="text-align: center;">
+                    <!-- <button class="update-role-btn btn-tbl btn-primary" data-userid="{{ user.useruid }}">변경</button> -->
+                    <button type="button" class="update-role-btn icon-btn" data-userid="{{ user.useruid }}">
+                        <img src="{% static 'icons/save.svg' %}" title="저장" class="icon-img-tbl save-icon">
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+document.querySelectorAll('.update-role-btn').forEach(button => {
+    button.addEventListener('click', async () => {
+        const userId = button.getAttribute('data-userid');
+        const select = document.querySelector(`select[data-userid="${userId}"]`);
+        const newRoleId = select.value;
+
+        const response = await fetch('/master/user_role_save/', {
+            method: 'POST',
+            credentials: "include",
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                useruid: userId,
+                roleid: parseInt(newRoleId)
+            })
+        });
+
+        if (response.ok) {
+            alert("권한이 변경되었습니다.");
+            location.reload();
+        } else {
+            alert("권한 변경 실패");
+        }
+    });
+});
+</script>
+{% endblock %}

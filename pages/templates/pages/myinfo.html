@@ -1,0 +1,450 @@
+{% extends 'pages/base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}홈{% endblock %}
+
+{% block content %}
+
+<style>
+.myinfo-label{ width: 200px; }
+.tab-menu {
+  display: flex;
+  gap: 20px;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 20px;
+}
+.tab-menu button {
+  background: none;
+  border: none;
+  padding: 10px 5px;
+  font-size: 16px;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+}
+.tab-menu button.active {
+  border-bottom: 3px solid #163E64;
+  font-weight: bold;
+}
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.edit-input {
+  padding: 4px 8px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 200px;
+}
+
+.save-btn {
+  background-color: #163E64;
+  color: #ffffff;
+  border: none;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: bold;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 10px;
+}
+.save-btn:hover {
+  background-color: #0f2c4a;
+}
+</style>
+
+<div class="page-title">
+  <div style="display: flex; align-items: center;">
+    <div class="gradient-bar"></div>
+    <div>My Page</div>
+  </div>
+</div>
+
+
+{# --- 탭 메뉴: 유료 사용자만 --- #}
+{% if payment == "Y" %}
+<div class="tab-menu">
+  <button id="btn-my-tab" class="tab-btn active" onclick="openTab('my-tab')">My</button>
+  <button id="btn-payment-tab" class="tab-btn" onclick="openTab('payment-tab')">결제</button> 
+</div>
+{% endif %}
+
+{# --- My 탭 / 일반 화면 내용 --- #}
+<div id="my-tab" class="tab-content {% if payment == "Y" %}active{% else %}active{% endif %}">
+    <h3>개인 정보</h3>
+    <div style="margin-left: 50px; margin-bottom: 30px;">
+        <div class = "form-group-left"> 
+            <label class="myinfo-label">Email: </label>
+            <span>{{ user_info.email }}</span>
+        </div>
+<!-- 
+        <div class = "form-group-left"> 
+            <label class="myinfo-label">사용자명: </label>
+            <span>{{ user_info.usernm }}</span>
+        </div> -->
+
+        <div class="form-group-left" style="display: flex; align-items: center; gap: 10px;">
+            <label class="myinfo-label">사용자명: </label>
+            <form method="POST" action="{% url 'myinfo_update_username' %}">
+                {% csrf_token %}
+                <input type="text" name="usernm" value="{{ user_info.usernm }}" 
+                    class="edit-input" style="width: 160px; flex: none;">
+                <button type="submit" class="save-btn">저장</button>
+            </form>
+        </div>
+
+        <div class="form-group-left" style="display: flex; align-items: center; gap: 10px;">
+            <label class="myinfo-label">요금제: </label>
+            <span class="fixed-width-text" style="width: 150px; display: inline-block;">
+                {% if user_info.billingmodelcd == "Fr" %}Free{% elif user_info.billingmodelcd == "Pr" %}Pro{% elif user_info.billingmodelcd == "Te" %}Teams{% elif user_info.billingmodelcd == "En" %}Enterprise{% endif %}
+            </span>
+            {% if user_info.billingmodelcd == "Fr" %}
+            <button class="save-btn" onclick="showPreparingMessage(event)">업그레이드</button>
+            {% endif %}
+        </div>
+
+   
+    </div>
+
+    <h3>약관 동의 여부</h3>
+    <div style="margin-left: 50px; margin-bottom: 30px;">
+        <div class = "form-group-left"> 
+            <label class="myinfo-label">이용약관동의 (필수): </label>
+            <span>{{ user_info.termsofuseyn|yesno:'√,-' }}</span>
+        </div>
+
+        <div class = "form-group-left"> 
+            <label class="myinfo-label">개인정보수집동의 (필수): </label>
+            <span>{{ user_info.userinfoyn|yesno:'√,-' }}</span>
+        </div>
+
+        <div class = "form-group-left"> 
+            <label class="myinfo-label">마케팅동의 (선택): </label>
+            <span>{{ user_info.marketingyn|yesno:'√,-' }}</span>
+        </div>  
+    </div>
+
+    <h3>소속 기업</h3>
+    <div style="margin-left: 50px; margin-bottom: 10px; display: flex;">
+        <div>
+            <h4>현재</h4>
+            <div style="margin-left: 50px; margin-bottom: 30px;">
+                <div class = "form-group-left"> 
+                    <label class="myinfo-label">기업:</label>
+                    <span>{{ tenants.tenantnm }}</span>
+                </div>
+
+                <div class = "form-group-left"> 
+                    <label class="myinfo-label">권한:</label>
+                    <span>{% if user_info.roleid == 1 %}일반유저{% elif user_info.roleid == 7 %}관리자{% endif %}</span>
+                </div>
+
+                <div class = "form-group-left"> 
+                    <label class="myinfo-label">등록일:</label>
+                    <span>{{ tenants.createdts|date:"Y-m-d H:i:s" }}</span>
+                </div>
+
+                <h4>참여 프로젝트</h4>
+                    <table style = "width: 400px; margin-left: 20px;">
+                        <thead>
+                            <tr>
+                                <th>프로젝트명</th>
+                                <th>권한</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pu in projectusers %}
+                            <tr>
+                                <td>{{ pu.projectnm }}</td>
+                                <td style="text-align: center;">{% if pu.rolecd == "M" %}Manager{% elif pu.rolecd == "U" %}User{% endif %}</td> 
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+            </div>
+        </div>
+
+        <div style="margin-left: 200px;">
+            <h4>이력</h4>
+            <div style="margin-left: 20px;">
+                <div class = "form-group-left"> 
+                    <label class="myinfo-label">{% if tenantnewusers %}기업 변경 요청{% else %}변경 사항 없음{% endif %}</label>
+                </div>
+
+                {% if tenantnewusers %}
+                    <div class = "form-group-left"> 
+                        <label class="myinfo-label">기업:</label>
+                        <span>{{ newtenants.tenantnm }}</span>
+                    </div>
+
+                    <div class = "form-group-left"> 
+                        <label class="myinfo-label">진행상태:</label>
+                        <span>{% if tenantnewusers.approvecd == "A" %}대기중{% elif tenantnewusers.approvecd == "D" %}승인 거절{% endif %}</span>
+                    </div>
+
+                    <div class = "form-group-left"> 
+                        <label class="myinfo-label">비고:</label>
+                        <span>{% if tenantnewusers.approvecd == "A" %}-{% elif tenantnewusers.approvecd == "D" %}{{ tenantnewusers.approvenote }}{% endif %}</span>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{# --- 결제 탭: 유료 사용자만 --- #}
+{% if payment == "Y" %}
+<div id="payment-tab" class="tab-content">
+  <!-- <h3>결제</h3> -->
+    <div class="form-group-left" style="display: flex; align-items: center; gap: 10px;">
+        <label class="myinfo-label">요금제: </label>
+        <span class="fixed-width-text" style="width: 150px; display: inline-block;">
+            {% if user_info.billingmodelcd == "Pr" %}Pro{% elif user_info.billingmodelcd == "Te" %}Teams{% elif user_info.billingmodelcd == "En" %}Enterprise{% endif %}
+        </span>
+    </div>
+
+    {% if user_info.billingmodelcd != "Pr" %}
+    <div class="form-group-left" style="display: flex; align-items: center; gap: 10px;">
+        <label class="myinfo-label">기업명: </label>
+        <span class="fixed-width-text" style="width: 150px; display: inline-block;">
+            {{ tenants.tenantnm }}
+        </span>
+    </div>
+
+    <div class="form-group-left" style="display: flex; align-items: center; gap: 10px;">
+        <label class="myinfo-label">과금 사용자수: </label>
+        <span class="fixed-width-text" style="width: 150px; display: inline-block;">
+            {% if tenants.defaultyn|default:False %}
+            -
+            {% else %}
+            {{ tenants.billingusercnt }}명
+            {% endif %}
+        </span>
+    </div>
+    {% endif %}
+
+    <div class="form-group-left" style="display: flex; align-items: center; gap: 10px;">
+        <label class="myinfo-label">과금최초시작일: </label>
+        <span class="fixed-width-text" style="width: 150px; display: inline-block;">
+            {{ billmasters.billingfirstdt }}
+        </span>
+    </div>
+
+    {% if user_info.billingmodelcd != "Pr" %}
+    <form method="POST"
+        action="{% url 'myinfo_update_contact' %}"
+        enctype="multipart/form-data">
+
+    {% csrf_token %}
+    <input type="hidden" name="tenantid" value="{{ tenants.tenantid }}">
+
+    <div class="form-group-left" style="display:flex; align-items:center; gap:10px;">
+        <label class="myinfo-label">담당자 이메일 / 전화번호: </label>
+
+        {% if tenants.defaultyn|default:False %}
+        <span>-</span>
+        {% else %}
+        <input type="email"
+            name="decemail"
+            value="{{ billmasters.decemail }}"
+            class="edit-input"
+            style="width: 150px; flex: none;"
+            placeholder="이메일">
+
+        <input type="text"
+            name="dectelno"
+            value="{{ billmasters.dectelno }}"
+            class="edit-input"
+            style="width: 150px; flex: none;"
+            placeholder="전화번호">
+
+        {% endif %}
+    </div>
+    {% if not tenants.defaultyn|default:False %}
+    <div class="form-group-left">
+        <label>기업 이미지:</label>
+
+        <input type="file" name="iconfile" id="iconfile" style="display:none;">
+
+        <div style="display:flex; align-items:center; gap:10px;">
+        <button type="button" id="icon-upload-btn" class="icon-btn">
+            <img src="{% static 'icons/upload.svg' %}"
+                title="업로드"
+                class="icon-img new-icon">
+        </button>
+
+        <span id="current-iconfile-name">이미지 파일 없음</span>
+        </div>
+    </div>
+    
+    <!-- 🔥 반드시 이 form 안 -->
+    <button type="submit" class="save-btn">저장</button>
+    {% endif %}
+    </form>
+    {% endif %}
+
+
+    <div style="margin-top: 20px;">
+        <h4>과금정보</h4>
+        <div style="margin-left: 50px;">
+            <div class="form-group-left" style="display: flex; align-items: center; gap: 10px;">
+                <label class="myinfo-label">이용기간: </label>
+            {% if tenants.defaultyn|default:False %}
+            -
+            {% else %}
+            {{ billdts.billstartdt }} ~ {{ billdts.billenddt }}
+            {% endif %}
+            </div>
+
+            <div class="form-group-left" style="display: flex; align-items: center; gap: 10px;">
+                <label class="myinfo-label">이용가능 토큰: </label>
+            {% if tenants.defaultyn|default:False %}
+            -
+            {% elif user_info.billingmodelcd != "Pr"  %}
+            {{ billdts.inputtokencapa|intcomma }} ( {{ configs.inputtokencapa|intcomma }} * {{ tenants.billingusercnt }})
+            {% else %}
+            {{ billdts.inputtokencapa|intcomma }}
+            {% endif %}
+            </div>
+
+            <div class="form-group-left" style="display: flex; align-items: center; gap: 10px;">
+                <label class="myinfo-label">실사용 토큰: </label>
+            {% if tenants.defaultyn|default:False %}
+            -
+            {% else %}
+            {{ billdts.inputtoken|intcomma }}
+            {% endif %}
+            </div>
+
+            <div class="form-group-left" style="display: flex; align-items: center; gap: 10px;">
+                <label class="myinfo-label">추가 토큰: </label>
+            {% if tenants.defaultyn|default:False %}
+            -
+            {% else %}
+            {{ billdts.overtokenm|intcomma }}
+            {% endif %}
+            </div>
+
+            <div class="form-group-left" style="display: flex; align-items: center; gap: 10px;">
+                <label class="myinfo-label">서비스 금액: </label>
+            {% if tenants.defaultyn|default:False %}
+            -
+            {% else %}
+            {{ billdts.serviceamt|intcomma }}
+            {% endif %}
+            </div>
+
+            <div class="form-group-left" style="display: flex; align-items: center; gap: 10px;">
+                <label class="myinfo-label">추가 금액: </label>
+            {% if tenants.defaultyn|default:False %}
+            -
+            {% else %}
+            {{ billdts.addamt|intcomma }}
+            {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if messages %}
+<div id="message-container"  style="margin-left:50px; margin-bottom:20px;">
+  {% for message in messages %}
+    <div style="padding:10px; border-radius:4px; 
+                {% if message.tags == 'success' %}background-color:#d4edda; color:#155724;
+                {% elif message.tags == 'error' %}background-color:#f8d7da; color:#721c24;{% endif %}">
+      {{ message }}
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+
+<script>
+const iconFileInput = document.getElementById("iconfile");
+const iconUploadBtn = document.getElementById("icon-upload-btn");
+const currentIconFileName = document.getElementById("current-iconfile-name");
+
+// 업로드 버튼 클릭 -> 파일 선택
+iconUploadBtn.addEventListener("click", () => {
+  iconFileInput.click();
+});
+
+// 파일 선택 시 파일명 바로 표시
+iconFileInput.addEventListener("change", () => {
+  if (iconFileInput.files.length > 0) {
+    currentIconFileName.textContent = iconFileInput.files[0].name;
+    currentIconFileName.style.color = "black";
+    currentIconFileName.style.textDecoration = "none";
+    currentIconFileName.onclick = null; // 새 업로드 파일이므로 다운로드는 아직 없음
+  } else {
+    currentIconFileName.textContent = "이미지 파일 없음";
+    currentIconFileName.style.color = "black";
+    currentIconFileName.style.textDecoration = "none";
+    currentIconFileName.onclick = null;
+  }
+});
+
+// 페이지 로딩 시 기존 이미지 표시
+document.addEventListener("DOMContentLoaded", () => {
+  const iconFileName = "{{ tenants.iconfilenm|default:'' }}";
+  const iconFileUrl = "{{ tenants.iconfileurl|default:'' }}";
+
+  if (iconFileName && iconFileUrl) {
+    currentIconFileName.textContent = iconFileName;
+    currentIconFileName.style.color = "blue";
+    currentIconFileName.style.textDecoration = "underline";
+    currentIconFileName.style.cursor = "pointer";
+
+    currentIconFileName.onclick = async (e) => {
+      e.preventDefault();
+      try {
+        const res = await fetch(iconFileUrl);
+        if (!res.ok) throw new Error("파일을 불러올 수 없습니다.");
+
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = iconFileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      } catch (err) {
+        alert("다운로드 실패: " + err.message);
+      }
+    };
+  } else {
+    currentIconFileName.textContent = "이미지 파일 없음";
+    currentIconFileName.style.color = "black";
+    currentIconFileName.style.textDecoration = "none";
+    currentIconFileName.style.cursor = "default";
+  }
+});
+
+
+  function openTab(tabId) {
+    document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+
+    document.getElementById(tabId).classList.add("active");
+    document.getElementById("btn-" + tabId).classList.add("active");
+  }
+
+  // 10초 후 메시지 제거
+  setTimeout(function() {
+    const container = document.getElementById('message-container');
+    if (container) {
+      container.style.transition = "opacity 0.5s ease";
+      container.style.opacity = 0;
+      setTimeout(() => container.remove(), 500); // fade out 후 제거
+    }
+  }, 3000); // 10000ms = 10초
+
+function showPreparingMessage(event) {
+    event.preventDefault(); // 링크 이동 막기
+    alert("현재 기능을 준비 중입니다.\n조금만 기다려 주세요");
+}
+</script>
+{% endblock %}

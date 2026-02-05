@@ -1,0 +1,391 @@
+{% extends 'pages/base.html' %}
+{% load static %}
+{% block title %}홈{% endblock %}
+
+{% block content %}
+
+<div>
+    <div style="text-align: center; padding: 20px;">
+        <p style="font-size: 1rem; margin: 0; opacity: 0.8;">
+            효율적인 문서 자동 작성
+        </p>
+        <p style="font-size: 5rem; font-weight: 300; margin: 0;">
+            GenQuery
+        </p>
+    </div>
+
+    <div style="display: flex; gap: 0px; margin-top: 40px;">
+
+        <!-- 왼쪽 영역 -->
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 20px;">
+            <div style="
+                margin-left: auto;
+                margin-right: 10%;
+                background-color: rgb(230, 230, 230);
+                padding: 15px 100px 15px 30px;
+                border-radius: 8px;
+            ">
+                <p style="text-align: left; color: black; font-weight: normal; margin: 0;">
+                    GenQuery는 DB와 Excel로부터 <br>
+                    AI 기능을 이용하여 문서를 작성합니다.
+                </p>
+            </div>
+        </div>
+
+        <!-- 오른쪽 영역 -->
+        <div style="flex: 1; display: flex; flex-direction: column;">
+            <div style="
+                margin-right: auto;
+                margin-left: 10%;
+                background-color: rgb(230, 230, 230);
+                padding: 15px 100px 15px 30px; 
+                border-radius: 8px;
+            ">
+                <p style="text-align: left; color: black; font-weight: normal; margin: 0;">
+                    작성에서 검토 및 확정 중심으로 전환,<br>
+                    One-Click으로 문서를 자동 작성합니다.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div style="max-width: 700px; margin: 60px auto; display: flex; flex-direction: column; gap: 20px;">
+
+        <!-- What -->
+        <div style="display: flex; align-items: center; gap: 20px; padding: 20px 25px; border-radius: 15px; 
+                    background: linear-gradient(90deg, #55C7D9, #91E3F3); box-shadow: 0 8px 20px rgba(0,0,0,0.2); color: #fff;">
+            <!-- Lucide FileText Icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+            <strong style="font-size: 1.2rem;">What</strong>
+            정기적으로 작성해야 하는 문서
+        </div>
+
+        <!-- Why -->
+        <div style="display: flex; align-items: center; gap: 20px; padding: 20px 25px; border-radius: 15px; 
+                    background: linear-gradient(90deg, #FF9A8B, #FF6A88); box-shadow: 0 8px 20px rgba(0,0,0,0.2); color: #fff;">
+            <!-- Lucide AlertCircle Icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12" y2="16"/></svg>
+            <strong style="font-size: 1.2rem;">Why</strong>
+            반복적인 자료 조회, 비효율적인 작성
+        </div>
+
+        <!-- How -->
+        <div style="display: flex; align-items: center; gap: 20px; padding: 20px 25px; border-radius: 15px; 
+                    background: linear-gradient(90deg, #FDCB6E, #FFB347); box-shadow: 0 8px 20px rgba(0,0,0,0.2); color: #fff;">
+            <!-- Lucide Settings Icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <strong style="font-size: 1.2rem;">How</strong>
+            문서에 사용될 데이터와 서식 설정을 통해
+        </div>
+
+    </div>
+
+    <style>
+    #slider-dots {
+        position: absolute;
+        bottom: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 10px;
+        z-index: 10;
+    }
+
+    .slider-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #bbb;
+        cursor: pointer;
+    }
+
+    .slider-dot.active {
+        background: #55C7D9;
+        transform: scale(1.3);
+    }
+    </style>
+
+    <div id="feature-slider" style="max-width: 800px; margin: 50px auto; border: 1px solid #ddd; border-radius: 15px; overflow: hidden; position: relative; padding-bottom: 40px;">
+        <!-- 각 슬라이드 -->
+        <div class="slide" style="display: flex; padding: 20px; gap: 20px; align-items: center;">
+            <div style="flex: 3;">
+                <h2>데이터 설정</h2>
+                <p>ODBC를 지원하는 모든 데이터베이스와 Excel 자료에 대한 연결 정보, 쿼리, 데이터 항목을 정의합니다.</p>
+            </div>
+            <div style="flex: 7; text-align: right;">
+                <img src="{% static 'images/Home01.png' %}" style="max-width: 100%; border-radius: 10px;">
+            </div>
+        </div>
+
+        <div class="slide" style="display: flex; padding: 20px; gap: 20px; align-items: center; display: none;">
+            <div style="flex: 3;">
+                <h2>문서 설정</h2>
+                <p>구성할 목차, 템플릿, 템플릿 내 항목을 정의합니다.<br>
+                개체에 해당하는 문장, 테이블, 차트는 AI와 UI로 정의합니다.</p>
+            </div>
+            <div style="flex: 7; text-align: right;">
+                <img src="{% static 'images/Home02.png' %}" style="max-width: 100%; border-radius: 10px;">
+            </div>
+        </div>
+
+        <div class="slide" style="display: flex; padding: 20px; gap: 20px; align-items: center; display: none;">
+            <div style="flex: 3;">
+                <h2>문서 작성</h2>
+                <p>문서의 노출된 매개변수에 값을 기입하여 해당 매개변수 기준으로 문서를 작성합니다.</p>
+            </div>
+            <div style="flex: 7; text-align: right;">
+                <img src="{% static 'images/Home03.png' %}" style="max-width: 100%; border-radius: 10px;">
+            </div>
+        </div>
+
+        <!-- 🔵 슬라이드 점 (★ 반드시 여기 있어야 함) -->
+        <div id="slider-dots"></div>
+    </div>
+
+        <!-- 가운데로 모을 내부 컨테이너 -->
+        <div style="
+            max-width: 900px; 
+            margin: 0 auto; 
+            display: flex; 
+            gap: 0;
+            padding-bottom: 30px;
+        ">
+
+            <!-- 왼쪽 영역 -->
+            <div style="flex: 1; text-align: center; padding: 0 20px;">
+                <p style="font-size: 24px; margin: 0 0 10px 0;">
+                    체험하기
+                </p>
+                <p style="font-size: 16px; margin: 0 0 20px 0; opacity: 0.8;">
+                    문장, 표, 차트를<br>AI 프롬프트로<br>수정해보기 
+                </p>
+                <div style="display: flex; justify-content: center; gap: 10px;">
+                    <a onclick="showPreparingMessage(event)" style="background-color: var(--info-color); color: var(--border-color); padding: 8px 16px; border-radius: 4px; text-decoration: none; cursor: pointer;">
+                        체험 시작
+                    </a>
+                </div>
+            </div>
+
+            <div style="flex: 1; text-align: center; padding: 0 20px;">
+                <p style="font-size: 24px; margin: 0 0 10px 0;">
+                    따라하기
+                </p>
+                <p style="font-size: 16px; margin: 0 0 20px 0; opacity: 0.8;">
+                    제공 데이터를 활용해<br>따라하기 문서<br>실습해보기
+                </p>
+                <div style="display: flex; justify-content: center; gap: 10px;">
+                    <a onclick="showPreparingMessage(event)" style="background-color: var(--info-color); color: var(--border-color); padding: 8px 16px; border-radius: 4px; text-decoration: none; cursor: pointer;">
+                        따라하기
+                    </a>
+                </div>
+            </div>
+
+            <!-- 오른쪽 영역 -->
+            <div style="flex: 1; text-align: center; padding: 0 20px;">
+                <p style="font-size: 24px; margin: 0 0 10px 0;">
+                    GenQuery <span style="color: #FFC107; font-weight: 100;">AI</span>
+                </p>
+                <p style="font-size: 16px; margin: 0 0 20px 0; line-height: 1.5; opacity: 0.8;">
+                    사용 및 적용<br>
+                    도입문의<br>
+                    커스터마이징 문의
+                </p>
+                <div style="display: flex; justify-content: center; gap: 10px;">
+                    <a href="{% url 'register_qna' %}" style="background-color: var(--info-color); color: var(--border-color); padding: 8px 16px; border-radius: 4px; text-decoration: none; cursor: pointer;">
+                        문의
+                    </a>
+                    <a onclick="showPreparingMessage(event)" style="background-color: var(--info-color); color: var(--border-color); padding: 8px 16px; border-radius: 4px; text-decoration: none; cursor: pointer;">
+                        Chat
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+  
+    <!-- 검은 배경 전체 -->
+    <div style="background-color: #000; padding: 20px 0;">
+
+        <!-- 가운데 정렬 컨테이너 -->
+        <div style="
+            max-width: 1200px; 
+            margin: 0 auto; 
+            display: flex; 
+            gap: 0;
+            padding: 0 20px;
+        ">
+
+            <style>
+                .footer-col {
+                    flex: 1;
+                    padding: 0 20px;
+                    font-size: 14px;
+                }
+
+                /* 영역1 - 메뉴 (흰색) */
+                .footer-menu a {
+                    color: #fff;
+                    text-decoration: none;
+                    display: block;
+                    margin: 4px 0;
+                    padding-left: 15px;
+                }
+                .footer-title-white {
+                    color: #fff;
+                    font-weight: 600;
+                    margin-bottom: 8px;
+                }
+
+                /* 영역2~5 - #999999 */
+                .footer-title-gray {
+                    color: #999999;
+                    font-weight: 600;
+                    margin-bottom: 8px;
+                }
+                .footer-list {
+                    list-style: none;
+                    padding-left: 15px;
+                    margin: 6px 0 0 0;
+                    color: #999999;
+                }
+                .footer-list li {
+                    margin: 3px 0;
+                }
+            </style>
+
+            <!-- 영역1: 상단 메뉴 (흰색) -->
+            <div class="footer-col">
+                <div class="footer-title-white">MENU</div>
+                <div class="footer-menu">
+                    <a href="/service_view/">서비스 소개</a>
+                    <a href="/about_view/">기능 소개</a>
+                    <a href="/usage/">서비스 이용</a>
+                    <a href="{% url 'register_qna' %}">문의</a>
+                    <a onclick="showPreparingMessage(event)" >Chat</a>
+                </div>
+            </div>
+
+            <!-- 영역2: 문서 관리 (연회색) -->
+            <div class="footer-col">
+                <div class="footer-title-gray">문서</div>
+            </div>
+
+            <!-- 영역3: 기준정보 (연회색) -->
+            <div class="footer-col">
+                <div class="footer-title-gray">기준 정보</div>
+                <ul class="footer-list">
+                    <li>문서 관리</li>
+                    <li>챕터 관리</li>
+                    <li>항목 관리</li>
+                    <li>Excel 데이터</li>
+                    <li>AI 데이터</li>
+                </ul>
+            </div>
+
+            <!-- 영역4: 프로젝트 관리 (연회색) -->
+            <div class="footer-col">
+                <div class="footer-title-gray">프로젝트 관리</div>
+                <ul class="footer-list">
+                    <li>기업 사용자 관리</li>
+                    <li>기업 LLM 관리</li>
+                    <li>프로젝트 관리</li>
+                    <li>프로젝트 사용자 관리</li>
+                </ul>
+            </div>
+
+            <!-- 영역5: DB 정보 (연회색) -->
+            <div class="footer-col">
+                <div class="footer-title-gray">DB 정보</div>
+                <ul class="footer-list">
+                    <li>DB 연결정보</li>
+                    <li>DB 데이터</li>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 슬라이드 점 -->
+    <div id="slider-dots" style="
+        position: absolute;
+        bottom: 15px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 10px;
+    ">
+    </div>
+
+</div>
+
+<script>
+    const slides = document.querySelectorAll('#feature-slider .slide');
+    const dotsContainer = document.getElementById('slider-dots');
+    let current = 0;
+    let timer;
+
+    // 점 생성
+    slides.forEach((_, index) => {
+        const dot = document.createElement('div');
+        dot.classList.add('slider-dot');
+        dot.addEventListener('click', () => {
+            current = index;
+            showSlide(current);
+            resetTimer();
+        });
+        dotsContainer.appendChild(dot);
+    });
+
+    const dots = document.querySelectorAll('.slider-dot');
+
+    function showSlide(index) {
+        slides.forEach((slide, i) => {
+            slide.style.display = (i === index) ? 'flex' : 'none';
+        });
+
+        dots.forEach((dot, i) => {
+            dot.classList.toggle('active', i === index);
+        });
+    }
+
+    function startTimer() {
+        timer = setInterval(() => {
+            current = (current + 1) % slides.length;
+            showSlide(current);
+        }, 5000);
+    }
+
+    function resetTimer() {
+        clearInterval(timer);
+        startTimer();
+    }
+
+    // 초기 실행
+    showSlide(current);
+    startTimer();
+</script>
+
+
+
+<script>
+sessionStorage.clear()
+
+function getCookie(name) {
+    const v = `; ${document.cookie}`;
+    const p = v.split(`; ${name}=`);
+    if (p.length === 2) return p.pop().split(';').shift();
+}
+
+function setCookie(name, days) {
+    let expire = new Date();
+    expire.setDate(expire.getDate() + days);
+    document.cookie = `${name}=hidden; expires=${expire.toUTCString()}; path=/`;
+}
+
+function showPreparingMessage(event) {
+    event.preventDefault(); // 링크 이동 막기
+    alert("현재 기능을 준비 중입니다.\n조금만 기다려 주세요");
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,307 @@
+{% extends 'pages/base.html' %}
+{% load static %}
+{% block title %}기업 LLM 관리{% endblock %}
+{% block content %}
+<style>
+  .tenant-info {
+    height: 100px;
+  }
+
+  .project-info{
+    height: 500px;
+  }
+</style>
+<div class="page-title">
+  <div style="display: flex; align-items: center;">
+    <div class="gradient-bar"></div>
+    <div>기업 LLM 관리</div>
+  </div>
+
+</div>
+
+
+<div style="display: flex; gap: 30px; padding-right: 10px;">
+  <div style="flex: 60%;">
+    <div>
+      <h3>기업 LLM 정보</h3>
+
+      <div class="table-container tenant-info">
+        <table id="tenant-table">
+          <thead>
+            <tr>
+              <th style="width: 15%;">기업명</th>
+              <th style="width: 25%;">LLM 모델명</th>
+              <th style="width: 15%;">LLM 사용방법</th>
+              <th style="width: 10%;">활성</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if tenant %}
+              <tr 
+                data-tenantid="{{ tenant.tenantid }}"
+                data-tenantnm="{{ tenant.tenantnm }}"
+                data-llmmodelnm="{{ tenant.llmmodelnm|default_if_none:'' }}"
+                data-llmmodeluseyn="{{ tenant.llmmodeluseyn|yesno:'true,false' }}"
+                data-llmmodelnicknm="{{ tenant.llmmodelnicknm|default_if_none:'' }}"
+                data-llmmodelactiveyn="{{ tenant.llmmodelactiveyn|yesno:'true,false' }}"
+              >
+                <td>{{ tenant.tenantnm }}</td>
+                <td>{{ tenant.llmmodelnicknm|default_if_none:'' }}</td>
+                <td style="text-align: center;">
+                  {% if tenant.llmmodeluseyn %}고객사{% else %}서비스사{% endif %}
+                </td>
+                <td style="text-align: center;">
+                  {% if tenant.llmmodelactiveyn %}✔{% else %}{% endif %}
+                </td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div>
+      <h3>프로젝트 LLM 정보</h3>
+
+      <div class="table-container project-info">
+        <table id="project-table">
+          <thead>
+            <tr>
+              <th style="width: 15%;">프로젝트명</th>
+              <th style="width: 25%;">프로젝트설명</th>
+              <th style="width: 15%;">LLM 모델명</th>
+              <th style="width: 10%;">활성</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for project in projects %}
+              <tr 
+                data-projectid="{{ project.projectid }}"
+                data-projectnm="{{ project.projectnm }}"
+                data-llmmodelnm="{{ project.llmmodelnm|default_if_none:'' }}"
+                data-llmmodelnicknm="{{ project.llmmodelnicknm|default_if_none:'' }}"
+                data-llmmodelactiveyn="{{ project.llmmodelactiveyn|yesno:'true,false' }}"
+              >
+                <td>{{ project.projectnm }}</td>
+                <td>{{ project.projectdesc|default_if_none:'' }}</td>
+                <td>{{ project.llmmodelnicknm|default_if_none:'' }}</td>
+                <td style="text-align: center;">
+                  {% if project.llmmodelactiveyn %}✔{% else %}{% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 상세정보 폼 -->
+  <div style="flex:40%;">
+    <h3>LLM 상세</h3>
+
+    <form id="llm-detail-form" enctype="multipart/form-data">
+      <input type="hidden" name="tenantid" id="tenantid">
+      <input type="hidden" name="projectid" id="projectid">
+
+      <div class="form-group">
+        <label id="jobtitle">작업명:</label>
+        <input type="text" name="jobnm" id="jobnm" readonly>
+      </div>
+
+      <!-- <div class="form-group"> 
+        <label>LLM 모델명:</label>
+        <input type="text" 
+              name="llmmodelnm" 
+              id="llmmodelnm" 
+              autocomplete="off">
+      </div> -->
+      <div class="form-group">
+        <label for="llmmodelnm">LLM 모델명:</label>
+        <select id="llmmodelnm" name="llmmodelnm">
+          <option value="">-- LLM 모델 선택 --</option>
+          {% for llmmodel in llmmodels %}
+            <option value="{{ llmmodel.llmmodelnm }}">{{ llmmodel.llmmodelnicknm }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>API Key:</label>
+        <input type="password" 
+              name="apikey" 
+              id="apikey" 
+              placeholder="변경 시에만 입력" 
+              autocomplete="new-password">
+        <small style="color: #888;">※ 기존 키는 표시되지 않습니다.</small>
+      </div>
+
+      <div class="button-group">
+        <!-- 저장 버튼 -->
+        <button id="save-btn" type="button" class="icon-btn">
+          <div class="icon-wrapper">
+            <img src="{% static 'icons/save.svg' %}" class="icon-img save-icon" title="저장">
+            <span class="icon-label">저장</span>
+          </div>  
+        </button>
+
+        <!-- 삭제 버튼 -->
+        <button id="delete-btn" type="button" class="icon-btn">
+          <div class="icon-wrapper">
+            <img src="{% static 'icons/delete.svg' %}" class="icon-img del-icon" title="삭제">
+            <span class="icon-label">삭제</span>
+          </div>
+        </button>
+      </div>
+      
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  const tenant_tbl = document.getElementById('tenant-table');
+  const project_tbl = document.getElementById('project-table');
+  const form = document.getElementById('llm-detail-form');
+  const del_btn = document.getElementById('delete-btn');
+  let selectedRow = null; // ✅ 선택된 행 추적
+
+  function fillLLMFormFromRow(row, type) {
+    if (type == 'tenant'){
+      document.getElementById('jobtitle').textContent = "기업명:"
+      document.getElementById('tenantid').value = row.getAttribute('data-tenantid');
+      document.getElementById('projectid').value = '';
+      document.getElementById("jobnm").value = row.getAttribute('data-tenantnm');
+      document.getElementById('llmmodelnm').value = row.getAttribute('data-llmmodelnm');
+    } else if (type == 'project'){
+      document.getElementById('jobtitle').textContent = "프로젝트명:"
+      document.getElementById('tenantid').value = '';
+      document.getElementById('projectid').value = row.getAttribute('data-projectid');
+      document.getElementById("jobnm").value = row.getAttribute('data-projectnm');
+      document.getElementById('llmmodelnm').value = row.getAttribute('data-llmmodelnm');
+    }
+
+    document.getElementById('apikey').value = '';
+  }
+
+  // --- 행 클릭 시 ---
+  tenant_tbl.addEventListener('click', function (e) {
+    const row = e.target.closest('tr');
+    if (!row || row.parentNode.tagName !== 'TBODY') return;
+
+    // 이전 선택 해제
+    if (selectedRow) selectedRow.classList.remove('selected-row');
+    // 새로 선택
+    selectedRow = row;
+    selectedRow.classList.add('selected-row');
+
+    fillLLMFormFromRow(row, 'tenant');
+  });
+  // --- 행 클릭 시 ---
+  project_tbl.addEventListener('click', function (e) {
+    const row = e.target.closest('tr');
+    if (!row || row.parentNode.tagName !== 'TBODY') return;
+
+    // 이전 선택 해제
+    if (selectedRow) selectedRow.classList.remove('selected-row');
+    // 새로 선택
+    selectedRow = row;
+    selectedRow.classList.add('selected-row');
+
+    fillLLMFormFromRow(row, 'project');
+  });
+
+  // --- 저장 버튼 ---
+  document.getElementById('save-btn').addEventListener('click', function () {
+    const formData = new FormData(form);
+    const tenantid = document.getElementById('tenantid').value
+    const projectid = document.getElementById('projectid').value
+
+    if (tenantid){
+      console.log('tenantid가 있음')
+    }
+    if (projectid){
+      console.log('projectid가 있음')
+    }
+
+    if ((!tenantid) && (!projectid) ){
+      alert("선택 된 항목이 없습니다.")
+      return;
+    }
+
+    fetch('/master/tenant_llms_save/', {
+      method: "POST",
+      body: formData,
+      headers: {
+        "X-CSRFToken": getCookie("csrftoken")
+      }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.result === "success") {
+        alert(data.message);
+        location.reload();
+      } else {
+        alert("저장 실패: " + (data.message || "서버 오류"));
+      }
+    })
+    .catch(err => {
+      alert("오류 발생: " + err.message);
+    });
+  });
+
+  // --- 삭제 버튼 ---
+  document.getElementById('delete-btn').addEventListener('click', function () {
+    const tenantid = document.getElementById('tenantid').value
+    const projectid = document.getElementById('projectid').value
+    const jobnm = document.getElementById('jobnm').value
+
+    if (tenantid){
+      console.log('tenantid가 있음')
+      if (!confirm('정말 기업 LLM 정보를 삭제하시겠습니까?')) return;  
+    }
+    if (projectid){
+      if (!confirm(`정말 프로젝트 ${ jobnm }의 LLM 정보를 삭제하시겠습니까?`)) return;  
+    }
+    
+    fetch('/master/tenant_llms_delete/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify({ tenantid, projectid })
+    })
+    .then(response => {
+      if (!response.ok) throw new Error('삭제 실패');
+      return response.json();
+    })
+    .then(() => {
+      alert('삭제되었습니다.');
+      location.reload();
+    })
+    .catch(error => {
+      alert('삭제 중 오류 발생: ' + error.message);
+    });
+  });
+
+  // --- CSRF 토큰 ---
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+});
+</script>
+
+{% endblock %}

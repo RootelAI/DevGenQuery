@@ -1,0 +1,231 @@
+{% extends 'pages/base.html' %}
+{% load static %}
+{% block title %}LLM 관리{% endblock %}
+{% block content %}
+
+<div class="page-title">
+  <div style="display: flex; align-items: center;">
+    <div class="gradient-bar"></div>
+    <div>LLM 관리</div>
+  </div>
+
+</div>
+
+
+<div style="display: flex; gap: 30px; padding-right: 10px;">
+  <div style="flex: 60%;">
+    <h3>LLM 목록</h3>
+
+    <div class="table-container">
+      <table id="llms-table">
+        <thead>
+          <tr>
+            <th style="width: 10%;">LLM 벤더명</th>
+            <th style="width: 25%;">LLM 모델명</th>
+            <th style="width: 20%;">LLM 모델 별칭</th>
+            <th style="width:  8%;">사용</th>
+            <th style="width: 10%;">등록자</th>
+            <th style="width: 10%;">등록일시</th>
+            <!-- <th style="width: 10%;"></th> -->
+          </tr>
+        </thead>
+        <tbody>
+          {% for llm in llmmodels %}
+            <tr 
+              data-llmvendornm="{{ llm.llmvendornm }}"
+              data-llmmodelnm="{{ llm.llmmodelnm }}"
+              data-llmmodelnicknm="{{ llm.llmmodelnicknm }}"
+              data-useyn="{{ llm.useyn|yesno:'true,false' }}"
+              data-creator="{{ llm.creator }}"
+              data-createuser="{{ llm.createuser }}"
+              data-creatdts="{{ llm.createdts }}"
+            >
+              <td>{{ llm.llmvendornm }}</td>
+              <td>{{ llm.llmmodelnm }}</td>
+              <td>{{ llm.llmmodelnicknm }}</td>
+              <td style="text-align: center;">
+                {% if llm.useyn %}✔{% endif %}
+              </td>
+              <td>{{ llm.createuser }}</td>
+              <td>{{ llm.createdts }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 상세정보 폼 -->
+  <div style="flex:40%;">
+    <h3>LLM 상세</h3>
+
+    <form id="llm-detail-form" enctype="multipart/form-data">
+      <div class="form-group">
+        <label>LLM 벤더명:</label>
+        <input type="text" name="llmvendornm" id="llmvendornm">
+      </div>
+
+      <div class="form-group">
+        <label>LLM 모델명:</label>
+        <input type="text" name="llmmodelnm" id="llmmodelnm">
+      </div>
+
+      <div class="form-group"> 
+        <label>LLM 모델별칭:</label>
+        <input type="text" 
+              name="llmmodelnicknm" 
+              id="llmmodelnicknm" 
+              autocomplete="off">
+      </div>
+
+      <div class="form-group">
+        <label>사용:</label>
+        <input type="checkbox" name="useyn" id="useyn">
+      </div>
+
+      <div class="button-group">
+        <button id="reset-btn" type="button" class="icon-btn">
+          <div class="icon-wrapper">
+            <img src="{% static 'icons/new.svg' %}" class="icon-img new-icon" title="신규">
+            <span class="icon-label">신규</span>
+          </div>    
+        </button>
+
+        <!-- 저장 버튼 -->
+        <button id="save-btn" type="button" class="icon-btn">
+          <div class="icon-wrapper">
+            <img src="{% static 'icons/save.svg' %}" class="icon-img save-icon" title="저장">
+            <span class="icon-label">저장</span>
+          </div>  
+        </button>
+
+        <!-- 삭제 버튼 -->
+        <button id="delete-btn" type="button" class="icon-btn">
+          <div class="icon-wrapper">
+            <img src="{% static 'icons/delete.svg' %}" class="icon-img del-icon" title="삭제">
+            <span class="icon-label">삭제</span>
+          </div>
+        </button>
+      </div>
+      
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  const table = document.getElementById('llms-table');
+  const form = document.getElementById('llm-detail-form');
+  let selectedRow = null; // ✅ 선택된 행 추적
+
+  function fillLLMFormFromRow(row) {
+    const llmvendornm = row.dataset.llmvendornm;
+    const llmmodelnm = row.dataset.llmmodelnm;
+    const llmmodelnicknm = row.dataset.llmmodelnicknm;
+    const useyn = row.dataset.useyn;
+
+    document.getElementById('llmvendornm').value = llmvendornm;
+    document.getElementById('llmmodelnm').value = llmmodelnm;
+    document.getElementById('llmmodelnicknm').value = llmmodelnicknm;
+    document.getElementById('useyn').checked = (useyn === 'true');
+  }
+
+  // --- 행 클릭 시 ---
+  table.addEventListener('click', function (e) {
+    const row = e.target.closest('tr');
+    if (!row || row.parentNode.tagName !== 'TBODY') return;
+
+    // 이전 선택 해제
+    if (selectedRow) selectedRow.classList.remove('selected-row');
+    // 새로 선택
+    selectedRow = row;
+    selectedRow.classList.add('selected-row');
+
+    fillLLMFormFromRow(row);
+  });
+
+  // --- 저장 버튼 ---
+  document.getElementById('save-btn').addEventListener('click', function () {
+    const formData = new FormData(form);
+
+    fetch('/master/llms_save/', {
+      method: "POST",
+      body: formData,
+      headers: {
+        "X-CSRFToken": getCookie("csrftoken")
+      }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.result === "success") {
+        alert(data.message);
+        location.reload();
+      } else {
+        alert("저장 실패: " + (data.message || "서버 오류"));
+      }
+    })
+    .catch(err => {
+      alert("오류 발생: " + err.message);
+    });
+  });
+
+  // --- 삭제 버튼 ---
+  document.getElementById('delete-btn').addEventListener('click', function () {
+    const llmmodelnm = document.getElementById('llmmodelnm').value;
+    if (!llmmodelnm) {
+      alert('삭제할 LLM를 먼저 선택하세요.');
+      return;
+    }
+
+    if (!confirm('정말 삭제하시겠습니까?')) return;
+
+    fetch('/master/llms_delete/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify({ llmmodelnm })
+    })
+    .then(response => {
+      if (!response.ok) throw new Error('삭제 실패');
+      return response.json();
+    })
+    .then(() => {
+      alert('삭제되었습니다.');
+      location.reload();
+    })
+    .catch(error => {
+      alert('삭제 중 오류 발생: ' + error.message);
+    });
+  });
+
+  // --- 초기화 버튼 ---
+  document.getElementById('reset-btn').addEventListener('click', function () {
+    form.reset();
+    if (selectedRow) {
+      selectedRow.classList.remove('selected-row');
+      selectedRow = null;
+    }
+  });
+
+  // --- CSRF 토큰 ---
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+});
+</script>
+
+{% endblock %}

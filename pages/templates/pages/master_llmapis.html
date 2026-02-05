@@ -1,0 +1,272 @@
+{% extends 'pages/base.html' %}
+{% load static %}
+{% block title %}LLM API 관리{% endblock %}
+{% block content %}
+
+<div class="page-title">
+  <div style="display: flex; align-items: center;">
+    <div class="gradient-bar"></div>
+    <div>LLM API 관리</div>
+  </div>
+
+</div>
+
+
+<div style="display: flex; gap: 30px; padding-right: 10px;">
+  <div style="flex: 60%;">
+    <h3>LLM API 목록</h3>
+
+    <div class="table-container">
+      <table id="llms-table">
+        <thead>
+          <tr>
+            <th style="width: 25%;">LLM 모델명</th>
+            <th style="width:  8%;">사용 유형</th>
+            <th style="width: 10%;">비고(기업명)</th>
+            <th style="width: 10%;">등록자</th>
+            <th style="width: 10%;">등록일시</th>
+            <!-- <th style="width: 10%;"></th> -->
+          </tr>
+        </thead>
+        <tbody>
+          {% for llmapi in llmapis %}
+            <tr 
+              data-llmapiuid="{{ llmapi.llmapiuid }}"
+              data-llmmodelnm="{{ llmapi.llmmodelnm }}"
+              data-usetypecd="{{ llmapi.usetypecd }}"
+              data-desc="{{ llmapi.desc|default_if_none:''}}"
+              data-creator="{{ llmapi.creator }}"
+              data-createuser="{{ llmapi.createuser }}"
+              data-creatdts="{{ llmapi.createdts }}"
+            >
+              <td>{{ llmapi.llmmodelnm }}</td>
+              <td>{{ llmapi.usetypenm }}</td>
+              <td>{{ llmapi.desc|default_if_none:'' }}</td>
+              <td>{{ llmapi.createuser }}</td>
+              <td>{{ llmapi.createdts }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 상세정보 폼 -->
+  <div style="flex:40%;">
+    <h3>LLM API 상세</h3>
+
+    <form id="llm-detail-form" enctype="multipart/form-data">
+      <input type="text" name="llmapiuid" id="llmapiuid" hidden>
+
+      <div class="form-group">
+        <label>LLM 모델명:</label>
+        <select name="llmmodelnm" id="llmmodelnm" required>
+          <option value="">사용 모델을 선택하세요</option>
+          {% for llmmodel in llmmodels %}
+            <option value="{{ llmmodel.llmmodelnm }}">{{ llmmodel.llmvendornm }}->{{ llmmodel.llmmodelnm }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>API Key:</label>
+        <input type="password" 
+              name="apikey" 
+              id="apikey" 
+              placeholder="변경 시에만 입력" 
+              autocomplete="new-password">
+        <small style="color: #888;">※ 기존 키는 표시되지 않습니다.</small>
+      </div>
+
+      <div class="form-group">
+        <label>사용 유형:</label>
+        <select name="usetypecd" id="usetypecd" required>
+          <option value="">사용 유형을 선택하세요</option>
+            <option value="R">Round</option>
+            <option value="D">Direct</option>
+            <option value="N">No</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>비고:</label>
+        <select name="desc" id="desc" disabled>
+          <option value="">기업을 선택하세요</option>
+          {% for tenant in tenants %}
+            <option value="{{ tenant.tenantnm }}">{{ tenant.tenantnm }}</option>
+          {% endfor %}
+        </select>
+
+        <!-- <textarea id="desc" name="desc" spellcheck="false" style="resize: none; height: 80%;" disabled></textarea> -->
+      </div>
+
+      <div class="button-group">
+        <button id="reset-btn" type="button" class="icon-btn">
+          <div class="icon-wrapper">
+            <img src="{% static 'icons/new.svg' %}" class="icon-img new-icon" title="신규">
+            <span class="icon-label">신규</span>
+          </div>    
+        </button>
+
+        <!-- 저장 버튼 -->
+        <button id="save-btn" type="button" class="icon-btn">
+          <div class="icon-wrapper">
+            <img src="{% static 'icons/save.svg' %}" class="icon-img save-icon" title="저장">
+            <span class="icon-label">저장</span>
+          </div>  
+        </button>
+
+        <!-- 삭제 버튼 -->
+        <button id="delete-btn" type="button" class="icon-btn">
+          <div class="icon-wrapper">
+            <img src="{% static 'icons/delete.svg' %}" class="icon-img del-icon" title="삭제">
+            <span class="icon-label">삭제</span>
+          </div>
+        </button>
+      </div>
+      
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  const table = document.getElementById('llms-table');
+  const form = document.getElementById('llm-detail-form');
+  let selectedRow = null; // ✅ 선택된 행 추적
+
+  function fillLLMFormFromRow(row) {    
+    const llmapiuid = row.dataset.llmapiuid;
+    const llmmodelnm = row.dataset.llmmodelnm;
+    const usetypecd = row.dataset.usetypecd;
+    const desc = row.dataset.desc;
+
+    document.getElementById('llmapiuid').value = llmapiuid;
+    document.getElementById('llmmodelnm').value = llmmodelnm;
+    document.getElementById('usetypecd').value = usetypecd;
+    document.getElementById('desc').value = desc;
+
+    if (usetypecd == "D"){
+      desc.disabled = false;
+    } else {
+      desc.disabled = true;
+      desc.value = "";
+    }
+  }
+
+  // --- 행 클릭 시 ---
+  table.addEventListener('click', function (e) {
+    const row = e.target.closest('tr');
+    if (!row || row.parentNode.tagName !== 'TBODY') return;
+
+    // 이전 선택 해제
+    if (selectedRow) selectedRow.classList.remove('selected-row');
+    // 새로 선택
+    selectedRow = row;
+    selectedRow.classList.add('selected-row');
+
+    fillLLMFormFromRow(row);
+  });
+
+  document.getElementById('usetypecd').addEventListener('change', function (){
+    const usetypecd = document.getElementById('usetypecd').value
+    const desc = document.getElementById('desc')
+
+    if (usetypecd == "D"){
+      desc.disabled = false;
+    } else {
+      desc.disabled = true;
+      desc.value = "";
+    }
+    
+    
+
+  })
+
+  // --- 저장 버튼 ---
+  document.getElementById('save-btn').addEventListener('click', function () {
+    const formData = new FormData(form);
+
+    fetch('/master/llmapis_save/', {
+      method: "POST",
+      body: formData,
+      headers: {
+        "X-CSRFToken": getCookie("csrftoken")
+      }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.result === "success") {
+        alert(data.message);
+        location.reload();
+      } else {
+        alert("저장 실패: " + (data.message || "서버 오류"));
+      }
+    })
+    .catch(err => {
+      alert("오류 발생: " + err.message);
+    });
+  });
+
+  // --- 삭제 버튼 ---
+  document.getElementById('delete-btn').addEventListener('click', function () {
+    const llmapiuid = document.getElementById('llmapiuid').value;
+    if (!llmapiuid) {
+      alert('삭제할 LLM API 를 먼저 선택하세요.');
+      return;
+    }
+
+    if (!confirm('정말 삭제하시겠습니까?')) return;
+
+    fetch('/master/llmapis_delete/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify({ llmapiuid })
+    })
+    .then(response => {
+      if (!response.ok) throw new Error('삭제 실패');
+      return response.json();
+    })
+    .then(() => {
+      alert('삭제되었습니다.');
+      location.reload();
+    })
+    .catch(error => {
+      alert('삭제 중 오류 발생: ' + error.message);
+    });
+  });
+
+  // --- 초기화 버튼 ---
+  document.getElementById('reset-btn').addEventListener('click', function () {
+    form.reset();
+    desc.disabled = true;
+    
+    if (selectedRow) {
+      selectedRow.classList.remove('selected-row');
+      selectedRow = null;
+    }
+  });
+
+  // --- CSRF 토큰 ---
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+});
+</script>
+
+{% endblock %}

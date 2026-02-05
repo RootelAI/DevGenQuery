@@ -1,0 +1,188 @@
+{% extends 'pages/base.html' %}
+{% load static %}
+{% block title %}기능소개{% endblock %}
+
+{% block content %}
+
+<style>
+.service-section {
+    max-width: 950px;
+    margin: 50px auto 0 auto;
+    font-family: 'Noto Sans', sans-serif;
+}
+.service-section h2 {
+    padding: 10px 15px;
+    color: #091747;
+    font-size: 22px;
+    font-weight: 700;
+    margin: 30px 0 10px 0;
+    text-align: left;
+}
+
+.service-section h3 {
+    padding: 10px 15px;
+    padding-left: 50px; /* 살짝 들여쓰기 */
+    color: #091747;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 30px 0 10px 0;
+    text-align: left;
+}
+
+.service-section h3 + p {
+    padding-left: 55px; /* h3 바로 아래 p 살짝 더 들여쓰기 */
+}
+
+.service-section p {
+    margin-top: 0;
+    margin-bottom: 25px;
+    padding-left: 20px;
+    color: #333;
+    font-size: 18px;
+    line-height: 1.6;
+}
+.service-section img {
+    display: block;
+    max-width: 100%;
+    margin: 30px auto;
+}
+
+/* -------------------------- */
+/* 카드(프로세스 흐름) 스타일 */
+/* -------------------------- */
+.process-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    max-width: 950px;
+    margin: 40px auto;
+}
+
+.process-card {
+    flex: 1;
+    background: #f7f9fc;
+    border: 1px solid #d8dfeb;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    transition: 0.25s;
+}
+
+.process-card:hover {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transform: translateY(-3px);
+}
+
+.process-card-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #091747;
+    margin-bottom: 8px;
+}
+
+.process-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    font-weight: 700;
+    color: #091747;
+}
+</style>
+
+<div class="service-section">
+    <h2>GenQuery는 데이터베이스와의 연동을 통해 문서 작성 과정을 자동화합니다. </h2>
+</div>
+
+
+<div class="service-section">
+    <h2>기능 구성</h2>
+    <p>
+        ODBC를 지원하는 모든 데이터베이스와 연동할 수 있으며, <br> 
+        문서에 필요한 데이터, 매개변수, 템플릿, 개체를 미리 설정해 두고 <br> 
+        매개변수 값 변경만으로 문서를 생성합니다.
+    </p>
+    <img src="{% static 'images/about01.png' %}">
+</div>
+
+
+<!-- ------------------------------ -->
+<!-- 1. 전체 흐름 카드 (3단 카드로 표시) -->
+<!-- ------------------------------ -->
+<div class="service-section">
+    <h2>문서 작성 흐름</h2>
+
+    <div class="process-container">
+
+        <div class="process-card">
+            <div class="process-card-title">데이터 설정</div>
+        </div>
+
+        <div class="process-arrow">→</div>
+
+        <div class="process-card">
+            <div class="process-card-title">문서 설정</div>
+        </div>
+
+        <div class="process-arrow">→</div>
+
+        <div class="process-card">
+            <div class="process-card-title">문서 작성</div>
+        </div>
+
+    </div>
+</div>
+
+<!-- 2. 이하 기존 내용 그대로 유지 -->
+<div class="service-section">
+    <h3>데이터 설정</h3>
+    <p>ODBC를 지원하는 모든 데이터베이스와 Excel 자료에 대해 연결 정보, 쿼리, 데이터 항목을 정의합니다.</p>
+</div>
+
+<div class="service-section">
+    <h3>문서 설정</h3>
+    <p>
+        문서의 내용을 구성하기 위해 목차, 템플릿 및 템플릿 내 개체를 정의합니다.<br>
+        개체에 해당하는 문장, 테이블, 차트는 AI 또는 UI를 통해 설정할 수 있으며,<br>
+        AI에는 문장, 표, 차트를 어떻게 작성할지 프롬프트로 지시합니다.
+    </p>
+</div>
+
+<div class="service-section">
+    <h3>문서 작성</h3>
+    <p>문서에 노출된 매개변수에 값을 입력하면, 해당 매개변수를 기준으로 문서가 작성됩니다.</p>
+</div>
+
+
+
+<div class="service-section">
+    <h2>문서 설정 - 챕터 관리
+</h2>
+    <p>
+        주제별로 챕터를 분리하고, 템플릿에서 내용을 구성할 시나리오에 따라 항목을 정의합니다.<br>
+        정의된 항목은 항목 추출 과정을 통해 데이터화되며, <br>
+        이후 단계에서 각 항목에 대해 표현할 문장, 표, 차트의 구성 내용을 설정합니다.
+    </p>
+    <img src="{% static 'images/about02.png' %}">
+</div>
+
+<div class="service-section">
+    <h2>문서 설정 - 항목 정의</h2>
+    <p>
+        항목 정의는 문서에 작성될 문장, 표, 차트로 표현할 내용을 설정하는 단계이며,<br>
+        AI와 UI 두 가지 방식으로 정의할 수 있습니다. 
+    </p>
+    <img src="{% static 'images/about03.png' %}">
+</div>
+
+<div class="service-section">
+    <h2>문서 작성</h2>
+    <p>
+        문서에 정의된 매개변수 값을 선택하여 새 문서를 생성합니다.<br>
+        선택한 매개변수 값에 따라 챕터 템플릿과 항목 정의를 기반으로 문서가 자동으로 작성됩니다.
+    </p>
+    <img src="{% static 'images/about04.png' %}">
+</div>
+
+{% endblock %}

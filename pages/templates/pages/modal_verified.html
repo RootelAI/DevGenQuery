@@ -1,0 +1,285 @@
+<style>
+ /* 본인 인증 */
+.verification_base_modal_content {
+    background: var(--white);
+    padding: 30px 25px;
+    border-radius: 12px;
+    width: 360px;
+    height: 350px;
+    box-shadow: 0 8px 24px var(--black-shadow);
+    text-align: center;
+}
+</style>
+
+<!-- 본인인증 -->
+<div id="verification_base_modal" class="base_modal_overlay" style="display: none;">
+  <div class="verification_base_modal_content" style="position: relative">
+    <!-- ✅ 닫기 버튼 -->
+    <button id="verification_base_modal_close" style="
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: transparent;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+    ">&times;</button>
+
+    <h2 style="font-weight: bold;">본인 인증</h2>
+
+    <!-- 메시지 표시 영역 -->
+    <div id="messageArea"></div>
+    <!-- SMS 발송 섹션 -->
+    <div class="section">
+        <h3 class="sub_header" style="margin-bottom: 0%;">휴대폰 번호</h3>
+        
+        <label class="modal_label" style="margin-top: 0%;">
+            <input type="tel" id="phoneNumber" name="phone_number" placeholder="01012345678" maxlength="13" class="base_modal_input" style="width: 48%;" >
+            <button type="button" class="btn btn-primary modal_span btn-verified" id="sendSmsBtn" onclick="sendVerificationSMS()"><span id="sendBtnText">인증번호 받기</span></button>
+        </label>
+    </div>
+        
+    <!-- 인증번호 입력 섹션 -->
+    <div class="section" {% if sms_sent %}style="display: block;"{% endif %}>
+        <h3 class="sub_header" style="margin-bottom: 0%;">인증번호(6자리)</h3>
+        
+        <label class="modal_label"  style="margin-top: 0%;">
+            <input type="text" id="verificationCode" name="verification_code" placeholder="123456" maxlength="6" class="base_modal_input" style="width: 48%;">
+            <button type="button" class="btn btn-primary modal_span btn-verified" id="verifyBtn" onclick="verifyCode()"><span id="verifyBtnText">인증하기</span></button>
+        </label>
+        
+        <div class="timer" id="timer"></div>
+    </div>
+
+    <button type="button" class="btn btn-primary btn-verified" id="resendBtn" onclick="sendVerificationSMS()" style="margin-top: 10px;">인증번호 재발송</button>
+
+  </div>
+</div>
+
+<script>
+// 인증 모달 보여주기
+function show_verification_base_modal(){
+  document.getElementById("verification_base_modal").style.display = "flex";
+}
+
+////////// 본인 인증 관련
+let timerInterval;
+let remainingTime = 300; // 5분 = 300초
+
+function showMessage(message, type = 'info') {
+    const messageArea = document.getElementById('messageArea');
+    const alertClass = type === 'error' ? 'alert-error' : 
+                      type === 'success' ? 'alert-success' : 'alert-info';
+    
+    messageArea.innerHTML = `<div class="alert ${alertClass}">${message}</div>`;
+    
+    // 3초 후 메시지 자동 제거 (에러 메시지는 제외)
+    if (type !== 'error') {
+        setTimeout(() => {
+            messageArea.innerHTML = '';
+        }, 3000);
+    }
+}
+
+function formatPhoneNumber(value) {
+    // 숫자만 추출
+    const numbers = value.replace(/[^0-9]/g, '');
+    
+    // 010-XXXX-XXXX 형식으로 포맷팅
+    if (numbers.length <= 3) return numbers;
+    if (numbers.length <= 7) return numbers.replace(/(\d{3})(\d{1,4})/, '$1-$2');
+    return numbers.replace(/(\d{3})(\d{4})(\d{1,4})/, '$1-$2-$3');
+}
+// 휴대폰 번호 자동 포맷팅
+document.getElementById('phoneNumber').addEventListener('input', function(e) {
+    e.target.value = formatPhoneNumber(e.target.value);
+});
+
+// 인증번호는 숫자만 입력 가능
+document.getElementById('verificationCode').addEventListener('input', function(e) {
+    e.target.value = e.target.value.replace(/[^0-9]/g, '');
+});
+function startTimer() {
+    remainingTime = 300; // 5분 리셋
+    const timerElement = document.getElementById('timer');
+    
+    timerInterval = setInterval(() => {
+        const minutes = Math.floor(remainingTime / 60);
+        const seconds = remainingTime % 60;
+        timerElement.textContent = `남은 시간: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        
+        remainingTime--;
+        
+        if (remainingTime < 0) {
+            clearInterval(timerInterval);
+            timerElement.textContent = '인증시간이 만료되었습니다.';
+            showMessage('인증번호가 만료되었습니다. 다시 요청해주세요.', 'error');
+        }
+    }, 1000);
+}
+// 인증번호 발송
+async function sendVerificationSMS() {
+  const phoneNumber = document.getElementById('phoneNumber').value.trim();
+  const sendBtn = document.getElementById('sendSmsBtn');
+  const sendBtnText = document.getElementById('sendBtnText');
+  
+  if (!phoneNumber) {
+      showMessage('휴대폰 번호를 입력해주세요.', 'error');
+      return;
+  }
+  
+  // 휴대폰 번호 유효성 검사
+  const cleanPhone = phoneNumber.replace(/[^0-9]/g, '');
+  if (!/^01[016789]\d{7,8}$/.test(cleanPhone)) {
+      showMessage('올바른 휴대폰 번호를 입력해주세요.', 'error');
+      return;
+  }
+  
+  // 버튼 비활성화 및 로딩 표시
+  sendBtn.disabled = true;
+  sendBtnText.innerHTML = '<span class="loading"></span> 발송 중...';
+  
+  try {
+      const response = await fetch('/api/send_verification_sms/', {
+          method: 'POST',
+          credentials: "include",   // 👈 여기
+          headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': getCookie('csrftoken')
+          },
+          body: JSON.stringify({
+              phone_number: cleanPhone
+          })
+      });
+      
+      const result = await response.json();
+      // result = {"success": true}
+      
+      if (result.success) {
+          showMessage('인증번호가 발송되었습니다.', 'success');
+        //   document.getElementById('verificationSection').style.display = 'block';
+          startTimer();
+          
+          // 포커스를 인증번호 입력 필드로 이동
+          document.getElementById('verificationCode').focus();
+      } else {
+          showMessage(result.message, 'error');
+      }
+      
+  } catch (error) {
+      showMessage('네트워크 오류가 발생했습니다.', 'error');
+  } finally {
+      // 버튼 활성화
+      sendBtn.disabled = false;
+      sendBtnText.textContent = '인증번호 재발송';
+  }
+}
+
+async function verifyCode() {
+  const phoneNumber = document.getElementById('phoneNumber').value.trim();
+  const verificationCode = document.getElementById('verificationCode').value.trim();
+  const verifyBtn = document.getElementById('verifyBtn');
+  const verifyBtnText = document.getElementById('verifyBtnText');
+  
+  if (!verificationCode) {
+      showMessage('인증번호를 입력해주세요.', 'error');
+      return;
+  }
+  
+  if (verificationCode.length !== 6) {
+      showMessage('인증번호는 6자리입니다.', 'error');
+      return;
+  }
+  
+  // 버튼 비활성화 및 로딩 표시
+  verifyBtn.disabled = true;
+  verifyBtnText.innerHTML = '<span class="loading"></span> 인증 중...';
+  
+  try {
+      const cleanPhone = phoneNumber.replace(/[^0-9]/g, '');
+      const response = await fetch('/api/verify_sms_code/', {
+          method: 'POST',
+          credentials: "include",   // 👈 여기
+          headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': getCookie('csrftoken')
+          },
+          body: JSON.stringify({
+              phone_number: cleanPhone,
+              verification_code: verificationCode
+          })
+      });
+      
+      const result = await response.json();
+      // const result = {"success": true}
+      
+      if (result.success) {
+          clearInterval(timerInterval);
+          showMessage('✅ 인증이 완료되었습니다!', 'success');
+          
+          // 인증 완료 처리 (예: 페이지 이동, 폼 제출 등)
+          setTimeout(() => {
+              // 원하는 페이지로 리다이렉트 또는 다음 단계 처리
+              // window.location.href = '/next-step/';
+              
+              // 또는 상위 컴포넌트에 인증 완료 알림
+              if (window.parent && window.parent.onSMSVerified) {
+                  window.parent.onSMSVerified(cleanPhone);
+              }
+
+              show_signup_base_modal()
+              document.getElementById("verification_base_modal").style.display = "none";
+              document.getElementById("phoneNumber").value = '';
+              document.getElementById("verificationCode").value = '';
+              document.getElementById('timer').textContent = "";
+
+
+          }, 1500);
+          
+      } else {
+          showMessage(result.message, 'error');
+          
+          // 인증번호 입력 필드 클리어
+          document.getElementById('verificationCode').value = '';
+          document.getElementById('verificationCode').focus();
+      }
+      
+  } catch (error) {
+      showMessage('네트워크 오류가 발생했습니다.', 'error');
+  } finally {
+      // 버튼 활성화
+      verifyBtn.disabled = false;
+      verifyBtnText.textContent = '인증하기';
+  }
+}
+
+// Enter 키 처리
+document.getElementById('phoneNumber').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        sendVerificationSMS();
+    }
+});
+
+document.getElementById('verificationCode').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        verifyCode();
+    }
+});
+
+
+// 모달 관련 이벤트
+document.addEventListener("DOMContentLoaded", function () {
+  ////////// 번호인증 영역 시작
+  // 번호인증 모달 닫기
+  const verification_base_closeBtn = document.getElementById("verification_base_modal_close");
+  const verification_base_modal = document.getElementById("verification_base_modal");
+  verification_base_closeBtn.addEventListener("click", function () {
+      verification_base_modal.style.display = "none";
+      document.getElementById("phoneNumber").value = '';
+      document.getElementById("verificationCode").value = '';
+  });
+  
+  ////////// 번호인증 영역 종료
+  
+});
+</script>

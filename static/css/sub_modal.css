@@ -1,0 +1,160 @@
+/* 공통 정보 */
+.base_modal_overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: var(--black-shadow);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.base_modal_input{
+    width: 90%;
+    padding: 10px;
+    margin-top: 12px;
+    font-size: 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+}
+
+.modal_label {
+    display: flex;
+    justify-content: center;
+    margin-top: 4%;
+    text-align: left;
+}
+.modal_span {
+    font-size: 14px;
+    margin-left: 1%;
+    width: 30%;
+    margin-top: 12px;
+    align-self: center;
+}
+
+.btn-save:disabled{
+    background-color: var(--secondary-100);
+}
+
+.section {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    text-align: center;
+    border: 1px solid var(--border-color);
+    padding: 5px 5px 10px 5px;
+}
+
+.sub_header {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    font-weight: 400;
+    color: var(--secondary-300);
+}
+
+.timer {
+    text-align: center;
+    color: var(--red-shadow);
+    font-weight: 600;
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.btn-verified {
+    margin-top: 12px;
+    height: 38px;
+    width: 37%;
+}
+
+/* 추가 정보 */
+.more_info_modal_content {
+    background: var(--white);
+    padding: 30px 25px;
+    border-radius: 12px;
+    width: 360px;
+    height: 410px;
+    box-shadow: 0 8px 24px var(--black-shadow);
+    text-align: center;
+}
+
+/* 계정 찾기 */
+.find_email_modal_content {
+    background: var(--white);
+    padding: 30px 25px;
+    border-radius: 12px;
+    width: 360px;
+    height: 290px;
+    box-shadow: 0 8px 24px var(--black-shadow);
+    text-align: center;
+}
+
+/* 비밀번호 찾기 */
+.find_password_modal_content {
+    background: var(--white);
+    padding: 30px 25px;
+    border-radius: 12px;
+    width: 360px;
+    height: 360px;
+    box-shadow: 0 8px 24px var(--black-shadow);
+    text-align: center;
+}
+
+.find_modal_input{
+    width: 65%;
+    padding: 10px;
+    margin-top: 12px;
+    font-size: 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+}
+
+.find_modal_btn{
+    width: 27%;
+    padding: 10px;
+    margin-top: 12px;
+    font-size: 14px;
+}
+
+.find {
+  cursor: pointer;
+}
+
+.modal_a4 {
+  display: none; 
+  position: fixed;
+  z-index: 9999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+  justify-content: center;
+  align-items: center; /* 화면 중앙 정렬 */
+}
+
+.modal_a4-content {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 90%;         /* 화면 가로의 90% */
+  max-width: 900px;   /* 최대 가로 */
+  max-height: 90%;    /* 화면 높이의 90% */
+  overflow-y: auto;   /* 내부 세로 스크롤 */
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  position: relative;
+}
+
+.close-a4 {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.close-a4:hover,
+.close-a4:focus {
+  color: black;
+  text-decoration: none;
+}

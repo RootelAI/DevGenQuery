@@ -1,0 +1,42 @@
+/* 로그인 관련 화면에서 사용하는 form Style 시작 */
+.form-container {
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 20px;
+    border: 1px solid var(--border-color );
+    border-radius: 5px;
+}
+
+.form-container label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+.form-container input {
+    width: 100%;
+    margin-bottom: 20px;
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+.form-container button {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    background-color: var(--info-color);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.form-container button:disabled {
+    background-color: var(--back-dark);
+    cursor: default;
+}
+
+.form-error {
+    color: var(--danger-color);
+    margin-top: 15px;
+}
+/* 로그인 관련 화면에서 사용하는 form Style 종료 */

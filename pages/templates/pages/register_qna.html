@@ -1,0 +1,114 @@
+{% extends 'pages/base.html' %}
+{% load static %}
+{% block title %}문의{% endblock %}
+
+{% block content %}
+
+<div class="page-title">
+  <div style="display: flex; align-items: center;">
+    <div class="gradient-bar"></div>
+    <div>문의</div>
+  </div>
+</div>
+<style>
+.qna-container {
+    display: flex;
+    gap: 40px;
+    max-width: 1000px;
+    margin: 30px auto;
+}
+
+.qna-left, .qna-right {
+    flex: 1;
+}
+
+.qna-left-box {
+    border: 1px solid #d8dfeb;
+    padding: 20px;
+    border-radius: 10px;
+    background: #000000;
+    line-height: 1.8;
+    font-size: 15px;
+    height: 350px;
+    color : #ffffff;
+}
+
+.contact-hr {
+    border: 0;
+    border-top: 1px solid #ffffff55; /* 반투명 흰색 */
+    margin: 12px 0;
+}
+
+</style>
+
+<div class="qna-container">
+
+  <!-- 좌측 영역 -->
+  <div class="qna-left">
+      <div class = "qna-left-box">
+        <div>전화</div>
+        <div>010-4255-7999</div><br>
+        <hr class="contact-hr">
+        <div>이메일</div>
+        <div>sales@rootel.kr</div><br>
+        <hr class="contact-hr">
+        <div>주소</div>
+        <div>서울시 강남구 논현로 80 3층</div>
+      </div>
+  </div>
+
+  <!-- 우측 영역 -->
+  <div class="qna-right">
+    <form method="POST" action="{% url 'register_qna_submit' %}">
+      {% csrf_token %}
+      <div class = "form-group-left" style="margin-bottom: 20px;">
+        <!-- <label>이름</label> -->
+        <input type="text" id="name" name="name" placeholder="이름" style="height: 50px;">
+      </div>
+
+      <div class = "form-group-left" style="margin-bottom: 20px;">
+        <!-- <labe>이메일</label> -->
+        <input type="text" id="email" name="email" placeholder="이메일" style="height: 50px;">
+      </div>
+
+      <div class = "form-group-left" style="margin-bottom: 20px;">
+        <!-- <label>제목</label> -->
+        <input type="text" id="title" name="title" placeholder="제목" style="height: 50px;">
+      </div>
+
+      <div class = "form-group-left" style="margin-bottom: 20px;">
+        <!-- <label>메세지</label> -->
+        <textarea style="resize: none;" name="message" id="message" rows="11" placeholder="메세지"></textarea>
+      </div>
+
+      <div style="text-align:center;">
+        <button type="submit" class="btn btn-primary">메세지 보내기</button>
+      </div>
+
+    </form>
+  </div>
+
+</div>
+
+<script>
+document.querySelector("form").addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+    const res = await fetch("{% url 'register_qna_submit' %}", {
+        method: "POST",
+        credentials: "include",   // 👈 여기
+        body: formData,
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}"
+        }
+    });
+
+    const data = await res.json();  // JSON으로 파싱
+    alert(data.message);            // 한글이 정상으로 표시됨
+});
+</script>
+
+
+
+{% endblock %}

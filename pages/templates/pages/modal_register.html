@@ -1,0 +1,532 @@
+<!-- ✅ Tom Select 라이브러리 추가 -->
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+
+<style>
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}  
+/* 조회 속도 느릴때 화면 overlay 로 조회중이란 메시지 뿌릴때 사용 시작 */
+#signup_formatLoading {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: var(--white-shadow); /* 반투명 흰색 */
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999; /* 제일 위로 */
+}
+
+#signup_formatLoading .signup_loading-content {
+  background: var(--loadingback-color);
+  padding: 15px 25px;
+  border-radius: 8px;
+  color: var(--gray-600);
+  font-size: 16px;
+  font-weight: bold;
+  box-shadow: 0 2px 6px var(--black-shadow);
+}
+
+/* 회원 가입 */
+.signup_base_modal_content {
+    background: var(--white);
+    padding: 30px 25px;
+    border-radius: 12px;
+    width: 360px;
+    height: 615px;
+    box-shadow: 0 8px 24px var(--black-shadow);
+    text-align: center;
+}
+</style>
+
+<meta name="csrf-token" content="{{ csrf_token }}">
+
+<!-- 회원가입 -->
+<div id="signup_base_modal" class="base_modal_overlay" style="display: none;">
+    <div class="signup_base_modal_content" style="position: relative">
+        <!-- ✅ 닫기 버튼 -->
+        <button id="signup_base_modal_close" style="
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: transparent;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+        ">&times;</button>
+
+        <h2 style="font-weight: bold;">GenQuery 회원가입</h2>
+
+        <!-- ✅ 드롭박스 자리 -->
+        <label class="modal_label">
+          <span class="modal_span">사용 모델</span>
+          <div class="base_modal_input" style="width: 70%;" id="billingmodelcd" >
+            <label class="radio-inline">
+              <input type="radio" name="billingmodelcd" value="single" checked>
+              개인
+            </label>
+            <label class="radio-inline" style="margin-left: 10%;">
+              <input type="radio" name="billingmodelcd" value="multi">
+              단체
+            </label>
+          </div>
+        </label>
+
+        <!-- ✅ 개인 선택 시 Free 와 Pro 나옴 -->
+        <label id="single_selector" class="modal_label">
+          <span class="modal_span">요금제</span>
+          <select id="signup_single" class="base_modal_input" style="width: 77%; height: 42px;"> <!--required> -->
+            <option value="Fr" selected>Free 사용자</option>
+            <option value="Pr">Pro 사용자</option>
+          </select>
+        </label>
+
+        <!-- ✅ 단체 선택 시 Tenant 정보 나옴 -->
+        <label id="tenant_selector" class="modal_label" style="display: none;">
+          <span class="modal_span">기업</span>
+          <select id="signup_tenant" class="base_modal_input" style="width: 71%;"> <!--required> -->
+            <option value="">기업을 선택하세요</option>
+          </select>
+        </label>
+
+        <label class="modal_label">
+            <span class="modal_span">사용자명</span>
+            <input type="text" id="signup_usernm" placeholder="사용자명" class="base_modal_input" style="width: 70%;" required/>
+        </label>
+
+        <label class="modal_label">
+            <span class="modal_span">이메일</span>
+            <input type="email" id="signup_email" placeholder="이메일" class="base_modal_input" style="width: 70%;" required/>
+        </label>
+
+        <label class="modal_label">
+            <span class="modal_span">비밀번호</span>
+            <input type="password" id="signup_password" placeholder="비밀번호" class="base_modal_input" style="width: 70%;" required/>
+        </label>
+
+        <!-- 안 보이는 더미 필드 -->
+        <input type="text" style="position: absolute; left: -9999px; top: -9999px;" autocomplete="off">
+        
+        <label class="modal_label">
+            <span class="modal_span">비밀번호 확인</span>
+            <input type="password" id="signup_password_confirm" placeholder="비밀번호 확인" class="base_modal_input" style="width: 70%;" required/>
+        </label>
+
+        <label class="modal_label">
+          <input type="checkbox" id="agree_all" />
+          <span style="font-size: 14px; margin-left: 1%;">전체 동의합니다. </span>
+        </label>
+        <label class="modal_label" style="display: block; margin-top: 10px; text-align: left;">
+          <input type="checkbox" id="userinfoyn" />
+          <span style="font-size: 14px; margin-left: 1%;">
+            <a href="{% url 'terms_conditions' %}?terms=collection" target="_blank" style="color: #0f6efd; text-decoration: underline;">개인정보수집동의여부</a> (필수)
+          </span>
+        </label>
+        <label class="modal_label" style="display: block; margin-top: 10px; text-align: left;">
+            <input type="checkbox" id="termsofuseyn" />
+            <span style="font-size: 14px; margin-left: 1%;">
+              <a href="{% url 'terms_conditions' %}?terms=service" target="_blank" style="color: #0f6efd; text-decoration: underline;">GenQuery 이용약관</a>
+              에 동의합니다. (필수)
+            </span>
+        </label>
+        <label class="modal_label" style="display: block; margin-top: 10px; text-align: left;">
+          <input type="checkbox" id="marketingyn" />
+          <span style="font-size: 14px; margin-left: 1%;">
+            <a href="{% url 'terms_conditions' %}?terms=marketing" target="_blank" style="color: #0f6efd; text-decoration: underline;">마케팅동의여부</a>
+            (선택)</span>
+        </label>
+
+        <button id="signup_submit" class="btn btn-save" style="margin-top: 8%" disabled>회원가입</button>
+    </div>
+</div>
+
+<!-- 로딩 오버레이 -->
+<div id="signup_formatLoading">
+  <div class="signup_loading-content">
+    <div class="signup_spinner"></div>
+    <div id="signup_loading-text" style="text-align: left; white-space: pre-line;"></div>
+    <div style="text-align: left;">잠시만 기다려 주세요.</div>
+  </div>
+</div>
+
+
+<script>
+// 로딩 상태 관리 함수들
+  function signup_showLoading() {
+    const overlay = document.getElementById('signup_formatLoading');
+    const text = document.getElementById('signup_loading-text');
+    
+    // 오버레이 표시
+    overlay.style.display = 'flex';
+  }
+
+  function signup_hideLoading() {
+    const overlay = document.getElementById('signup_formatLoading');
+    const text = document.getElementById('signup_loading-text');
+    
+    // 오버레이 숨기기
+    overlay.style.display = 'none';
+    text.textContent = '';
+  }
+
+
+// ✅ CSRF 쿠키에서 꺼내기
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + '=')) {
+                cookieValue = decodeURIComponent(cookie.slice(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+// const csrftoken = getCookie('csrftoken');
+
+
+// ✅ 회원가입 모달 표시
+async function show_signup_base_modal(plan = null){
+  signup_showLoading()
+
+
+  // --------------------------
+  // 🔥 ① plan이 있을 때만 기본 설정 적용 
+  //    (기존 호출은 plan=null → 아무것도 변화 없음)
+  // --------------------------
+  if (plan !== null) {
+
+      // 기본값 초기화
+      document.querySelector("input[name='billingmodelcd'][value='single']").checked = true;
+      document.getElementById("single_selector").style.display = "flex";
+      document.getElementById("tenant_selector").style.display = "none";
+      document.getElementById("signup_single").value = "Fr"; // 기본 Free
+      document.getElementById("signup_tenant").value = "";
+
+      // 플랜별 오토 설정
+      if (plan === "free") {
+          // 개인 Free
+          document.querySelector("input[name='billingmodelcd'][value='single']").checked = true;
+          document.getElementById("signup_single").value = "Fr";
+
+      } else if (plan === "pro") {
+          // 개인 Pro
+          document.querySelector("input[name='billingmodelcd'][value='single']").checked = true;
+          document.getElementById("signup_single").value = "Pr";
+
+      } else if (plan === "teams") {
+          // 단체 Teams
+          document.querySelector("input[name='billingmodelcd'][value='multi']").checked = true;
+          document.getElementById("single_selector").style.display = "none";
+          document.getElementById("tenant_selector").style.display = "flex";
+
+      } else if (plan === "enterprise") {
+          // 단체 Enterprise
+          document.querySelector("input[name='billingmodelcd'][value='multi']").checked = true;
+          document.getElementById("single_selector").style.display = "none";
+          document.getElementById("tenant_selector").style.display = "flex";
+      }
+  }
+
+  try {
+    const res = await fetch("{% url 'get_tenants' %}", {
+      method: "POST",
+      credentials: "include",   // 👈 여기
+      headers: { "X-CSRFToken": getCookie("csrftoken") }
+    });
+    const data = await res.json();
+
+    if (data.result === "success") {
+      const tenantSelect = document.getElementById("signup_tenant");
+      const multitenantyn = data.multitenantyn
+
+      if (multitenantyn == true) {
+        tenantSelect.innerHTML = '<option value="">기업을 선택하세요</option>';
+      }
+      
+
+      // ✅ 서버에서 가져온 옵션 채우기
+      data.tenants.forEach(tenant => {
+        const opt = document.createElement("option");
+        opt.value = tenant.tenantid;
+        opt.textContent = tenant.tenantnm;
+        tenantSelect.appendChild(opt);
+      });
+
+      // ✅ TomSelect 재초기화 (기존 인스턴스 제거 후 새로)
+      if (window.signupTenantSelect) {
+        window.signupTenantSelect.destroy();
+      }
+
+      window.signupTenantSelect = new TomSelect("#signup_tenant", {
+        placeholder: "기업을 검색하거나 선택하세요",
+        create: false,
+        openOnFocus: true,
+        maxOptions: 500,
+        allowEmptyOption: true,
+        sortField: { field: "text", direction: "asc" },
+        render: {
+          option: (data, escape) => `<div>${escape(data.text)}</div>`,
+          item: (data, escape) => `<div>${escape(data.text)}</div>`
+        },
+        onInitialize: function() {
+          this.on('focus', () => this.open());
+        }
+      });
+
+      // multitenantyn 이 false 인 경우 외부 서버 배포 된 상태 이므로 하나의 테넌드 밖에 없음
+      if (multitenantyn == false && data.tenants.length > 0) {
+        window.signupTenantSelect.setValue(data.tenants[0].tenantid);
+      }
+
+      document.getElementById("signup_base_modal").style.display = "flex";
+      signup_hideLoading()
+    } else {
+      signup_hideLoading()
+      alert("테넌트 조회 실패: " + (data.message || "서버 오류"));
+    }
+  } catch (err) {
+    signup_hideLoading()
+    alert("테넌트 조회 중 오류 발생: " + err.message);
+  }
+}
+
+// 회원가입 저장 버튼 클릭 시
+document.getElementById('signup_submit').addEventListener('click', async () => {
+    const usernm = document.getElementById("signup_usernm").value.trim();
+    const email = document.getElementById('signup_email').value.trim();
+    const password = document.getElementById('signup_password').value;
+    const password_confirm = document.getElementById("signup_password_confirm").value;
+    const tenant = document.getElementById('signup_tenant').value;
+    const single = document.getElementById('signup_single').value;
+    // const billingmodelcd = document.getElementByName('billingmodelcd').value;
+    const billingmodelcd = document.querySelector("input[name='billingmodelcd']:checked")?.value || "";
+    const termsofuseyn = document.getElementById("termsofuseyn").checked;
+    const userinfoyn = document.getElementById("userinfoyn").checked;
+    const marketingyn = document.getElementById("marketingyn").checked;
+
+    if (!termsofuseyn || !userinfoyn){
+      alert("필수 약관에 동의 하셔야 합니다.");
+      return;
+    }
+
+    if ((billingmodelcd == "single") && !single){
+      alert('단체는 기업 선택이 필수입니다.');
+      return;
+    }
+
+    if ((billingmodelcd == "multi") && !tenant){
+      alert('단체는 기업 선택이 필수입니다.');
+      return;
+    }
+
+    if (!usernm){
+      alert("이름을 입력해주세요.");
+      return;
+    }
+    
+    if (!email) {
+      alert('이메일을 입력해주세요.');
+      return;
+    }
+    if (!password) {
+      alert('비밀번호를 입력해주세요.');
+      return;
+    }
+    if (password !== password_confirm) {
+      alert('비밀번호가 일치하지 않습니다.');
+      return;
+    }
+    if (password.length < 8) {
+      alert('비밀번호는 최소 8자 이상이어야 합니다.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('email', email);
+    formData.append('password', password);
+    formData.append('password_confirm', password_confirm);
+    formData.append('single', single);
+    formData.append('tenant', tenant);
+    formData.append('billingmodelcd', billingmodelcd);
+    formData.append('usernm', usernm);
+    formData.append('userinfoyn', userinfoyn);
+    formData.append('termsofuseyn', termsofuseyn);
+    formData.append('marketingyn', marketingyn);
+
+    document.getElementById("signup_usernm").value = "";
+    document.getElementById("signup_email").value = "";
+    document.getElementById("signup_password").value = "";
+    document.getElementById("signup_password_confirm").value = "";
+    document.getElementById("signup_usernm").disabled = true;
+    document.getElementById("signup_email").disabled = true;
+    document.getElementById("signup_password").disabled = true;
+    document.getElementById("signup_password_confirm").disabled = true;
+    document.getElementById('signup_tenant').value = "";
+    document.getElementById('signup_single').value = "";
+    document.getElementById('agree_all').checked = false;
+    document.getElementById('userinfoyn').checked = false;
+    document.getElementById('termsofuseyn').checked = false;
+    document.getElementById('marketingyn').checked = false;
+
+    const btn = document.getElementById('signup_submit');
+    btn.disabled = true;
+    btn.textContent = '가입 중...';
+
+    try {
+      const response = await fetch('/register/', {
+        method: 'POST',
+        credentials: "include",   // 👈 여기
+        headers: { 'X-CSRFToken': csrftoken },
+        body: formData
+      });
+      const data = await response.json();
+
+      if (data.result === 'success') {
+        alert(data.message || '회원가입이 완료되었습니다.');
+        window.location.href = '/';
+        // window.location.href = '/login/';
+      } else {
+        alert(data.message || '회원가입 실패');
+      }
+    } catch (error) {
+      alert('서버와 통신 중 오류가 발생했습니다.');
+      // console.log(error)
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '가입하기';
+    }
+  });
+
+// 모달 관련 이벤트
+document.addEventListener("DOMContentLoaded", function () {
+  ////////// Singup 영역 시작
+  // 회원가입 영역
+  const signup_base_closeBtn = document.getElementById("signup_base_modal_close");
+  const signup_base_modal = document.getElementById("signup_base_modal");
+  signup_base_closeBtn.addEventListener("click", function () {
+      signup_base_modal.style.display = "none";
+      document.getElementById("signup_email").value = '';
+      document.getElementById("signup_password").value = '';
+      document.getElementById("signup_password_confirm").value = '';
+      document.getElementById("signup_submit").disabled = true;
+      document.getElementById("signup_tenant").value = '';
+      document.getElementById("signup_single").value = 'Fr';
+      document.getElementById('agree_all').checked = false;
+      document.getElementById('userinfoyn').checked = false;
+      document.getElementById('termsofuseyn').checked = false;
+      document.getElementById('marketingyn').checked = false;
+  });
+
+  const registerBtn = document.getElementById('register_submit');
+
+  // 약관 관련 체크
+  const agreeAll = document.getElementById("agree_all");
+  const userinfoyn = document.getElementById("userinfoyn");       // 개인정보수집동의여부 (필수)
+  const termsofuseyn = document.getElementById("termsofuseyn");   // 이용약관 (필수)
+  const marketingyn = document.getElementById("marketingyn");     // 마케팅동의여부 (선택)
+
+  agreeAll.addEventListener("change", function() {
+    const checked = agreeAll.checked;
+    userinfoyn.checked = checked;
+    termsofuseyn.checked = checked;
+    marketingyn.checked = checked;
+  });
+
+  // 하위 항목 해제될 시 전체동의도 해제
+  [userinfoyn, termsofuseyn, marketingyn].forEach(el => {
+    el.addEventListener("change", function () {
+      if (!userinfoyn.checked || !termsofuseyn.checked || !marketingyn.checked) {
+        agreeAll.checked = false;
+      } else if (userinfoyn.checked && termsofuseyn.checked && marketingyn.checked) {
+        agreeAll.checked = true;
+      }
+    })
+  })
+
+  // 회원가입 버튼 활성화
+  const signup_submitBtn = document.getElementById("signup_submit");
+  const signup_usernm = document.getElementById("signup_usernm");
+  const signup_email = document.getElementById("signup_email");
+  const signup_password = document.getElementById("signup_password");
+  const signup_password_confirm = document.getElementById("signup_password_confirm");
+
+  function signup_validateForm() {
+    const usernm_fill = signup_usernm.value.trim().length > 0;
+    const email_fill = signup_email.value.trim().length > 0;
+    const password_fill = signup_password.value.trim().length > 0;
+    const password_confirm_fill = signup_password_confirm.value.trim().length > 0;
+    const userinfoyn_fill = userinfoyn.checked;
+    const termsofuseyn_fill = termsofuseyn.checked;
+
+    const allValid = usernm_fill && email_fill && password_fill && password_confirm_fill && userinfoyn_fill && termsofuseyn_fill;
+
+    signup_submitBtn.disabled = !allValid;
+  }
+  // 회원가입 이벤트 연결
+  signup_usernm.addEventListener("input", signup_validateForm);
+  signup_email.addEventListener("input", signup_validateForm);
+  signup_password.addEventListener("input", signup_validateForm);
+  signup_password_confirm.addEventListener("input", signup_validateForm);
+  userinfoyn.addEventListener("change", signup_validateForm);
+  termsofuseyn.addEventListener("change", signup_validateForm);
+  agreeAll.addEventListener("change", signup_validateForm);
+
+  // 회원가입 영역 -> 이메일 입력 후 엔터 → 비밀번호로 포커스 이동
+  signup_email.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      signup_password.focus();
+    }
+  });
+
+  // 회원가입 영역 -> 비밀번호 입력 후 엔터 → 비밀번호_확인 으로 포커스 이동
+  signup_password.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      signup_password_confirm.focus();
+    }
+  });
+
+  // 회원가입 영역 -> 비밀번호_확인 입력 후 엔터 → 로그인 버튼 클릭
+  signup_password_confirm.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (!registerBtn.disabled) {
+        registerBtn.click();
+        }
+    }
+  });
+
+  const radios = document.getElementsByName("billingmodelcd");
+
+  radios.forEach(radio => {
+    radio.addEventListener("change", () => {
+      const tenant_selector = document.getElementById("tenant_selector")
+      const single_selector = document.getElementById("single_selector")
+
+      if (radio.value == "multi"){
+        single_selector.style.display = 'none';
+        tenant_selector.style.display = 'flex';
+        document.getElementById('signup_tenant').value = "";
+        document.getElementById('signup_single').value = "";
+      } else {
+        single_selector.style.display = 'flex';
+        tenant_selector.style.display = 'none';
+        document.getElementById('signup_tenant').value = "";
+        document.getElementById('signup_single').value = "Fr";
+      }
+    })
+  });
+
+
+  ////////// Singup 영역 종료
+});
+</script>

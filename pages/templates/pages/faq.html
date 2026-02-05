@@ -1,0 +1,138 @@
+{% extends 'pages/base.html' %}
+{% load static %}
+{% block title %}FAQ{% endblock %}
+
+{% block content %}
+
+<div class="page-title">
+  <div style="display: flex; align-items: center;">
+    <div class="gradient-bar"></div>
+    <div>FAQ</div>
+  </div>
+
+  <!-- FAQ 추가 버튼 (roleid 7일 경우만) -->
+  {% if roleid == 7 %}
+  <div style="text-align: right; margin: 20px 0;">
+      <button id="faqAddBtn" class="btn btn-primary">FAQ 추가</button>
+  </div>
+  {% endif %}
+</div>
+
+{% for faq in faqs %}
+<div style="border: 1px solid #d8dfeb; border-radius: 8px; margin-bottom: 10px; overflow: hidden;">
+    <!-- 제목 + 편집/삭제 버튼 Row -->
+    <div style="display:flex; align-items:center; justify-content: space-between; padding: 10px; background-color:#f0f4f8;">
+        <button class="faq-title" style="text-align:left; font-weight:bold; cursor:pointer; flex:1; border:none; background:none; padding:0;">
+            {{ faq.title }}
+        </button>
+        {% if roleid == 7 %}
+        <span>
+            <button class="btn btn-primary faq-edit-btn"
+                data-faquid="{{ faq.faquid }}"
+                data-title="{{ faq.title }}"
+                data-question="{{ faq.question }}"
+                data-answer="{{ faq.answer }}"
+                data-orderno="{{ faq.orderno }}"
+            >편집</button>
+            <button class="btn btn-danger" onclick="if(confirm('정말 삭제하시겠습니까?')) location.href='{% url 'faq_delete' %}?faquid={{ faq.faquid }}'">삭제</button>
+        </span>
+        {% endif %}
+    </div>
+    <div class="faq-content" style="padding:10px; display:none; background:#fff;">
+        <div style="font-weight:bold; margin-bottom:5px;">Q. {{ faq.question }}</div>
+        <div style="margin-left:10px;">A. {{ faq.answer|linebreaks }}</div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- FAQ 추가/편집 모달 -->
+<div id="faqModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center;">
+    <div style="background:#fff; padding:20px; border-radius:8px; width:400px; position:relative;">
+        <h3 id="faqModalTitle" style="text-align:center;">FAQ 추가</h3>
+        <form method="POST" action="{% url 'faq_save' %}">
+            {% csrf_token %}
+            <input type="hidden" name="faquid" id="faqFaquid">
+            <div style="margin-bottom:10px;">
+                <label>제목:</label><br>
+                <input type="text" name="title" id="faqTitle" required style="width:100%;">
+            </div>
+            <div style="margin-bottom:10px;">
+                <label>질문:</label><br>
+                <input type="text" name="question" id="faqQuestion" required style="width:100%;">
+            </div>
+            <div style="margin-bottom:10px;">
+                <label>답변:</label><br>
+                <textarea name="answer" id="faqAnswer" required style="width:100%; height:100px;"></textarea>
+            </div>
+            <div style="margin-bottom:10px;">
+                <label>정렬순서:</label><br>
+                <input type="number" name="orderno" id="faqOrderno" required style="width:100%;">
+            </div>
+            <div style="text-align:center;">
+                <button type="button" id="faqCancelBtn"  class="btn btn-secondary">취소</button>
+                <button type="submit"  class="btn btn-primary">저장</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// FAQ 내용 토글
+document.querySelectorAll('.faq-title').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const content = btn.closest('div').nextElementSibling;
+        content.style.display = (content.style.display === "none" || content.style.display === "") ? "block" : "none";
+    });
+});
+
+// 모달 관련 요소
+const faqModal = document.getElementById('faqModal');
+const faqAddBtn = document.getElementById('faqAddBtn');
+const faqCancelBtn = document.getElementById('faqCancelBtn');
+const faqModalTitle = document.getElementById('faqModalTitle');
+const faqFaquid = document.getElementById('faqFaquid');
+const faqTitle = document.getElementById('faqTitle');
+const faqQuestion = document.getElementById('faqQuestion');
+const faqAnswer = document.getElementById('faqAnswer');
+const faqOrderno = document.getElementById('faqOrderno');
+
+// 추가 버튼 클릭
+faqAddBtn?.addEventListener('click', () => {
+    faqModalTitle.textContent = 'FAQ 추가';
+    faqFaquid.value = '';
+    faqTitle.value = '';
+    faqQuestion.value = '';
+    faqAnswer.value = '';
+    faqOrderno.value = '';
+    faqModal.style.display = 'flex';
+});
+
+// 편집 버튼 클릭
+document.querySelectorAll('.faq-edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        faqModalTitle.textContent = 'FAQ 편집';
+        faqFaquid.value = btn.dataset.faquid;
+        faqTitle.value = btn.dataset.title;
+        faqQuestion.value = btn.dataset.question;
+        faqAnswer.value = btn.dataset.answer;
+        faqOrderno.value = btn.dataset.orderno;
+        faqModal.style.display = 'flex';
+    });
+});
+
+// 모달 취소 버튼
+faqCancelBtn?.addEventListener('click', () => {
+    faqModal.style.display = 'none';
+});
+
+// **배경 클릭으로 닫히지 않도록 제거**
+
+// 정렬순서 입력 중 엔터 방지
+document.querySelector('#faqModal form').addEventListener('keydown', function(e){
+    if(e.key === 'Enter' && e.target.type === 'number'){
+        e.preventDefault();
+    }
+});
+</script>
+
+{% endblock %}
