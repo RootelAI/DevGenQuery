@@ -138,7 +138,7 @@ def master_tenant_llms_save(request):
         return JsonResponse({"result": "success", "message": "성공적으로 저장되었습니다."})
 
     except Exception as e:
-        print(e)
+        # print(e)
         return JsonResponse({"message": str(e)}, status=500)
     
 def master_tenant_llms_delete(request):

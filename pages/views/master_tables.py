@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.http import JsonResponse
 import json
 from utilsPrj.supabase_client import get_supabase_client
+import re
 
 def master_tables(request):
     access_token = request.session.get("access_token")
@@ -243,23 +244,113 @@ def master_tables_delete(request):
     except Exception as e:
         return JsonResponse({"result": "Failed", "error": "삭제 중 오류가 발생했습니다."})
 
+def parse_aliases(s):
+    """문자열에서 " " 로 감싼 alias들을 리스트로 반환"""
+    if not s:
+        return []
+    return re.findall(r'"(.*?)"', s)
+
+def parse_multiline(s):
+    if not s:
+        return []
+
+    lines = re.split(r'[\r\n]+', s)
+    cleaned = []
+
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+
+        # "내용",  → 내용
+        line = re.sub(r'^"\s*|\s*",?$', '', line)
+
+        cleaned.append(line)
+
+    return cleaned
+
 def master_tables_json_create(supabase, tableuid):
-    """
-    tableuid를 받아서 tables 테이블만 조회
-    추후 로직 추가 예정
-    """
     try:
-        table_response = (
+        # ------------------ tables (필수) ------------------
+        table_resp = (
             supabase.schema("genquery")
             .table("tables")
             .select("*")
             .eq("tableuid", tableuid)
             .execute()
         )
-        if table_response.data:
-            # 일단 조회된 데이터 확인용으로 print
-            print("master_tables_json_create 조회:", table_response.data[0])
-        else:
-            print("master_tables_json_create: 테이블을 찾을 수 없음")
-    except Exception as e:
-        print("master_tables_json_create 오류:", e)
+        if not table_resp.data:
+            return None  # ❌ 즉시 종료
+
+        table = table_resp.data[0]
+
+        # ------------------ columns (필수) ------------------
+        columns_resp = (
+            supabase.schema("genquery")
+            .table("columns")
+            .select("*")
+            .eq("tableuid", tableuid)
+            .execute()
+        )
+        if not columns_resp.data:
+            return None  # ❌ 즉시 종료
+
+        # ------------------ values (선택) ------------------
+        values_resp = (
+            supabase.schema("genquery")
+            .table("values")
+            .select("*")
+            .eq("tableuid", tableuid)
+            .execute()
+        )
+        values_data = values_resp.data or []
+
+        # ------------------ 테이블 기본 JSON ------------------
+        table_json = {
+            "schema": table["schema_name"],
+            "physical_name": table["physical_name"],
+            "logical_name": table.get("logical_name", ""),
+            "aliases": parse_aliases(table.get("aliases", "")),
+            "source_type": table.get("source_type", ""),
+            "description": table.get("description", ""),
+            "primary_key": parse_aliases(table.get("primary_key", "")),
+            "grain": table.get("grain", "").strip('" '),
+            "default_time_column": table.get("default_time_column", ""),
+            "purpose": parse_multiline(table.get("purpose", "")),
+            "query_examples": parse_multiline(table.get("query_examples", "")),
+            "columns": {}
+        }
+
+        # ------------------ 컬럼 메타 ------------------
+        for col in columns_resp.data:
+            table_json["columns"][col["column_name"]] = {
+                "logical_name": col.get("logical_name", ""),
+                "aliases": parse_aliases(col.get("aliases", "")),
+                "data_type": col.get("data_type", "string")
+            }
+
+        # ------------------ values 매핑 ------------------
+        for v in values_data:
+            col_name = v["column_name"]
+            if col_name not in table_json["columns"]:
+                continue  # 방어 코드
+
+            col_entry = table_json["columns"][col_name]
+            values_obj = col_entry.setdefault("values", {})
+
+            values_obj[v["value"]] = {
+                "logical_name": v.get("logical_name", ""),
+                "aliases": parse_aliases(v.get("aliases", ""))
+            }
+
+        # ------------------ 저장 ------------------
+        supabase.schema("genquery") \
+            .table("tables") \
+            .update({"json": table_json}) \
+            .eq("tableuid", tableuid) \
+            .execute()
+
+        return table_json
+
+    except Exception:
+        return None

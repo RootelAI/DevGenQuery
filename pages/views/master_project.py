@@ -44,16 +44,12 @@ def master_projects(request):
         if users.data and len(users.data) > 0:
             tenantid = users.data[0]['tenantid']
         else:
-            print(f"⚠️ user_id={user_id} 의 tenant 정보가 없습니다.")
             tenantid = None  # 또는 0 으로 기본값 지정 가능
-    # print(tenantid)
 
     try:# projects 테이블에서 데이터 조회
         response = supabase.schema('genquery').table('projects').select('*').eq('tenantid', tenantid).order('createdts', desc=True).execute()
-        # print(response)
         projects = response.data if response.data else []
-        
-        
+         
         tenantnm = supabase.schema('genquery').table('tenants').select('*').eq('tenantid', tenantid).execute().data[0]['tenantnm']
         
         for i in projects:
@@ -69,12 +65,16 @@ def master_projects(request):
                     i['creatornm'] = creatornm[0]['full_name'] if creatornm else ''
                 except Exception as e:
                     i['creatornm'] = ''
-        
+
+        azure_key_vault_response = supabase.schema('genquery').table('azure_key_vault').select('*').eq('tenantid', tenantid).order('createdts', desc=True).execute()
+        azure_key_vault = azure_key_vault_response.data if azure_key_vault_response.data else []
+
         context = {
             'projects': projects,
             'tenantnm': tenantnm,
             'total_count': len(projects),
             'active_count': len([g for g in projects if g.get('is_active', False)]),
+            'azure_key_vault' : azure_key_vault,
         }
         
         return render(request, 'pages/master_projects.html', context)
@@ -117,7 +117,8 @@ def master_projects_save(request):
         projectnm = request.POST.get('projectnm')
         useyn = request.POST.get('useyn')
         projectdesc = request.POST.get('projectdesc')
-        
+        access_key_uid  = request.POST.get('access_key_uid')
+              
         if not tenantid:
             users = supabase.schema("genquery").table("tenantusers") \
                 .select("tenantid").eq("useruid", user_id).eq("useyn", True).execute()
@@ -125,9 +126,7 @@ def master_projects_save(request):
             if users.data and len(users.data) > 0:
                 tenantid = users.data[0]['tenantid']
             else:
-                print(f"⚠️ user_id={user_id} 의 tenant 정보가 없습니다.")
                 tenantid = None  # 또는 0 으로 기본값 지정 가능
-        # print(tenantid)
 
         if useyn == 'on':
             useyn = True
@@ -151,7 +150,8 @@ def master_projects_save(request):
             "useyn": useyn,
             "tenantid": tenantid,
             "projectdesc": projectdesc,
-            "creator": user_id
+            "creator": user_id,
+            "access_key_uid" : access_key_uid 
         }
 
         if existing:

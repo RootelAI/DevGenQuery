@@ -82,10 +82,8 @@ def search_help(request):
             return JsonResponse({"status": "fail", "error": "Invalid JSON"}, status=400)
 
         url = data.get("url")
-        # print(f'URL: {url}')
 
         response = supabase.schema("genquery").table("helps").select("*").eq("url", url).execute().data or []
-        # print(f'Result: {response}')
 
         # JsonResponse로 반환
         return JsonResponse({

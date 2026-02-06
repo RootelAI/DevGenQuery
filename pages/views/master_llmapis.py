@@ -96,7 +96,7 @@ def master_llmapis_save(request):
         # 공백 시 기존 API Key 사용
         if llmapiuid:
             if apikey == "":
-                print('기존 API 사용')
+                # print('기존 API 사용')
                 orig_apikey = supabase.schema('genquery').table('llmapis').select("*").eq("llmapiuid", llmapiuid).execute().data
                 if orig_apikey:
                     apikey = decrypt_value(orig_apikey[0]['encapikey'])
@@ -105,7 +105,6 @@ def master_llmapis_save(request):
         desc = request.POST.get('desc')
 
         encapikey = encrypt_value(apikey)
-        print(f'APIKey: {apikey} / EncAPIKey: {encapikey}')
         user = request.session.get("user")
         user_id = user.get("id")
 
@@ -127,7 +126,7 @@ def master_llmapis_save(request):
         return JsonResponse({"result": "success", "message": "성공적으로 저장되었습니다."})
 
     except Exception as e:
-        print(e)
+        # print(e)
         return JsonResponse({"error": str(e)}, status=500)
     
 def master_llmapis_delete(request):

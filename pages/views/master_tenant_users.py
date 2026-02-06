@@ -65,7 +65,7 @@ def master_tenant_users(request):
                 try:
                     i['sep'] = 'users'
                 except Exception as e:
-                    print(e)
+                    # print(e)
                     i['sep'] = ''
 
         tenantnewusers = supabase.schema('genquery').table('tenantnewusers').select('*').eq('tenantid', tenantid).eq('approvecd', 'A').execute().data or []
@@ -76,7 +76,7 @@ def master_tenant_users(request):
                     i['sep'] = 'newusers'
                     i['rolecd'] = 'U'  # ✅ rolecd 필드 추가
                 except Exception as e:
-                    print(e)
+                    # print(e)
                     i['sep'] = ''
 
         # print(tenantnewusers)

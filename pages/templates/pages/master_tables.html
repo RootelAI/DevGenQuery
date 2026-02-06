@@ -66,21 +66,34 @@
         </select>
       </div>
 
-      <div class="form-group-left"><label>스키마:</label><input id="schema_name" name="schema_name" type="text"></div>
-      <div class="form-group-left"><label>물리명:</label><input id="physical_name" name="physical_name" type="text"></div>
-      <div class="form-group-left"><label>논리명:</label><input id="logical_name" name="logical_name" type="text"></div>
-      <div class="form-group-left"><label>별칭:</label><input id="aliases" name="aliases" type="text"></div>
-      <div class="form-group-left"><label>타입:</label><input id="source_type" name="source_type" type="text"></div>
-      <div class="form-group-left"><label>주요 키:</label><input id="primary_key" name="primary_key" type="text"></div>
-      <div class="form-group-left"><label>기본 시간 컬럼:</label><input id="default_time_column" name="default_time_column" type="text"></div>
-      <div class="form-group-left"><label>그레인:</label><input id="grain" name="grain" type="text"></div>
-      <div class="form-group-left"><label>목적:</label><input id="purpose" name="purpose" type="text"></div>
-      <div class="form-group-left"><label>쿼리 예제:</label><textarea id="query_examples" name="query_examples" spellcheck="false" style="resize: none; height: 60px;"></textarea></div>
-      <div class="form-group-left"><label>설명:</label><textarea id="description" name="description" spellcheck="false" style="resize: none; height: 60px;"></textarea></div>
-      <div class="form-group-left"><label>부모 스키마:</label><input id="parent_schema" name="parent_schema" type="text"></div>
-      <div class="form-group-left"><label>부모 테이블:</label><input id="parent_table" name="parent_table" type="text"></div>
-      <div class="form-group-left"><label>부모 컬럼:</label><input id="parent_column" name="parent_column" type="text"></div>
-      <div class="form-group-left"><label>자식 컬럼:</label><input id="child_column" name="child_column" type="text"></div>
+      <div class="form-group-left"><label>스키마:</label><input id="schema_name" name="schema_name" type="text" placeholder="dbo"></div>
+      <div class="form-group-left"><label>물리명:</label><input id="physical_name" name="physical_name" type="text" placeholder="view_rtims_logs" ></div>
+      <div class="form-group-left"><label>논리명:</label><input id="logical_name" name="logical_name" type="text" placeholder="인터페이스 연동 로그"></div>
+      <div class="form-group-left"><label>별칭:</label><input id="aliases" name="aliases" type="text" placeholder='"연동로그", "인터페이스로그"'></div>
+      <!-- <div class="form-group-left"><label>타입:</label><input id="source_type" name="source_type" type="text"></div> -->
+      <div class="form-group-left">
+        <label>타입:</label>
+        <select id="source_type" name="source_type">
+          <option value="">-- 선택 --</option>
+          <option value="table">Table</option>
+          <option value="view">View</option>
+        </select>
+      </div>
+      <div class="form-group-left"><label>주요 키:</label><input id="primary_key" name="primary_key" type="text" placeholder='"message_id"'></div>
+      <div class="form-group-left"><label>기준 컬럼:<br>(일자/시간)</label><input id="default_time_column" name="default_time_column" type="text" placeholder="createdts"></div>
+      <div class="form-group-left"><label>자료 단위:</label><input id="grain" name="grain" type="text" placeholder='"message_id"'></div>
+      <div class="form-group-left"><label>목적:</label><textarea id="purpose" name="purpose" spellcheck="false" style="resize: none; height: 60px;" placeholder='"인터페이스 송수신 추적",
+"API 호출 성공/실패 분석",
+"처리시간 성능 분석"'></textarea></div>
+      <div class="form-group-left"><label>질문 예시:</label><textarea id="query_examples" name="query_examples" spellcheck="false" style="resize: none; height: 60px;"placeholder='"인터페이스 오류 건수",
+"API 평균 처리시간",
+"어제 인터페이스 실패 로그",
+"인터페이스별 성공률"'></textarea></div>
+      <div class="form-group-left"><label>설명:</label><input id="description" name="description" type = "text" placeholder="시스템 간 인터페이스 송수신 및 API 호출 로그"></div>
+      <div class="form-group-left"><label>부모 스키마:</label><input id="parent_schema" name="parent_schema" type="text" placeholder="dbo"></div>
+      <div class="form-group-left"><label>부모 테이블:</label><input id="parent_table" name="parent_table" type="text" placeholder="view_rtimes_logs_detail"></div>
+      <div class="form-group-left"><label>부모 컬럼:</label><input id="parent_column" name="parent_column" type="text" placeholder="detail_id"></div>
+      <div class="form-group-left"><label>자식 컬럼:</label><input id="child_column" name="child_column" type="text" placeholder="detail_id"></div>
 
       <!-- 버튼 그룹 -->
       <div class="button-group" style="margin-top: 10px;">

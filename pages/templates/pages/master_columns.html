@@ -1,0 +1,466 @@
+{% extends 'pages/base.html' %}
+{% load static %}
+{% block title %}컬럼 관리{% endblock %}
+
+{% block content %}
+
+<style>
+.basic-table {
+  width: 100%;
+  table-layout: fixed; /* th 기준으로 td 폭 강제 */
+  border-collapse: collapse;
+}
+
+.basic-table th, .basic-table td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 4px 8px;   /* 내부 여백 */
+  box-sizing: border-box; /* 패딩까지 포함하여 td 폭 계산 */
+}
+
+/* input/select가 td 영역 안에서 꽉 차도록 */
+.basic-table td input,
+.basic-table td select {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 2px 4px;  /* 여백 조정 */
+  border: 1px solid #ccc;
+}
+
+.new-row, .new-value-row {
+  background:#f0f8ff;
+}
+.new-row input, .new-row select,
+.new-value-row input {
+  width:100%;
+  box-sizing:border-box;
+}
+</style>
+
+<div class="page-title">
+  <div style="display:flex; align-items:center;">
+    <div class="gradient-bar"></div>
+    <div>컬럼 관리</div>
+  </div>
+</div>
+
+<div style="display:flex; gap:20px; min-height:80%;">
+
+  <!-- 1. 왼쪽: 테이블 목록 -->
+  <div style="flex:1.5;">
+    <h3>테이블 목록</h3>
+    <div class="table-container">
+      <table class="basic-table" id="table-table">
+        <thead>
+          <tr>
+            <th style="width:25%;">프로젝트</th>
+            <th style="width:25%;">스키마</th>
+            <th style="width:50%;">물리명</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for table in tables %}
+          <tr data-table="{{ table.tableuid }}">
+            <td>{{ table.projectnm }}</td>
+            <td>{{ table.schema_name }}</td>
+            <td>{{ table.physical_name }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 2. 가운데: 컬럼 정보 -->
+  <div style="flex:2.8; padding-left:20px;">
+    <h3 style="display:flex; justify-content:space-between; align-items:center;">
+      컬럼 정보
+      <button id="add-column-btn" type="button" class="icon-btn">
+        <div class="icon-wrapper"><img src="{% static 'icons/new.svg' %}" class="icon-img new-icon" title="신규"></div>
+      </button>
+    </h3>
+
+    <table class="basic-table" id="column-table">
+      <thead>
+        <tr>
+          <th style="width:20%;">컬럼명</th>
+          <th style="width:20%;">논리명</th>
+          <th style="width:20%;">별칭</th>
+          <th style="width:25%;">데이터타입</th>
+          <th style="width:7%;">값</th>
+          <th style="width:8%;">액션</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr id="empty-message">
+          <td colspan="6" style="text-align:center; color:#888;">
+            좌측 테이블을 선택하세요.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="button-group" style="margin-top: 10px;">
+      <button id="save-btn" type="button" class="icon-btn">
+        <div class="icon-wrapper"><img src="{% static 'icons/save.svg' %}" class="icon-img save-icon" title="저장"><span class="icon-label">저장</span></div>
+      </button>
+      <button id="delete-btn" type="button" class="icon-btn">
+        <div class="icon-wrapper"><img src="{% static 'icons/delete.svg' %}" class="icon-img del-icon" title="삭제"><span class="icon-label">삭제</span></div>
+      </button>
+    </div>
+  </div>
+
+  <!-- 3. 오른쪽: 값(Value) 정보 -->
+  <div style="flex:1.8; padding-left:20px;" id="value-panel">
+    <h3 style="display:flex; justify-content:space-between; align-items:center;">
+      값 정보
+      <button id="add-value-btn" type="button" class="icon-btn">
+        <div class="icon-wrapper"><img src="{% static 'icons/new.svg' %}" class="icon-img new-icon" title="신규"></div>
+      </button>
+    </h3>
+
+    <table class="basic-table" id="value-table">
+      <thead>
+        <tr>
+          <th style="width:20%;">값</th>
+          <th style="width:25%;">논리명</th>
+          <th style="width:30%;">별칭</th>
+          <th style="width:10%;">순서</th>
+          <th style="width:15%;">액션</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td colspan="5" style="text-align:center;color:#888;">
+            컬럼을 선택하세요.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- 값 저장 + 전체 삭제 버튼 -->
+    <div class="button-group" style="margin-top: 10px;">
+      <button id="value-save-btn" type="button" class="icon-btn">
+        <div class="icon-wrapper">
+          <img src="{% static 'icons/save.svg' %}" class="icon-img save-icon" title="저장">
+          <span class="icon-label">저장</span>
+        </div>
+      </button>
+
+      <button id="value-delete-btn" type="button" class="icon-btn">
+        <div class="icon-wrapper">
+          <img src="{% static 'icons/delete.svg' %}" class="icon-img del-icon" title="삭제">
+          <span class="icon-label">삭제</span>
+        </div>
+      </button>
+    </div>
+
+  </div>
+
+</div>
+
+{{ columns|json_script:"columns-data" }}
+{{ values|json_script:"values-data" }}
+{{ datatype|json_script:"datatype-data" }}
+
+
+
+<script>
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+}
+
+let columns = JSON.parse(document.getElementById('columns-data').textContent);
+let values = JSON.parse(document.getElementById('values-data').textContent);
+let datatypes = JSON.parse(document.getElementById('datatype-data').textContent);
+
+let selectedTable = null;
+let selectedColumn = null;
+
+
+/* ------------------ 컬럼 신규 ------------------ */
+document.getElementById('add-column-btn').addEventListener('click', () => {
+  if (!selectedTable) return alert('테이블을 선택하세요.');
+  const tbody = document.querySelector('#column-table tbody');
+  const tr = document.createElement('tr');
+  tr.className = 'new-row';
+  tr.innerHTML = `
+    <td><input placeholder="interface_id"></td>
+    <td><input placeholder="인터페이스 ID"></td>
+    <td><input placeholder='"인터페이스", "연동ID"'></td>
+    <td>
+      <select>
+        ${datatypes.map(dt => `<option value="${dt.data_type}">${dt.data_type} (${dt.data_desc})</option>`).join('')}
+      </select>
+    </td>
+    <td></td>
+    <td><button class="btn-tbl btn-danger" onclick="this.closest('tr').remove()">삭제</button></td>
+  `;
+  tbody.appendChild(tr);
+});
+
+/* ------------------ 컬럼 삭제 ------------------ */
+function deleteColumn(colName) {
+  if (!confirm(`${colName} 삭제?`)) return;
+  columns = columns.filter(c => !(c.tableuid===selectedTable && c.column_name===colName));
+  renderColumns();
+  if (selectedColumn === colName) selectedColumn = null;
+  renderValues();
+}
+
+
+/* ------------------ 테이블 선택 ------------------ */
+document.querySelectorAll('#table-table tbody tr').forEach(tr => {
+  tr.addEventListener('click', function() {
+    document.querySelectorAll('#table-table tr.selected-row').forEach(r => r.classList.remove('selected-row'));
+    this.classList.add('selected-row');
+
+    selectedTable = tr.dataset.table;
+    selectedColumn = null;
+    renderColumns();
+    renderValues();
+  });
+});
+
+/* ------------------ 컬럼 렌더링 ------------------ */
+function renderColumns() {
+  const tbody = document.querySelector('#column-table tbody');
+  tbody.innerHTML = '';
+
+  if (!selectedTable) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#888;">좌측 테이블을 선택하세요.</td></tr>`;
+    return;
+  }
+
+  const tableCols = columns.filter(c => c.tableuid === selectedTable);
+
+  if (!tableCols.length) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#888;">컬럼 없음</td></tr>`;
+    return;
+  }
+
+  tableCols.forEach(col => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input value="${col.column_name}"></td>
+      <td><input value="${col.logical_name || ''}"></td>
+      <td><input value="${escapeHtml(col.aliases)}"></td>
+      <td>
+        <select>
+          ${datatypes.map(dt =>
+            `<option value="${dt.data_type}" ${dt.data_type===col.data_type?'selected':''}>
+              ${dt.data_type} (${dt.data_desc})
+            </option>`).join('')}
+        </select>
+      </td>
+      <td style="text-align:center;">
+        ${col.value_count ? col.value_count : ''}
+      </td>    
+      <td>
+        <button class="btn-tbl btn-danger" onclick="deleteColumn('${col.column_name}')">삭제</button>
+      </td>
+    `;
+    tr.addEventListener('click', () => {
+      document.querySelectorAll('#column-table tr.selected-row').forEach(r => r.classList.remove('selected-row'));
+      tr.classList.add('selected-row');
+      selectedColumn = col.column_name;
+      renderValues();
+    });
+    tbody.appendChild(tr);
+  });
+}
+
+/* ------------------ 값 렌더링 ------------------ */
+function renderValues() {
+  const tbody = document.querySelector('#value-table tbody');
+  tbody.innerHTML = '';
+  if (!selectedTable || !selectedColumn) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#888;">컬럼을 선택하세요.</td></tr>`;
+    return;
+  }
+
+  const rows = values.filter(v => v.tableuid === selectedTable && v.column_name === selectedColumn);
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#888;">값 없음</td></tr>`;
+    return;
+  }
+
+  rows.forEach(v => {
+    const tr = document.createElement('tr');
+    tr.className = 'new-value-row';
+    tr.innerHTML = `
+      <td style="width:20%;"><input value="${v.value}"></td>
+      <td style="width:25%;"><input value="${v.logical_name}"></td>
+      <td style="width:30%;"><input value="${escapeHtml(v.aliases)}"></td>
+      <td style="width:10%;"><input type="number" min="0" step="1" value="${v.orderno}"></td>
+      <td style="width:15%;">
+        <button class="btn-tbl btn-danger" onclick="this.closest('tr').remove()">삭제</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+/* ------------------ 값 신규 ------------------ */
+document.getElementById('add-value-btn').addEventListener('click', () => {
+  if (!selectedTable || !selectedColumn) return alert('컬럼을 선택하세요.');
+  const tbody = document.querySelector('#value-table tbody');
+  const tr = document.createElement('tr');
+  tr.className = 'new-value-row';
+  tr.innerHTML = `
+    <td style="width:20%;"><input placeholder="값"></td>
+    <td style="width:25%;"><input placeholder="논리명"></td>
+    <td style="width:30%;"><input placeholder="별칭"></td>
+    <td style="width:10%;"><input type="number" min="0" step="1" placeholder="순서"></td>
+    <td style="width:15%;"><button class="btn-tbl btn-danger" onclick="this.closest('tr').remove()">삭제</button></td>
+  `;
+  tbody.appendChild(tr);
+});
+
+/* ------------------ 값 저장 ------------------ */
+document.getElementById('value-save-btn').addEventListener('click', () => {
+  if (!selectedTable || !selectedColumn) return alert('컬럼을 선택하세요.');
+  const rows = document.querySelectorAll('#value-table tbody tr.new-value-row');
+  const data = Array.from(rows).map(r => {
+    const inputs = r.querySelectorAll('input');
+    return {
+      value: inputs[0].value,
+      logical_name: inputs[1].value,
+      aliases: inputs[2].value,
+      orderno: inputs[3].value,
+      tableuid: selectedTable,
+      column_name: selectedColumn
+    };
+  });
+  
+  fetch('/master/values_save/', {  // Django URL name 필요
+    method: 'POST',
+    credentials: "include",
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token }}'
+    },
+    body: JSON.stringify({values: data})
+  })
+  .then(res => res.json())
+  .then(res => {
+    if (res.success) {
+      alert('값이 저장되었습니다.');
+      location.reload();
+    } else {
+      alert('저장 실패: ' + res.error);
+    }
+  });
+});
+
+/* ------------------ 값 전체 삭제 ------------------ */
+document.getElementById('value-delete-btn').addEventListener('click', () => {
+  if (!selectedTable || !selectedColumn) return alert('컬럼을 선택하세요.');
+  if (!confirm('선택한 컬럼의 모든 값을 삭제하시겠습니까?')) return;
+
+  fetch('/master/values_delete/', {  // Django URL name 필요
+    method: 'POST',
+    credentials: "include",
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token }}'
+    },
+    body: JSON.stringify({
+      tableuid: selectedTable,
+      column_name: selectedColumn
+    })
+  })
+  .then(res => res.json())
+  .then(res => {
+    if (res.success) {
+      alert('값이 모두 삭제되었습니다.');
+      location.reload();
+    } else {
+      alert('삭제 실패: ' + res.error);
+    }
+  });
+});
+
+/* 선택 테이블 컬럼 저장 (표에 보이는 모든 컬럼 그대로) */
+document.getElementById('save-btn').addEventListener('click', () => {
+  if (!selectedTable) return alert('저장할 테이블을 선택하세요.');
+
+  const tbody = document.querySelector('#column-table tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  const tableColumns = [];
+
+  rows.forEach(row => {
+    const inputs = row.querySelectorAll('input');
+    const select = row.querySelector('select');
+    if (!inputs.length || !select) return; // 비어있는 행(예: "좌측 테이블 선택하세요")는 건너뜀
+
+    const colName = inputs[0].value.trim();
+    if (!colName) return; // 컬럼명 없는 행 무시
+
+    tableColumns.push({
+      tableuid: selectedTable,
+      column_name: colName,
+      logical_name: inputs[1].value.trim(),
+      aliases: inputs[2].value.trim(),
+      data_type: select.value
+    });
+  });
+
+  fetch('/master/columns_save/', {
+    method:'POST',
+    credentials: "include",
+    headers:{
+      'Content-Type':'application/json',
+      'X-CSRFToken':getCookie('csrftoken')
+    },
+    body:JSON.stringify({columns: tableColumns})
+  })
+  .then(r=>r.json())
+  .then(d=>{
+    alert(d.success?'저장 완료':`저장 실패: ${d.error||''}`);
+    if (d.success) {
+      // 화면 컬럼과 동기화
+      columns = columns.filter(c => c.tableuid !== selectedTable).concat(tableColumns);
+      renderColumns();
+    }
+  })
+  .catch(()=>alert('저장 중 오류 발생'));
+});
+
+/* 선택 테이블 컬럼 전체 삭제 */
+document.getElementById('delete-btn').addEventListener('click', () => {
+  if (!selectedTable) return alert('삭제할 테이블을 선택하세요.');
+  if (!confirm('해당 테이블의 모든 컬럼을 삭제하시겠습니까?')) return;
+
+  fetch('/master/columns_delete/', {
+    method:'POST',
+    credentials: "include",
+    headers:{
+      'Content-Type':'application/json',
+      'X-CSRFToken':getCookie('csrftoken')
+    },
+    body:JSON.stringify({tableuid: selectedTable})
+  })
+  .then(r=>r.json())
+  .then(d=>{
+    if (d.success) {
+      columns = columns.filter(c => c.tableuid !== selectedTable);
+      renderColumns();
+      alert('삭제 완료');
+    } else {
+      alert(`삭제 실패: ${d.error||''}`);
+    }
+  })
+  .catch(()=>alert('삭제 중 오류 발생'));
+});
+
+</script>
+
+{% endblock %}

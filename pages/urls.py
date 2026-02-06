@@ -34,6 +34,7 @@ from .views import (home, hide_popup, search_help
                   , password_reset
 
                   , master_tables, master_tables_save, master_tables_delete
+                  , master_columns, master_columns_save, master_columns_delete, master_values_save, master_value_delete
                     )
                     
 # urls.py
@@ -114,4 +115,10 @@ urlpatterns = [
     path('master/tables/', master_tables, name = 'master_tables'),
     path('master/tables_save/', master_tables_save, name = 'master_tables_save'),
     path('master/tables_delete/', master_tables_delete, name = 'master_tables_delete'),
+
+    path('master/columns/', master_columns, name = 'master_columns'),
+    path('master/columns_save/', master_columns_save, name = 'master_columns_save'),
+    path('master/columns_delete/', master_columns_delete, name = 'master_columns_delete'),
+    path('master/values_save/', master_values_save, name = 'master_values_save'),
+    path('master/values_delete/', master_value_delete, name = 'master_value_delete'),
 ]

@@ -34,7 +34,7 @@ def master_tenant_request_list(request):
             try:
                 i['email'] = decrypt_value(i['encemail'])
             except Exception as e:
-                print(e)
+                # print(e)
                 i['email'] = ''
         if i.get('enctelno'):
             try:

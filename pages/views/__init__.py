@@ -33,6 +33,7 @@ from .myinfo import myinfo, myinfo_update_username, myinfo_update_contact
 from .password_reset import password_reset
 
 from .master_tables import master_tables, master_tables_save, master_tables_delete
+from .master_columns import master_columns, master_columns_save, master_columns_delete, master_values_save, master_value_delete
 
 __all__ = [
      "home"
@@ -108,4 +109,10 @@ __all__ = [
   , "master_tables"
   , "master_tables_save"
   , "master_tables_delete"
+
+  , "master_columns"
+  , "master_columns_save"
+  , "master_columns_delete"
+  , "master_values_save"
+  , "master_value_delete"
 ]
