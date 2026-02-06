@@ -4,6 +4,8 @@ from .login import login_view, logout_view, send_reset_email
 from .register import register, get_tenants
 from .terms_conditions import terms_conditions
 
+from .master_servers import master_servers, master_servers_save, master_servers_delete
+
 from .master_llms import master_llms, master_llms_save, master_llms_delete
 from .master_llmapis import master_llmapis, master_llmapis_save, master_llmapis_delete
 
@@ -44,6 +46,10 @@ __all__ = [
    , "register"
    , "get_tenants"
    , "terms_conditions"
+
+   , "master_servers"
+   , "master_servers_save"
+   , "master_servers_delete"
 
    , "master_llms"
    , "master_llms_save"

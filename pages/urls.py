@@ -4,6 +4,8 @@ from .views import (home, hide_popup, search_help
                   , register, get_tenants
                   , terms_conditions
 
+                  , master_servers, master_servers_save, master_servers_delete
+
                   , master_llms, master_llms_save, master_llms_delete
                   , master_llmapis, master_llmapis_save, master_llmapis_delete
 
@@ -45,6 +47,10 @@ urlpatterns = [
     path("register/", register, name="register"),
     path("get_tenants/", get_tenants, name = 'get_tenants'),
     path("terms_conditions/", terms_conditions, name = "terms_conditions"),
+
+    path('master/servers/', master_servers, name = 'master_servers'),
+    path('master/servers_save/', master_servers_save, name = 'master_servers_save'),
+    path('master/servers_delete/', master_servers_delete, name = 'master_servers_delete'),
 
     path('master/llms/', master_llms, name = 'master_llms'),
     path('master/llms_save/', master_llms_save, name = 'master_llms_save'),

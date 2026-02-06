@@ -1,0 +1,289 @@
+{% extends 'pages/base.html' %}
+{% load static %}
+{% block title %}서버 연결정보{% endblock %}
+{% block content %}
+
+<style>
+.form-group {
+  margin-bottom: 10px;
+}
+</style>
+
+<div class="page-title">
+  <div style="display: flex; align-items: center;">
+    <div class="gradient-bar"></div>
+    <div>서버 연결정보</div>
+  </div>
+</div>
+
+<div style="background-color: #f9fbe7; padding: 5px; margin-bottom: 5px; border-radius: 6px; color: #6a7d3c;">
+  <p style="margin: 5px">＊ 서버 연결정보에 등록되는 서버 EndPoint 와 비밀번호는 해당 시스템에 저장되지 않습니다.</p>
+  <p style="margin: 5px">＊ EndPoint 와 비밀번호는 Azure KeyVault 에 암호화 되어 저장 및 관리됩니다..</p>
+</div>
+
+<div style="display: flex; gap: 30px; padding-right: 10px;">
+  <div style="flex: 50%;">
+    <h3>서버 목록</h3>
+
+    <div class="table-container">
+      <table id="servers-table">
+        <thead>
+          <tr>
+            <th style="width: 15%;">기업명</th>
+            <th style="width:  8%;">DBMS</th>
+            <th style="width: 24%;">연결자명</th>     
+            <th style="width: 12%;">등록위치</th>
+            <th style="width: 12%;">등록일시</th>
+            <!-- <th style="width: 13%;"></th> -->
+          </tr>
+        </thead>
+        <tbody>
+          {% for server in connectors %}
+            <tr 
+              data-access_key_uid="{{ server.access_key_uid }}" 
+              data-tenantid="{{ server.tenantid }}"
+              data-tenantnm="{{ server.tenantnm }}"
+              data-accesskeynm="{{ server.accesskeynm }}"
+              data-serverendpoint_dec="{{ server.serverendpoint_dec}}"
+              data-userid="{{ server.userid }}"
+              data-key_vault_nm="{{ server.key_vault_nm}}"
+              data-creatornm="{{ server.creatornm }}"
+              data-dbms="{{ server.dbms }}"
+            >
+              <td>{{ server.tenantnm|default_if_none:'' }}</td>
+              <td style="text-align: center;">{{ server.dbms|default_if_none:'' }}</td>
+              <td>{{ server.accesskeynm|default_if_none:'' }}</td>
+              <td>{{ server.key_vault_nm }}</td>
+              <td style="text-align: center;">{{ server.createdts }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 상세정보 폼 -->
+  <div style="flex:50%;">
+    <h3>서버 상세</h3>
+
+    <form id="server-detail-form" enctype="multipart/form-data">
+      <input type="hidden" name="access_key_uid" id="access_key_uid">
+
+      <div class="form-group"> 
+        <label for="dbms">DBMS:</label>
+        <select id="dbms" name="dbms" required>
+          <option value="" selected disabled>DBMS 를 선택하세요</option>
+          {% for dbtype in dbtypes %}
+            <option value="{{ dbtype.dbms }}">{{ dbtype.dbms }}</option>
+          {% endfor %}
+        </select>        
+      </div>
+
+      <div class="form-group"> 
+        <label for="tenantnm">기업명:</label>
+        <input type="text" name="tenantnm" id="tenantnm" disabled>
+      </div>
+
+      <div class="form-group"> 
+        <label for="accesskeynm">연결자명:</label>
+        <input type="text" name="accesskeynm" id="accesskeynm">
+      </div>
+
+      <div class="form-group"> 
+        <label for="serverendpoint">EndPoint:</label>
+        <input type="text" name="serverendpoint" id="serverendpoint">
+      </div>
+
+      <div class="form-group"> 
+        <label for="userid">사용계정:</label>
+        <input type="text" name="userid" id="userid">
+      </div>
+
+      <div class="form-group"> 
+        <label for="creatornm">생성자:</label>
+        <input type="text" name="creatornm" id="creatornm" disabled>
+      </div>
+      
+      <div class="form-group">
+        <label for="secret">비밀번호:</label>
+        <input type="password" name="secret" id="secret" placeholder="변경 시에만 입력" autocomplete="new-secret">
+      </div>
+
+      <div class="form-group">
+        <label for="secret_confirm">비밀번호 확인:</label>
+        <input type="password" name="secret_confirm" id="secret_confirm" placeholder="비밀번호를 다시 입력" autocomplete="new-password">
+        <small style="color: #888;">※ 기존 비밀번호는 표시되지 않습니다.</small>
+      </div>
+
+    <div class="button-group">
+      <button id="reset-btn" type="button" class="icon-btn">
+        <div class="icon-wrapper">
+          <img src="{% static 'icons/new.svg' %}" class="icon-img new-icon" title="신규">
+          <span class="icon-label">신규</span>
+        </div> 
+      </button>
+
+      <!-- 저장 버튼 -->
+      <button id="save-btn" type="button" class="icon-btn">
+        <div class="icon-wrapper">
+          <img src="{% static 'icons/save.svg' %}" class="icon-img save-icon" title="저장">
+          <span class="icon-label">저장</span>
+        </div>  
+      </button>
+
+      <!-- 삭제 버튼 -->
+      <button id="delete-btn" type="button" class="icon-btn">
+        <div class="icon-wrapper">
+          <img src="{% static 'icons/delete.svg' %}" class="icon-img del-icon" title="삭제">
+          <span class="icon-label">삭제</span>
+        </div>  
+      </button>
+    </div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const table = document.getElementById('servers-table');
+  const form = document.getElementById('server-detail-form');
+  let selectedRow = null;
+
+  // ✅ 선택 시 비밀번호는 절대 표시하지 않음
+    // 🔹 행 클릭 시 선택 처리
+  table.addEventListener('click', function (e) {
+    const row = e.target.closest('tr');
+    if (!row || row.parentNode.tagName !== 'TBODY') return;
+
+    // 이전 선택된 행이 있으면 제거
+    if (selectedRow) selectedRow.classList.remove('selected-row');
+
+    // 이전 선택된 행의 스타일 제거
+    if (selectedRow) selectedRow.classList.remove('selected');
+    selectedRow = row;
+    selectedRow.classList.add('selected-row');
+
+    // 폼 채우기
+    document.getElementById('access_key_uid').value = row.getAttribute('data-access_key_uid');
+    document.getElementById('tenantnm').value = row.getAttribute('data-tenantnm');
+    document.getElementById('accesskeynm').value = row.getAttribute('data-accesskeynm');
+    document.getElementById('serverendpoint').value = row.getAttribute('data-serverendpoint_dec');
+    document.getElementById('userid').value = row.getAttribute('data-userid');
+    document.getElementById('creatornm').value = row.getAttribute('data-creatornm');
+    document.getElementById('secret').value = '';
+    document.getElementById('secret_confirm').value = '';
+    document.getElementById('dbms').value = row.getAttribute('data-dbms');
+  });
+
+  // ✅ 저장 버튼 클릭
+  document.getElementById('save-btn').addEventListener('click', function () {
+    const pw = document.getElementById('secret').value.trim();
+    const pwConfirm = document.getElementById('secret_confirm').value.trim();
+
+    // 두 비밀번호 모두 입력된 경우 비교
+    if (pw || pwConfirm) {
+      if (pw !== pwConfirm) {
+        alert('비밀번호가 일치하지 않습니다. 다시 입력해주세요.');
+        return;
+      }
+    }
+
+    const accesskeynm = document.getElementById('accesskeynm').value;
+    if (!accesskeynm) {
+      alert('저장할 연결정보를 입력하세요.');
+      return;
+    }
+
+    const dbms = document.getElementById('dbms').value;
+    if (!dbms || dbms == "") {
+      alert('DBMS를 선택하세요.');
+      return;
+    }
+
+    const data = {
+      access_key_uid: document.getElementById('access_key_uid').value,
+      accesskeynm: document.getElementById('accesskeynm').value,
+      serverendpoint: document.getElementById('serverendpoint').value,
+      userid: document.getElementById('userid').value,
+      dbms: document.getElementById('dbms').value
+    };
+
+    // 새 비밀번호 입력 시만 추가
+    if (pw) data.secret = pw;
+
+    fetch('/master/servers_save/', {
+      method: 'POST',
+      credentials: "include",   // 👈 여기
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify(data)
+    })
+    .then(response => {
+      if (!response.ok) throw new Error('저장 실패');
+      return response.json();
+    })
+    .then(result => {
+      alert(result.message || '저장되었습니다.');
+      location.reload();
+    })
+    .catch(error => {
+      alert('저장 중 오류 발생: ' + error.message);
+    });
+  });
+
+  // ✅ 삭제 버튼
+  document.getElementById('delete-btn').addEventListener('click', function () {
+    const access_key_uid = document.getElementById('access_key_uid').value;
+    if (!access_key_uid) {
+      alert('삭제할 서버를 먼저 선택하세요.');
+      return;
+    }
+    if (!confirm('정말 삭제하시겠습니까?')) return;
+
+    fetch('/master/servers_delete/', {
+      method: 'POST',
+      credentials: "include",   // 👈 여기
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify({ access_key_uid })
+    })
+    .then(response => response.json())
+    .then(() => {
+      alert('삭제되었습니다.');
+      location.reload();
+    })
+    .catch(error => alert('삭제 중 오류: ' + error.message));
+  });
+
+  // ✅ 초기화 버튼
+  document.getElementById('reset-btn').addEventListener('click', function () {
+    form.reset();
+    document.getElementById('access_key_uid').value = '';
+    document.getElementById('dbms').selectedIndex = 0;
+    if (selectedRow) selectedRow.classList.remove('selected');
+    if (selectedRow) selectedRow.classList.remove('selected-row');
+    selectedRow = null;
+  });
+
+  // ✅ CSRF 토큰 함수
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+});
+</script>
+{% endblock %}
