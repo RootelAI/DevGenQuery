@@ -36,7 +36,6 @@
               data-creatornm="{{ project.creatornm}}"
               data-createdts="{{ project.createdts }}"
               data-llmmodelnm="{{ project.llmmodelnm }}"
-              data-apikey="{{ project.apikey }}"
               data-dirpath="{{ project.dirpath }}">
               <td>{{ project.projectnm }}</td>
               <td class="multiline">
@@ -80,7 +79,11 @@
 
       <div class="form-group-left">
         <label>APIKey:</label>
-        <input id="apikey" name="apikey" type="text">
+        <input id="apikey"
+              name="apikey"
+              type="password"
+              autocomplete="new-password"
+              placeholder="변경 시에만 입력하세요">
       </div>
 
       <div class="form-group-left">
@@ -155,7 +158,10 @@ document.querySelectorAll("tbody tr[data-projectid]").forEach(row => {
     document.getElementById("projectnm").value = row.dataset.projectnm;
     document.getElementById("projectdesc").value = row.dataset.projectdesc;
     document.getElementById("llmmodelnm").value = row.dataset.llmmodelnm;
-    document.getElementById("apikey").value = row.dataset.apikey;
+    // document.getElementById("apikey").value = row.dataset.apikey;
+    const apikeyInput = document.getElementById("apikey");
+    apikeyInput.value = "";
+    apikeyInput.placeholder = "변경 시에만 입력하세요";
     document.getElementById("dirpath").value = row.dataset.dirpath;
     document.getElementById("useyn").checked = row.dataset.useyn === "True";
 

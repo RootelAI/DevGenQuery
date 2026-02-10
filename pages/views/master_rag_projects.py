@@ -36,8 +36,8 @@ def master_rag_projects(request):
         project_response = supabase.schema('rag').table('projects').select('*').order('createdts', desc=True).execute()
         projects = project_response.data if project_response.data else []
 
-        for proj in projects:
-            proj["apikey"] = decrypt_value(proj["encapikey"])
+        # for proj in projects:
+        #     proj["apikey"] = decrypt_value(proj["encapikey"])
             
         # for i in projects:
         #     if i.get('createdts'):
@@ -96,8 +96,6 @@ def master_rag_projects_save(request):
         apikey  = request.POST.get('apikey')
         dirpath  = request.POST.get('dirpath')
 
-        encapikey = encrypt_value(apikey)
-
         if useyn == 'on':
             useyn = True
         else:
@@ -120,10 +118,13 @@ def master_rag_projects_save(request):
             "projectdesc": projectdesc,
             "useyn": useyn,
             "llmmodelnm" : llmmodelnm,
-            "encapikey" : encapikey,
             "dirpath" : dirpath 
         }
 
+        # ✅ apikey가 입력된 경우에만 업데이트
+        if apikey:
+            data["encapikey"] = encrypt_value(apikey)
+            
         if existing:
             response = supabase.schema('rag').table('projects').update(data).eq('projectid', projectid).execute()
         else:
