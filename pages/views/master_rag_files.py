@@ -217,7 +217,13 @@ def master_rag_files_save(request):
             if not file_uid:
                 file_uid = str(uuid.uuid4())
             
-            # print(f'FileUID: {file_uid}')
+            # 이미 동일한 프로젝트에 동일한 파일명 있으면 삽입 불가
+            existing_filenm = supabase.schema('rag').table('files').select('*').eq('projectid', project_id).eq('filenm', file_nm).execute().data
+            if existing_filenm:
+                return JsonResponse({
+                    'result': 'error',
+                    'message': '파일 명칭이 이미 존재합니다.'
+                })
 
             # 파일 업로드 처리
             uploaded_file = request.FILES.get('file')
