@@ -186,9 +186,43 @@ def master_rag_projects_delete(request):
         data = json.loads(request.body)
         projectid = data.get('projectid')
         
+        if not projectid:
+            return JsonResponse({
+                'result': 'Failed',
+                'message': 'projectid가 없습니다.'
+            })
+
+        # 프로젝트 조회 (dirpath 확보)
+        resp = supabase.schema('rag').table('projects') \
+            .select('dirpath') \
+            .eq('projectid', projectid) \
+            .execute()
+
+        if not resp.data:
+            return JsonResponse({
+                'result': 'Failed',
+                'message': '프로젝트를 찾을 수 없습니다.'
+            })
+
+        dirpath = resp.data[0]['dirpath']
+        
         # 프로젝트 상태 업데이트
         supabase.schema('rag').table('projects').delete().eq('projectid', projectid).execute()
-        
+
+        AZURE_STORAGE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+        blob_service_client = BlobServiceClient.from_connection_string(
+            AZURE_STORAGE_CONNECTION_STRING
+        )
+
+        # 생성할 때와 동일한 규칙으로 컨테이너 이름 계산
+        container_name = re.sub(
+            r'[^a-z0-9-]',
+            '',
+            dirpath.lower().replace(" ", "-")
+        )
+
+        blob_service_client.delete_container(container_name)
+
         return JsonResponse({'result': 'success', 'message': '프로젝트가 성공적으로 삭제되었습니다.'})
             
     except Exception as e:
