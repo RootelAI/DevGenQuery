@@ -130,14 +130,13 @@ def master_rag_files(request):
             'error': f'데이터 조회 중 오류가 발생했습니다: {str(e)}'
         })
 
-def upload_to_azure_blob(file, project_id, file_uid, dirPath):
+def upload_to_azure_blob(file, dirPath):
     """
     Azure Blob Storage에 파일 업로드
     
     Args:
         file: Django UploadedFile 객체
-        project_id: 프로젝트 ID
-        file_uid: 파일 고유 ID
+        dirPath: Blob 경로
     
     Returns:
         blob_url: 업로드된 파일의 URL
@@ -181,7 +180,46 @@ def upload_to_azure_blob(file, project_id, file_uid, dirPath):
         return {
             'success': False,
             'error': str(e)
+        }    
+
+def delete_from_azure_blob(blob_name, dirPath):
+    """
+    Azure Blob Storage에서 파일 삭제
+    
+    Args:
+        blob_name: 삭제할 Blob 이름 (예: "projectid/fileuid_filename.pdf")
+    
+    Returns:
+        dict: 삭제 결과
+    """
+    try:
+        # BlobServiceClient 생성
+        blob_service_client = BlobServiceClient.from_connection_string(
+            os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+        )
+        
+        # 컨테이너 클라이언트 가져오기
+        container_client = blob_service_client.get_container_client(
+            dirPath
+        )
+        
+        # Blob 클라이언트 가져오기
+        blob_client = container_client.get_blob_client('source/' + blob_name)
+        
+        # Blob 삭제
+        blob_client.delete_blob()
+        
+        return {
+            'success': True,
+            'message': 'Blob 삭제 완료'
         }
+        
+    except Exception as e:
+        return {
+            'success': False,
+            'error': str(e)
+        }
+
 
 @require_http_methods(["POST"])
 def master_rag_files_save(request):
@@ -238,6 +276,8 @@ def master_rag_files_save(request):
             if uploaded_file:
                 # 파일 확장자 추출
                 file_extension = os.path.splitext(uploaded_file.name)[1]
+
+                # 컨테이너
                 dirPath = supabase.schema('rag').table('projects').select('dirpath').eq('projectid', project_id).execute().data[0]['dirpath']
                 
                 # 기존 존재 시 삭제
@@ -245,12 +285,7 @@ def master_rag_files_save(request):
                     delete_from_azure_blob(blob_name, dirPath)
                     
                 # Azure Blob Storage에 업로드
-                upload_result = upload_to_azure_blob(
-                    uploaded_file, 
-                    project_id, 
-                    file_uid,
-                    dirPath
-                )
+                upload_result = upload_to_azure_blob(uploaded_file, dirPath)
                 
                 if upload_result['success']:
                     blob_url = upload_result['blob_url']
@@ -279,17 +314,8 @@ def master_rag_files_save(request):
             #     data['bloburl'] = blob_url
             #     data['blobname'] = blob_name
             
-            # 기존 데이터 확인 후 upsert
-            existing = supabase.schema('rag').table('files').select('*').eq('fileuid', file_uid).execute()
-            
-            if existing.data:
-                # 업데이트
-                # print('Update')
-                result = supabase.schema('rag').table('files').update(data).eq('fileuid', file_uid).execute()
-            else:
-                # 신규 삽입
-                # print('Insert')
-                result = supabase.schema('rag').table('files').insert(data).execute()
+            # Data Upsert
+            result = supabase.schema('rag').table('files').upsert(data).execute()
             
             return JsonResponse({
                 'result': 'success',
@@ -305,44 +331,6 @@ def master_rag_files_save(request):
             })
     
     return JsonResponse({'result': 'error', 'message': 'Invalid request'})
-
-def delete_from_azure_blob(blob_name, dirPath):
-    """
-    Azure Blob Storage에서 파일 삭제
-    
-    Args:
-        blob_name: 삭제할 Blob 이름 (예: "projectid/fileuid_filename.pdf")
-    
-    Returns:
-        dict: 삭제 결과
-    """
-    try:
-        # BlobServiceClient 생성
-        blob_service_client = BlobServiceClient.from_connection_string(
-            os.getenv("AZURE_STORAGE_CONNECTION_STRING")
-        )
-        
-        # 컨테이너 클라이언트 가져오기
-        container_client = blob_service_client.get_container_client(
-            dirPath
-        )
-        
-        # Blob 클라이언트 가져오기
-        blob_client = container_client.get_blob_client('source/' + blob_name)
-        
-        # Blob 삭제
-        blob_client.delete_blob()
-        
-        return {
-            'success': True,
-            'message': 'Blob 삭제 완료'
-        }
-        
-    except Exception as e:
-        return {
-            'success': False,
-            'error': str(e)
-        }
 
 @require_http_methods(["POST"])
 def master_rag_files_delete(request):
@@ -394,7 +382,10 @@ def master_rag_files_delete(request):
             
             # Azure Blob Storage에서 파일 삭제 (blob_name이 있는 경우에만)
             if blob_name:
+                # 컨테이너
                 dirPath = supabase.schema('rag').table('projects').select('dirpath').eq('projectid', project_id).execute().data[0]['dirpath']
+
+                # Blob 파일 삭제
                 delete_result = delete_from_azure_blob(blob_name, dirPath)
                 
                 if not delete_result['success']:
