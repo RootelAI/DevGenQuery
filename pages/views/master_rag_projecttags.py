@@ -30,28 +30,24 @@ def master_rag_projecttags(request):
     user_id = user.get("id")
 
     try:# projects 테이블에서 데이터 조회
-        project_response = supabase.schema('rag').table('projects').select('*').order('createdts', desc=True).execute()
+        project_response = supabase.schema('rag').table('projects').select('*').order('projectid', desc=False).execute()
         projects = project_response.data if project_response.data else []
+        project_map = {p["projectid"]: p["projectnm"] for p in projects}
+        
+        projecttags_response = supabase.schema('rag').table('projecttags').select('*').order('projectid', desc=False).execute()
+        projecttags = projecttags_response.data if projecttags_response.data else []
 
-        for proj in projects:
-            proj["apikey"] = decrypt_value(proj["encapikey"])
-            
-        # for i in projects:
-        #     if i.get('createdts'):
-        #         try:
-        #             dt = parser.parse(i['createdts']) if isinstance(i['createdts'], str) else i['createdts']
-        #             i['createdts'] = dt.strftime("%y-%m-%d %H:%M")
-        #         except Exception as e:
-        #             i['createdts'] = ''
-        #     if i.get('creator'):
-        #         try:
-        #             creatornm =  supabase.schema('public').table('users').select('*').eq('useruid', i['creator']).execute().data
-        #             i['creatornm'] = creatornm[0]['full_name'] if creatornm else ''
-        #         except Exception as e:
-        #             i['creatornm'] = ''
+        # 각 테이블에 projectnm 추가
+        for projecttag in projecttags:
+            projecttag["projectnm"] = project_map.get(projecttag["projectid"], "-")
+
+        projecttagvalues_response = supabase.schema('rag').table('projecttagvalues').select('*').order('projectid', desc=False).execute()
+        projecttagvalues = projecttagvalues_response.data if projecttagvalues_response.data else []
 
         context = {
             'projects': projects,
+            'projecttags' : projecttags,
+            'projecttagvalues' : projecttagvalues
         }
         
         return render(request, 'pages/master_rag_projecttags.html', context)
@@ -61,88 +57,108 @@ def master_rag_projecttags(request):
             'projects': [],
             'error': f'데이터 조회 중 오류가 발생했습니다: {str(e)}'
         })
-
+    
 @require_http_methods(["POST"])
 def master_rag_projecttags_save(request):
-    """새 프로젝트 생성 (필요시 사용)"""
+    """프로젝트 Tag + Tag Values 저장 (값은 전체 삭제 후 insert)"""
     try:
         # 세션 토큰
         access_token = request.session.get("access_token")
         refresh_token = request.session.get("refresh_token")
         supabase = get_supabase_client(access_token, refresh_token)
-        
+
         user = request.session.get("user")
         if not user:
             code = 'login'
             text = '로그인이 필요합니다.'
             page = "master_rag_projecttags"
             return render(request, "pages/home.html", {
-            "code": code,
-            "text": text,
-            "page": page,
-            "request": request
-        })
+                "code": code,
+                "text": text,
+                "page": page,
+                "request": request
+            })
         user_id = user.get("id")
         
-        # POST 데이터에서 프로젝트 정보 추출
-        # projectid = request.POST.get('projectid')
-        # projectnm = request.POST.get('projectnm')
-        # projectdesc = request.POST.get('projectdesc')
-        # useyn = request.POST.get('useyn')
-        # llmmodelnm  = request.POST.get('llmmodelnm')
-        # apikey  = request.POST.get('apikey')
-        # dirpath  = request.POST.get('dirpath')
+        # POST 데이터에서 프로젝트 Tag 정보 추출
+        projectid = request.POST.get('projectid')
+        tagcd = request.POST.get('tagcd')
+        tagnm = request.POST.get('tagnm')
+        uicomponent = request.POST.get('uicomponent')
+        useyn = request.POST.get('useyn')
+        orderno = request.POST.get('orderno')
 
-        # encapikey = encrypt_value(apikey)
+        useyn = True if useyn == "True" else False
+        orderno = int(orderno) if orderno else None
 
-        # if useyn == 'on':
-        #     useyn = True
-        # else:
-        #     useyn = False
-            
-        # if not projectnm:
-        #     return JsonResponse({
-        #         'success': False,
-        #         'error': '프로젝트명은 필수입니다.'
-        #     })
-
-        # # 기존 존재 여부 파악
-        # existing = None
-        # if projectid:
-        #     resp = supabase.schema("rag").table("projects").select("*").eq("projectid", projectid).execute()
-        #     existing = resp.data[0] if resp.data else None
+        # 기존 존재 여부 파악 (projecttags)
+        resp = supabase.schema("rag").table("projecttags") \
+            .select("*").eq("projectid", projectid).eq("tagcd", tagcd).execute()
+        existing = resp.data[0] if resp.data else None
         
-        # data = {
-        #     "projectnm": projectnm,
-        #     "projectdesc": projectdesc,
-        #     "useyn": useyn,
-        #     "llmmodelnm" : llmmodelnm,
-        #     "encapikey" : encapikey,
-        #     "dirpath" : dirpath 
-        # }
+        # projecttags 데이터 준비
+        tag_data = {
+            "tagnm": tagnm,
+            "uicomponent": uicomponent,
+            "useyn": useyn,
+            "orderno": orderno
+        }
 
-        # if existing:
-        #     response = supabase.schema('rag').table('projects').update(data).eq('projectid', projectid).execute()
-        # else:
-        #     data["creator"] = user_id
-        #     response = supabase.schema('rag').table('projects').insert(data).execute()
+        if existing:
+            supabase.schema('rag').table('projecttags') \
+                .update(tag_data).eq('projectid', projectid).eq("tagcd", tagcd).execute()
+        else:
+            tag_data.update({
+                "projectid": projectid,
+                "tagcd": tagcd,
+                "creator": user_id
+            })
+            supabase.schema('rag').table('projecttags').insert(tag_data).execute()
 
-        # if response.data:
-        #     return JsonResponse({
-        #         'result': 'success',
-        #         'group': response.data[0],
-        #         'message': '프로젝트가 성공적으로 저장되었습니다.'
-        #     })
-        # else:
-        #     return JsonResponse({
-        #         'result': 'Failed',
-        #         'error': '프로젝트 저장에 실패했습니다.'
-        #     })
+        # -------------------------
+        # 우측 값 정보 저장 처리 (전체 삭제 후 insert)
+        # -------------------------
+        values_json = request.POST.get('values_json')
+        if values_json:
+            values = json.loads(values_json)  # 리스트(dict)
+
+            # 기존 값 전체 삭제
+            supabase.schema("rag").table("projecttagvalues") \
+                .delete().eq("projectid", projectid).eq("tagcd", tagcd).execute()
             
+            # 새 값 insert
+            insert_data = []
+            for v in values:
+                valuecd = v.get('valuecd')
+                valuenm = v.get('valuenm')
+                useyn_v = True if v.get('useyn') else False
+                orderno_v = int(v.get('orderno')) if v.get('orderno') else None
+
+                if not valuecd:
+                    continue  # valuecd 없으면 스킵
+                
+                insert_data.append({
+                    "projectid": projectid,
+                    "tagcd": tagcd,
+                    "valuecd": valuecd,
+                    "valuenm": valuenm,
+                    "useyn": useyn_v,
+                    "orderno": orderno_v,
+                    "creator": user_id
+                })
+            
+            if insert_data:
+                supabase.schema("rag").table("projecttagvalues").insert(insert_data).execute()
+
+        return JsonResponse({
+            'result': 'success',
+            'message': '프로젝트 Tag 및 값 정보가 성공적으로 저장되었습니다.'
+        })
+
     except Exception as e:
         return JsonResponse({
             'result': 'Failed',
-            'error': f'프로젝트 저장 중 오류가 발생했습니다: {str(e)}'
+            'error': f'저장 중 오류가 발생했습니다: {str(e)}'
         })
 
 @require_http_methods(["POST"])
@@ -170,13 +186,15 @@ def master_rag_projecttags_delete(request):
         user_id = user.get("id")
         
         # POST 데이터에서 프로젝트 정보 추출
-        # data = json.loads(request.body)
-        # projectid = data.get('projectid')
+        data = json.loads(request.body)
+        projectid = data.get('projectid')
+        tagcd = data.get('tagcd')
+
+        # 프로젝트 상태 업데이트
+        supabase.schema('rag').table('projecttags').delete().eq('projectid', projectid).eq('tagcd', tagcd).execute()
+        supabase.schema('rag').table('projecttagvalues').delete().eq('projectid', projectid).eq('tagcd', tagcd).execute()
         
-        # # 프로젝트 상태 업데이트
-        # supabase.schema('rag').table('projects').delete().eq('projectid', projectid).execute()
-        
-        # return JsonResponse({'result': 'success', 'message': '프로젝트가 성공적으로 삭제되었습니다.'})
+        return JsonResponse({'result': 'success', 'message': '프로젝트가 성공적으로 삭제되었습니다.'})
             
     except Exception as e:
         return JsonResponse({

@@ -321,13 +321,32 @@ def master_tables_json_create(supabase, tableuid):
             "columns": {}
         }
 
+        # ------------------ reference 정보 추가 ------------------
+        if table.get("parent_table") and table.get("child_column") and table.get("parent_column"):
+            table_json["reference"] = {
+                "parent_schema": table.get("parent_schema", ""),
+                "parent_table": table["parent_table"],
+                "join_column": [
+                    {
+                        "child_column": table["child_column"],
+                        "parent_column": table["parent_column"]
+                    }
+                ]
+            }
+
         # ------------------ 컬럼 메타 ------------------
         for col in columns_resp.data:
-            table_json["columns"][col["column_name"]] = {
+            col_json = {
                 "logical_name": col.get("logical_name", ""),
-                "aliases": parse_aliases(col.get("aliases", "")),
                 "data_type": col.get("data_type", "string")
             }
+
+            aliases = parse_aliases(col.get("aliases", ""))
+            if aliases:  # ⭐ 비어있을 때는 아예 키를 안 넣음
+                col_json["aliases"] = aliases
+
+            table_json["columns"][col["column_name"]] = col_json
+
 
         # ------------------ values 매핑 ------------------
         for v in values_data:
@@ -339,9 +358,11 @@ def master_tables_json_create(supabase, tableuid):
             values_obj = col_entry.setdefault("values", {})
 
             values_obj[v["value"]] = {
-                "logical_name": v.get("logical_name", ""),
-                "aliases": parse_aliases(v.get("aliases", ""))
+                "logical_name": v.get("logical_name", "")
             }
+            value_aliases = parse_aliases(v.get("aliases", ""))
+            if value_aliases:  # 빈 배열이면 키 제거
+                values_obj[v["value"]]["aliases"] = value_aliases
 
         # ------------------ 저장 ------------------
         supabase.schema("genquery") \

@@ -6,6 +6,9 @@ from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 from utilsPrj.supabase_client import get_supabase_client
 from utilsPrj.crypto_helper import encrypt_value, decrypt_value
+import os
+import re
+from azure.storage.blob import BlobServiceClient
 
 def master_rag_projects(request):
     """프로젝트 관리 메인 페이지"""
@@ -124,6 +127,16 @@ def master_rag_projects_save(request):
         if existing:
             response = supabase.schema('rag').table('projects').update(data).eq('projectid', projectid).execute()
         else:
+            # 새 프로젝트라면 Azure Blob 컨테이너 생성
+            AZURE_STORAGE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+            blob_service_client = BlobServiceClient.from_connection_string(AZURE_STORAGE_CONNECTION_STRING)
+            
+            # 컨테이너 이름은 소문자 + 공백을 '-'로, 특수문자 제거
+            container_name = re.sub(r'[^a-z0-9-]', '', dirpath.lower().replace(" ", "-"))
+            
+            # 컨테이너 생성 (이미 존재하면 예외 발생 가능)
+            blob_service_client.create_container(container_name)
+
             data["creator"] = user_id
             response = supabase.schema('rag').table('projects').insert(data).execute()
 

@@ -12,48 +12,46 @@
 </div>
 
 <div style="display: flex; gap: 20px; min-height: 80%;">
-  <!-- 왼쪽 -->
-  <div style="flex: 1.5; " >
-    <h3>프로젝트 목록</h3>
+  <!-- 왼쪽: 프로젝트 Tag 목록 -->
+  <div style="flex: 1.5;">
+    <h3>프로젝트 Tag 목록</h3>
     <div class="table-container">
       <table class="table table-bordered table-sm">
         <thead>
           <tr>
             <th style="width: 20%;">프로젝트명</th>
-            <th style="width: 30%;">설명</th>
-            <th class="info"  style="width: 10%;">사용</th>
-            <th class="info"  style="width:20%;">LLM모델</th>
-            <th class="info"  style="width:20%;">폴더</th>
+            <th style="width: 30%;">TagCD</th>
+            <th style="width: 30%;">Tag명</th>
+            <th style="width: 30%;">사용여부</th>
           </tr>
         </thead>
         <tbody>
-          {% for project in projects %}
-          <tr data-projectid="{{ project.projectid }}"
-              data-projectnm="{{ project.projectnm }}"
-              data-projectdesc="{{ project.projectdesc|default_if_none:""}}"
-              data-useyn="{{ project.useyn }}"
-              data-creator="{{ project.creator }}"
-              data-creatornm="{{ project.creatornm}}"
-              data-createdts="{{ project.createdts }}"
-              data-llmmodelnm="{{ project.llmmodelnm }}"
-              data-apikey="{{ project.apikey }}"
-              data-dirpath="{{ project.dirpath }}">
-              <td>{{ project.projectnm }}</td>
-              <td class="multiline">
-                <span class="cell-center">
-                  {{ project.projectdesc|default_if_none:""|linebreaksbr }}
-                </span>
+          {% for projecttag in projecttags %}
+          <tr data-projectid="{{ projecttag.projectid }}"
+              data-projectnm="{{ projecttag.projectnm }}"
+              data-tagcd="{{ projecttag.tagcd }}"
+              data-tagnm="{{ projecttag.tagnm }}"
+              data-uicomponent="{{ projecttag.uicomponent }}"
+              data-useyn="{{ projecttag.useyn }}"
+              data-orderno="{{ projecttag.orderno }}"
+              data-creator="{{ projecttag.creator }}"
+              data-createdts="{{ projecttag.createdts }}">
+              <td>{{ projecttag.projectnm }}</td>
+              <td>
+                {% if projecttag.tagcd == 'tag1' %}Tag1
+                {% elif projecttag.tagcd == 'tag2' %}Tag2
+                {% elif projecttag.tagcd == 'tag3' %}Tag3
+                {% else %}{{ projecttag.tagcd }}
+                {% endif %}
               </td>
-              <td class="info"style="text-align: center;">
-                  {% if project.useyn %}<span>✔</span>
-                  {% endif %}
+              <td>{{ projecttag.tagnm }}</td>
+              <td class="info" style="text-align: center;">
+                  {% if projecttag.useyn %}<span>✔</span>{% endif %}
               </td>
-              <td class="info"><span>{{project.llmmodelnm}}</span></td>
-              <td class="info"><span>{{project.dirpath}}</span></td>
           </tr>
           {% empty %}
           <tr>
-              <td colspan="5" class="text-center text-muted py-4">등록된 프로젝트가 없습니다.</td>
+              <td colspan="4" class="text-center text-muted py-4">등록된 프로젝트가 없습니다.</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -61,39 +59,54 @@
     </div>
   </div>
 
-  <!-- 오른쪽 -->
+  <!-- 오른쪽: 프로젝트 Tag 상세 -->
   <div style="flex: 1.5; padding-left: 20px;">
-    <h3>프로젝트 상세</h3>
-    <form id="projects-detail-form" enctype="multipart/form-data">
+    <h3>프로젝트 Tag 상세</h3>
+    <form id="projecttags-detail-form">
       <input id="projectid" name="projectid" type="text" hidden>
-      <input id="tenantid" name="tenantid" type="text" hidden>
-      
+
       <div class="form-group-left">
         <label>프로젝트명:</label>
-        <input id="projectnm" name="projectnm" type="text">
+        <select id="projectid-select" name="projectid">
+          <option value="">선택</option>
+          {% for project in projects %}
+            <option value="{{ project.projectid }}">{{ project.projectnm }}</option>
+          {% endfor %}
+        </select>
       </div>
 
       <div class="form-group-left">
-        <label>LLM모델명:</label>
-        <input id="llmmodelnm" name="llmmodelnm" type="text">
+        <label>TagCD:</label>
+        <select id="tagcd" name="tagcd">
+          <option value="">선택</option>
+          <option value="tag1">Tag1</option>
+          <option value="tag2">Tag2</option>
+          <option value="tag3">Tag3</option>
+        </select>
       </div>
 
       <div class="form-group-left">
-        <label>APIKey:</label>
-        <input id="apikey" name="apikey" type="text">
+        <label>Tag명:</label>
+        <input id="tagnm" name="tagnm" type="text">
       </div>
 
       <div class="form-group-left">
-        <label>업로드폴더:</label>
-        <input id="dirpath" name="dirpath" type="text">
+        <label>UI 표현:</label>
+        <select id="uicomponent" name="uicomponent">
+          <option value="">선택</option>
+          <option value="R">Radio</option>
+          <option value="C">Checkbox</option>
+          <option value="DS">Dropdown Single Select</option>
+          <option value="DM">Dropdown Multi Select</option>
+        </select>
       </div>
 
       <div class="form-group-left">
-        <label>설명:</label>
-        <textarea class="form-control object_value" id="projectdesc" name="projectdesc" spellcheck="false" style="resize: none; height: 80%;"></textarea>
+        <label>정렬:</label>
+        <input id="orderno" name="orderno" type="number" min="0">
       </div>
-
-      <div class="form-group-left"style = "display: block;">
+      
+      <div class="form-group-left" style="display: block;">
         <label>사용:</label>
         <input id="useyn" name="useyn" type="checkbox" style="margin-left: 50px;">
       </div>
@@ -106,7 +119,6 @@
           </div> 
         </button>
 
-        <!-- 저장 버튼 -->
         <button id="save-btn" type="button" class="icon-btn">
           <div class="icon-wrapper">
             <img src="{% static 'icons/save.svg' %}" class="icon-img save-icon" title="저장">
@@ -114,7 +126,6 @@
           </div>  
         </button>
 
-        <!-- 삭제 버튼 -->
         <button id="delete-btn" type="button" class="icon-btn">
           <div class="icon-wrapper">
             <img src="{% static 'icons/delete.svg' %}" class="icon-img del-icon" title="삭제">
@@ -125,122 +136,198 @@
       
     </form>
   </div>
+
+  <!-- 오른쪽: 값 정보 패널 -->
+  <div style="flex:1.5; padding-left:20px;" id="value-panel">
+    <h3 style="display:flex; justify-content:space-between; align-items:center;">
+      값 정보
+      <button id="add-value-btn" type="button" class="icon-btn">
+        <div class="icon-wrapper"><img src="{% static 'icons/new.svg' %}" class="icon-img new-icon" title="신규"></div>
+      </button>
+    </h3>
+
+    <table class="basic-table" id="value-table">
+      <thead>
+        <tr>
+          <!-- <th style="width:20%;">ValueCD</th> -->
+          <th style="width:40%;">Value명</th>
+          <th style="width:20%;">사용</th>
+          <th style="width:20%;">순서</th>
+          <th style="width:20%;">액션</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td colspan="4" style="text-align:center;color:#888;">
+            태그를 선택하세요.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
 </div>
 
+<!-- JSON 데이터 안전하게 전달 -->
+{{ projecttagvalues|json_script:"projecttagvalues" }}
+
 <script>
-// 페이지 로드 시 초기화 진행
+let selectedRow = null;
+let selectedTag = null;
+
+// JSON 로드
+const projecttagvalues = JSON.parse(document.getElementById('projecttagvalues').textContent);
+
+// 페이지 로드 시 초기화
 window.addEventListener('load', function() {
-  document.getElementById("projects-detail-form").reset();
-    const params = new URLSearchParams(window.location.search);
-    const tenantId = params.get('tenantid');
-    
-    document.getElementById("tenantid").value = tenantId;
+  document.getElementById("projecttags-detail-form").reset();
+  document.getElementById("projectid-select").value = "";
+  document.getElementById("useyn").checked = false;
 });
 
-// 선택 클릭 → 행 클릭으로 변경
+// 좌측 목록 클릭 → form 및 값 테이블 채우기
 document.querySelectorAll("tbody tr[data-projectid]").forEach(row => {
   row.addEventListener("click", function () {
-    // 기존 form 채우기 로직
-    const tenantId = document.getElementById("tenantid").value;
+    // form 채우기
     document.getElementById("projectid").value = row.dataset.projectid;
-    document.getElementById("projectnm").value = row.dataset.projectnm;
-    document.getElementById("projectdesc").value = row.dataset.projectdesc;
-    document.getElementById("llmmodelnm").value = row.dataset.llmmodelnm;
-    document.getElementById("apikey").value = row.dataset.apikey;
-    document.getElementById("dirpath").value = row.dataset.dirpath;
-    document.getElementById("useyn").checked = row.dataset.useyn === "True";
+    document.getElementById("projectid-select").value = row.dataset.projectid;
+    document.getElementById("tagcd").value = row.dataset.tagcd;
+    document.getElementById("tagnm").value = row.dataset.tagnm;
+    document.getElementById("uicomponent").value = row.dataset.uicomponent;
+    document.getElementById("orderno").value = row.dataset.orderno;
+    document.getElementById("useyn").checked = row.dataset.useyn === "True" || row.dataset.useyn === "✔";
 
-    showActionButtons(row.dataset.projectid);
-
-    // 선택된 행 강조
-    document.querySelectorAll("tbody tr").forEach(r => r.classList.remove('selected-row'));
+    if (selectedRow) selectedRow.classList.remove("selected-row");
     row.classList.add('selected-row');
+    selectedRow = row;
+
+    // 값 정보 테이블 채우기
+    selectedTag = {projectid: row.dataset.projectid, tagcd: row.dataset.tagcd};
+    const tagValues = projecttagvalues.filter(v =>
+      v.projectid == selectedTag.projectid && v.tagcd == selectedTag.tagcd
+    );
+
+    const tbody = document.querySelector("#value-table tbody");
+    tbody.innerHTML = "";
+
+    if (!tagValues.length) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#888;">값 없음</td></tr>`;
+      return;
+    }
+
+    tagValues.forEach(v => {
+      const tr = document.createElement("tr");
+      tr.className = "new-value-row";
+      tr.innerHTML = `
+        <td><input value="${v.valuenm}"></td>
+        <td style="text-align:center;"><input type="checkbox" ${v.useyn ? 'checked' : ''}></td>
+        <td><input type="number" min="0" value="${v.orderno != null ? v.orderno : ''}"></td>
+        <td><button class="btn-tbl btn-danger" onclick="this.closest('tr').remove()">삭제</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
   });
 });
 
 // 초기화 버튼
 document.getElementById("reset-btn").addEventListener("click", () => {
-  document.getElementById("projects-detail-form").reset();
+  document.getElementById("projecttags-detail-form").reset();
   document.getElementById("projectid").value = "";
-  const navButtons = document.getElementById("nav-buttons");
-  navButtons.hidden = true;
-  navButtons.style.display = "none";
+  document.getElementById("projectid-select").value = "";
+  document.getElementById("useyn").checked = false;
+  const tbody = document.querySelector("#value-table tbody");
+  tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#888;">태그를 선택하세요.</td></tr>`;
   if (selectedRow) selectedRow.classList.remove("selected-row");
   selectedRow = null;
+  selectedTag = null;
 });
 
-// 저장 버튼
+// 값 신규 버튼
+document.getElementById("add-value-btn").addEventListener("click", () => {
+  if (!selectedTag) return alert("태그를 선택하세요.");
+  const tbody = document.querySelector("#value-table tbody");
+  const tr = document.createElement("tr");
+  tr.className = "new-value-row";
+  tr.innerHTML = `
+    <td><input placeholder="Value명"></td>
+    <td style="text-align:center;"><input type="checkbox"></td>
+    <td><input type="number" min="0" placeholder="순서"></td>
+    <td><button class="btn-tbl btn-danger" onclick="this.closest('tr').remove()">삭제</button></td>
+  `;
+  tbody.appendChild(tr);
+});
+
+// 저장 버튼 (projecttags + projecttagvalues)
 document.getElementById("save-btn").addEventListener("click", () => {
-  const form = document.getElementById("projects-detail-form");
+  const form = document.getElementById("projecttags-detail-form");
   const formData = new FormData(form);
+  formData.set("useyn", document.getElementById("useyn").checked ? "True" : "False");
 
-  // showLoading('save')
+  // 값 정보 테이블 데이터 수집
+  let values = [];
+  if (selectedTag) {
+    const rows = document.querySelectorAll("#value-table tbody tr.new-value-row");
+    values = Array.from(rows).map(r => {
+      const inputs = r.querySelectorAll("input");
+      return {
+        projectid: selectedTag.projectid,
+        tagcd: selectedTag.tagcd,
+        valuecd: inputs[0].value,
+        valuenm: inputs[0].value,
+        useyn: inputs[1].checked,
+        orderno: inputs[2].value || 0
+      };
+    });
+    formData.append("values_json", JSON.stringify(values));
+  }
 
-  fetch("{% url 'master_rag_projects_save' %}", {
+  fetch("{% url 'master_rag_projecttags_save' %}", {
     method: "POST",
-    credentials: "include", 
+    credentials: "include",
     body: formData,
-    headers: {
-      "X-CSRFToken": getCookie("csrftoken")
-    }
+    headers: { "X-CSRFToken": getCookie("csrftoken") }
   })
   .then(res => res.json())
   .then(data => {
     if (data.result === "success") {
       alert(data.message);
-      // hideLoading('save')
       location.reload();
     } else {
       alert("저장 실패: " + (data.message || "서버 오류"));
-      // hideLoading('save')
     }
   })
-  .catch(err => {
-    alert("오류 발생: " + err.message);
-    // hideLoading('save')
-  });
+  .catch(err => { alert("오류 발생: " + err.message) });
 });
 
-// 삭제 버튼
+// 삭제 버튼 (projecttags + 관련 values)
 document.getElementById("delete-btn").addEventListener("click", () => {
   const projectid = document.getElementById("projectid").value;
-  
-  if (!projectid) {
-    alert("삭제할 프로젝트을 선택하세요.");
-    return;
-  }
-
+  const tagcd = document.getElementById("tagcd").value;
+  if (!projectid || !tagcd) { alert("삭제할 프로젝트를 선택하세요."); return; }
   if (!confirm("정말 삭제하시겠습니까?")) return;
 
-  // showLoading('delete')
-
-  fetch("{% url 'master_rag_projects_delete' %}", {
+  fetch("{% url 'master_rag_projecttags_delete' %}", {
     method: "POST",
-    credentials: "include", 
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       "X-CSRFToken": getCookie("csrftoken")
     },
-    body: JSON.stringify({ projectid })
+    body: JSON.stringify({ projectid, tagcd })
   })
   .then(res => res.json())
   .then(data => {
     if (data.result === "success") {
       alert(data.message);
-      // hideLoading('delete')
       location.reload();
     } else {
       alert("삭제 실패: " + (data.message || "서버 오류"));
-      // hideLoading('delete')
     }
   })
-  .catch(error => {
-    alert("오류 발생: " + error.message)
-    // hideLoading('delete')
-  });
+  .catch(err => { alert("오류 발생: " + err.message) });
 });
 
-// 쿠키 정보
+// 쿠키 가져오기
 function getCookie(name) {
   let cookieValue = null;
   if (document.cookie && document.cookie !== '') {

@@ -35,3 +35,4 @@ SQLAlchemy
 jinja2
 azure-identity
 azure-keyvault-secrets
+azure-storage-blob
