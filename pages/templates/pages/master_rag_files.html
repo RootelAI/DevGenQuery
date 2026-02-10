@@ -13,47 +13,48 @@
 
 <div style="display: flex; gap: 20px; min-height: 80%;">
   <!-- 왼쪽 -->
-  <div style="flex: 1.5; " >
-    <h3>프로젝트 목록</h3>
+  <div style="flex: 2;" >
+    <h3>파일 목록</h3>
     <div class="table-container">
       <table class="table table-bordered table-sm">
         <thead>
           <tr>
-            <th style="width: 20%;">프로젝트명</th>
-            <th style="width: 30%;">설명</th>
-            <th class="info"  style="width: 10%;">사용</th>
-            <th class="info"  style="width:20%;">LLM모델</th>
-            <th class="info"  style="width:20%;">폴더</th>
+            <th style="width: 10%;">프로젝트명</th>
+            <th style="width: 30%;">파일명</th>
+            <th class="info" style="width: 8%;">Tag1</th>
+            <th class="info" style="width: 8%;">Tag2</th>
+            <th class="info" style="width: 8%;">Tag3</th>
+            <th class="info" style="width: 8%;">처리구분</th>
+            <th class="info" style="width: 8%;">처리일시</th>
           </tr>
         </thead>
         <tbody>
-          {% for project in projects %}
-          <tr data-projectid="{{ project.projectid }}"
-              data-projectnm="{{ project.projectnm }}"
-              data-projectdesc="{{ project.projectdesc|default_if_none:""}}"
-              data-useyn="{{ project.useyn }}"
-              data-creator="{{ project.creator }}"
-              data-creatornm="{{ project.creatornm}}"
-              data-createdts="{{ project.createdts }}"
-              data-llmmodelnm="{{ project.llmmodelnm }}"
-              data-apikey="{{ project.apikey }}"
-              data-dirpath="{{ project.dirpath }}">
-              <td>{{ project.projectnm }}</td>
-              <td class="multiline">
-                <span class="cell-center">
-                  {{ project.projectdesc|default_if_none:""|linebreaksbr }}
-                </span>
-              </td>
-              <td class="info"style="text-align: center;">
-                  {% if project.useyn %}<span>✔</span>
-                  {% endif %}
-              </td>
-              <td class="info"><span>{{project.llmmodelnm}}</span></td>
-              <td class="info"><span>{{project.dirpath}}</span></td>
+          {% for file in files %}
+          <tr data-fileuid="{{ file.fileuid }}"
+              data-projectid="{{ file.projectid }}"
+              data-projectnm="{{ file.projectnm }}"
+              data-filenm="{{ file.filenm }}"
+              data-fileextension="{{ file.fileextension }}"
+              data-tag1value="{{ file.tag1value }}"
+              data-tag2value="{{ file.tag2value }}"
+              data-tag3value="{{ file.tag3value }}"
+              data-processcd="{{ file.processcd }}"
+              data-processdts="{{ file.processdts }}"
+              data-creator="{{ file.creator }}"
+              data-creatornm="{{ file.creatornm }}"
+              data-createdts="{{ file.createdts }}"
+              >
+              <td class="info"><span>{{file.projectnm}}</span></td>
+              <td class="info"><span>{{file.filenm}}</span></td>
+              <td class="info" style="text-align: center;"><span>{{file.tag1valuenm}}</span></td>
+              <td class="info" style="text-align: center;"><span>{{file.tag2valuenm}}</span></td>
+              <td class="info" style="text-align: center;"><span>{{file.tag3valuenm}}</span></td>
+              <td class="info" style="text-align: center;"><span>{% if file.processcd %}✔{% endif %}</span></td>
+              <td class="info"><span>{{file.processdts|default_if_none:''}}</span></td>
           </tr>
           {% empty %}
           <tr>
-              <td colspan="5" class="text-center text-muted py-4">등록된 프로젝트가 없습니다.</td>
+              <td colspan="7" class="text-center text-muted py-4">등록된 파일이 없습니다.</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -62,40 +63,60 @@
   </div>
 
   <!-- 오른쪽 -->
-  <div style="flex: 1.5; padding-left: 20px;">
+  <div style="flex: 0.5; padding-left: 20px;">
     <h3>프로젝트 상세</h3>
-    <form id="projects-detail-form" enctype="multipart/form-data">
+    <form id="files-detail-form" enctype="multipart/form-data">
       <input id="projectid" name="projectid" type="text" hidden>
-      <input id="tenantid" name="tenantid" type="text" hidden>
+      <input id="fileuid" name="fileuid" type="text" hidden>
       
       <div class="form-group-left">
         <label>프로젝트명:</label>
-        <input id="projectnm" name="projectnm" type="text">
+        <select id="projectnm" name="projectnm" required>
+          <option value="" selected disabled>프로젝트 를 선택하세요</option>
+          {% for project in projects %}
+            <option value="{{ project.projectid }}">{{ project.projectnm }}</option>
+          {% endfor %}
+        </select>
       </div>
 
       <div class="form-group-left">
-        <label>LLM모델명:</label>
-        <input id="llmmodelnm" name="llmmodelnm" type="text">
+        <label>파일명:</label>
+        <input id="filenm" name="filenm" type="text" placeholder="확장자까지 전체 명 입력">
       </div>
 
       <div class="form-group-left">
-        <label>APIKey:</label>
-        <input id="apikey" name="apikey" type="text">
+        <label>Tag1:</label>
+        <select id="tag1" name="tag1" required>
+          <option value="" selected disabled>Tag1 을 선택하세요</option>
+        </select>
       </div>
 
       <div class="form-group-left">
-        <label>업로드폴더:</label>
-        <input id="dirpath" name="dirpath" type="text">
+        <label>Tag2:</label>
+        <select id="tag2" name="tag2" required>
+          <option value="" selected disabled>Tag2 을 선택하세요</option>
+        </select>
       </div>
 
       <div class="form-group-left">
-        <label>설명:</label>
-        <textarea class="form-control object_value" id="projectdesc" name="projectdesc" spellcheck="false" style="resize: none; height: 80%;"></textarea>
+        <label>Tag3:</label>
+        <select id="tag3" name="tag3" required>
+          <option value="" selected disabled>Tag3 을 선택하세요</option>
+        </select>
       </div>
 
-      <div class="form-group-left"style = "display: block;">
-        <label>사용:</label>
-        <input id="useyn" name="useyn" type="checkbox" style="margin-left: 50px;">
+      <div class="form-group-left">
+        <label>작성자:</label>
+        <input id="creatornm" name="creatornm" type="text" disabled>
+      </div>
+
+      <!-- 파일 첨부 필드 추가 -->
+      <div class="form-group-left">
+        <label>파일 첨부:</label>
+        <input id="file-upload" name="file" type="file" accept=".pdf,.docx,.txt,.xlsx,.pptx">
+        <small style="display: block; margin-top: 5px; color: #666;">
+          선택된 파일: <span id="file-name">없음</span>
+        </small>
       </div>
 
       <div class="button-group">
@@ -106,7 +127,6 @@
           </div> 
         </button>
 
-        <!-- 저장 버튼 -->
         <button id="save-btn" type="button" class="icon-btn">
           <div class="icon-wrapper">
             <img src="{% static 'icons/save.svg' %}" class="icon-img save-icon" title="저장">
@@ -114,7 +134,6 @@
           </div>  
         </button>
 
-        <!-- 삭제 버튼 -->
         <button id="delete-btn" type="button" class="icon-btn">
           <div class="icon-wrapper">
             <img src="{% static 'icons/delete.svg' %}" class="icon-img del-icon" title="삭제">
@@ -128,29 +147,91 @@
 </div>
 
 <script>
-// 페이지 로드 시 초기화 진행
+// Django에서 전달된 데이터를 JavaScript 변수로 저장
+const projectTagValues = {{ projecttagvalues_json|safe }};
+
+// 프로젝트 선택 시 태그 드롭다운 업데이트 함수
+function updateTagDropdowns(projectId, selectedValues = {}) {
+  const tag1Select = document.getElementById('tag1');
+  const tag2Select = document.getElementById('tag2');
+  const tag3Select = document.getElementById('tag3');
+  
+  // 드롭다운 초기화
+  tag1Select.innerHTML = '<option value="" selected disabled>Tag1 을 선택하세요</option>';
+  tag2Select.innerHTML = '<option value="" selected disabled>Tag2 을 선택하세요</option>';
+  tag3Select.innerHTML = '<option value="" selected disabled>Tag3 을 선택하세요</option>';
+  
+  if (!projectId) return;
+  
+  // Tag1 채우기
+  const tag1Key = `${projectId}_tag1`;
+  if (projectTagValues[tag1Key]) {
+    projectTagValues[tag1Key].forEach(item => {
+      const option = document.createElement('option');
+      option.value = item.valuecd;
+      option.textContent = item.valuenm;
+      tag1Select.appendChild(option);
+    });
+  }
+  
+  // Tag2 채우기
+  const tag2Key = `${projectId}_tag2`;
+  if (projectTagValues[tag2Key]) {
+    projectTagValues[tag2Key].forEach(item => {
+      const option = document.createElement('option');
+      option.value = item.valuecd;
+      option.textContent = item.valuenm;
+      tag2Select.appendChild(option);
+    });
+  }
+  
+  // Tag3 채우기
+  const tag3Key = `${projectId}_tag3`;
+  if (projectTagValues[tag3Key]) {
+    projectTagValues[tag3Key].forEach(item => {
+      const option = document.createElement('option');
+      option.value = item.valuecd;
+      option.textContent = item.valuenm;
+      tag3Select.appendChild(option);
+    });
+  }
+  
+  // 선택된 값이 있으면 설정
+  if (selectedValues.tag1) tag1Select.value = selectedValues.tag1;
+  if (selectedValues.tag2) tag2Select.value = selectedValues.tag2;
+  if (selectedValues.tag3) tag3Select.value = selectedValues.tag3;
+}
+
+// 페이지 로드 시 초기화
 window.addEventListener('load', function() {
-  document.getElementById("projects-detail-form").reset();
-    const params = new URLSearchParams(window.location.search);
-    const tenantId = params.get('tenantid');
-    
-    document.getElementById("tenantid").value = tenantId;
+  document.getElementById("files-detail-form").reset();
 });
 
-// 선택 클릭 → 행 클릭으로 변경
+// 프로젝트 선택 변경 시 태그 드롭다운 업데이트
+document.getElementById('projectnm').addEventListener('change', function() {
+  const projectId = this.value;
+  document.getElementById('projectid').value = projectId;
+  updateTagDropdowns(projectId);
+});
+
+// 테이블 행 클릭 시
 document.querySelectorAll("tbody tr[data-projectid]").forEach(row => {
   row.addEventListener("click", function () {
-    // 기존 form 채우기 로직
-    const tenantId = document.getElementById("tenantid").value;
-    document.getElementById("projectid").value = row.dataset.projectid;
-    document.getElementById("projectnm").value = row.dataset.projectnm;
-    document.getElementById("projectdesc").value = row.dataset.projectdesc;
-    document.getElementById("llmmodelnm").value = row.dataset.llmmodelnm;
-    document.getElementById("apikey").value = row.dataset.apikey;
-    document.getElementById("dirpath").value = row.dataset.dirpath;
-    document.getElementById("useyn").checked = row.dataset.useyn === "True";
-
-    showActionButtons(row.dataset.projectid);
+    const projectId = row.dataset.projectid;
+    
+    // 폼 필드 채우기
+    document.getElementById("projectid").value = projectId;
+    document.getElementById("projectnm").value = projectId;
+    document.getElementById("fileuid").value = row.dataset.fileuid;
+    document.getElementById("filenm").value = row.dataset.filenm;
+    document.getElementById("creatornm").value = row.dataset.creatornm;
+    
+    // 태그 드롭다운 업데이트 및 선택된 값 설정
+    updateTagDropdowns(projectId, {
+      tag1: row.dataset.tag1value,
+      tag2: row.dataset.tag2value,
+      tag3: row.dataset.tag3value
+    });
 
     // 선택된 행 강조
     document.querySelectorAll("tbody tr").forEach(r => r.classList.remove('selected-row'));
@@ -158,25 +239,49 @@ document.querySelectorAll("tbody tr[data-projectid]").forEach(row => {
   });
 });
 
+// 파일 선택 시 파일명 표시
+document.getElementById('file-upload').addEventListener('change', function(e) {
+  const fileName = e.target.files[0] ? e.target.files[0].name : '없음';
+  document.getElementById('file-name').textContent = fileName;
+});
+
 // 초기화 버튼
 document.getElementById("reset-btn").addEventListener("click", () => {
-  document.getElementById("projects-detail-form").reset();
+  document.getElementById("files-detail-form").reset();
   document.getElementById("projectid").value = "";
+  document.getElementById("fileuid").value = "";
+  document.getElementById("file-name").textContent = "없음";
+  
+  // 태그 드롭다운 초기화
+  updateTagDropdowns(null);
+  
   const navButtons = document.getElementById("nav-buttons");
-  navButtons.hidden = true;
-  navButtons.style.display = "none";
-  if (selectedRow) selectedRow.classList.remove("selected-row");
-  selectedRow = null;
+  if (navButtons) {
+    navButtons.hidden = true;
+    navButtons.style.display = "none";
+  }
+  
+  document.querySelectorAll("tbody tr").forEach(r => r.classList.remove("selected-row"));
 });
 
 // 저장 버튼
 document.getElementById("save-btn").addEventListener("click", () => {
-  const form = document.getElementById("projects-detail-form");
+  const form = document.getElementById("files-detail-form");
   const formData = new FormData(form);
+  
+  // 파일이 선택되었는지 확인
+  const fileInput = document.getElementById('file-upload');
+  if (fileInput.files.length > 0) {
+    formData.append('file', fileInput.files[0]);
+  }
 
-  // showLoading('save')
+  // 로딩 표시 (선택사항)
+  const saveBtn = document.getElementById("save-btn");
+  const originalText = saveBtn.querySelector('.icon-label').textContent;
+  saveBtn.querySelector('.icon-label').textContent = '저장중...';
+  saveBtn.disabled = true;
 
-  fetch("{% url 'master_rag_projects_save' %}", {
+  fetch("{% url 'master_rag_files_save' %}", {
     method: "POST",
     credentials: "include", 
     body: formData,
@@ -188,55 +293,64 @@ document.getElementById("save-btn").addEventListener("click", () => {
   .then(data => {
     if (data.result === "success") {
       alert(data.message);
-      // hideLoading('save')
       location.reload();
     } else {
       alert("저장 실패: " + (data.message || "서버 오류"));
-      // hideLoading('save')
+      saveBtn.querySelector('.icon-label').textContent = originalText;
+      saveBtn.disabled = false;
     }
   })
   .catch(err => {
     alert("오류 발생: " + err.message);
-    // hideLoading('save')
+    saveBtn.querySelector('.icon-label').textContent = originalText;
+    saveBtn.disabled = false;
   });
 });
 
 // 삭제 버튼
 document.getElementById("delete-btn").addEventListener("click", () => {
-  const projectid = document.getElementById("projectid").value;
+  const fileuid = document.getElementById("fileuid").value;
+  const filenm = document.getElementById("filenm").value;
   
-  if (!projectid) {
-    alert("삭제할 프로젝트을 선택하세요.");
+  if (!fileuid) {
+    alert("삭제할 파일을 선택하세요.");
     return;
   }
 
-  if (!confirm("정말 삭제하시겠습니까?")) return;
+  if (!confirm(`"${filenm}" 파일을 정말 삭제하시겠습니까?\n(Azure Blob Storage의 파일도 함께 삭제됩니다)`)) {
+    return;
+  }
 
-  // showLoading('delete')
+  // 로딩 표시
+  const deleteBtn = document.getElementById("delete-btn");
+  const originalText = deleteBtn.querySelector('.icon-label').textContent;
+  deleteBtn.querySelector('.icon-label').textContent = '삭제중...';
+  deleteBtn.disabled = true;
 
-  fetch("{% url 'master_rag_projects_delete' %}", {
+  fetch("{% url 'master_rag_files_delete' %}", {
     method: "POST",
     credentials: "include", 
     headers: {
       "Content-Type": "application/json",
       "X-CSRFToken": getCookie("csrftoken")
     },
-    body: JSON.stringify({ projectid })
+    body: JSON.stringify({ fileuid: fileuid })
   })
   .then(res => res.json())
   .then(data => {
     if (data.result === "success") {
       alert(data.message);
-      // hideLoading('delete')
       location.reload();
     } else {
       alert("삭제 실패: " + (data.message || "서버 오류"));
-      // hideLoading('delete')
+      deleteBtn.querySelector('.icon-label').textContent = originalText;
+      deleteBtn.disabled = false;
     }
   })
   .catch(error => {
-    alert("오류 발생: " + error.message)
-    // hideLoading('delete')
+    alert("오류 발생: " + error.message);
+    deleteBtn.querySelector('.icon-label').textContent = originalText;
+    deleteBtn.disabled = false;
   });
 });
 
