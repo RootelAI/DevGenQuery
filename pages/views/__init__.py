@@ -35,6 +35,10 @@ from .password_reset import password_reset
 from .master_tables import master_tables, master_tables_save, master_tables_delete
 from .master_columns import master_columns, master_columns_save, master_columns_delete, master_values_save, master_value_delete
 
+from .master_rag_projects import master_rag_projects, master_rag_projects_save, master_rag_projects_delete
+from .master_rag_files import master_rag_files, master_rag_files_save, master_rag_files_delete
+from .master_rag_projecttags import master_rag_projecttags, master_rag_projecttags_save, master_rag_projecttags_delete
+
 __all__ = [
      "home"
    , "hide_popup"
@@ -115,4 +119,16 @@ __all__ = [
   , "master_columns_delete"
   , "master_values_save"
   , "master_value_delete"
+
+  , "master_rag_projects"
+  , "master_rag_projects_save"
+  , "master_rag_projects_delete"
+
+  , "master_rag_files"
+  , "master_rag_files_save"
+  , "master_rag_files_delete"
+
+  , "master_rag_projecttags"
+  , "master_rag_projecttags_save"
+  , "master_rag_projecttags_delete"
 ]

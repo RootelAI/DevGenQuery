@@ -1,0 +1,261 @@
+{% extends 'pages/base.html' %}
+{% load static %}
+{% block title %}RAG Tag{% endblock %}
+
+{% block content %}
+
+<div class="page-title">
+  <div style="display: flex; align-items: center;">
+    <div class="gradient-bar"></div>
+    <div>RAG Tag</div>
+  </div>
+</div>
+
+<div style="display: flex; gap: 20px; min-height: 80%;">
+  <!-- 왼쪽 -->
+  <div style="flex: 1.5; " >
+    <h3>프로젝트 목록</h3>
+    <div class="table-container">
+      <table class="table table-bordered table-sm">
+        <thead>
+          <tr>
+            <th style="width: 20%;">프로젝트명</th>
+            <th style="width: 30%;">설명</th>
+            <th class="info"  style="width: 10%;">사용</th>
+            <th class="info"  style="width:20%;">LLM모델</th>
+            <th class="info"  style="width:20%;">폴더</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for project in projects %}
+          <tr data-projectid="{{ project.projectid }}"
+              data-projectnm="{{ project.projectnm }}"
+              data-projectdesc="{{ project.projectdesc|default_if_none:""}}"
+              data-useyn="{{ project.useyn }}"
+              data-creator="{{ project.creator }}"
+              data-creatornm="{{ project.creatornm}}"
+              data-createdts="{{ project.createdts }}"
+              data-llmmodelnm="{{ project.llmmodelnm }}"
+              data-apikey="{{ project.apikey }}"
+              data-dirpath="{{ project.dirpath }}">
+              <td>{{ project.projectnm }}</td>
+              <td class="multiline">
+                <span class="cell-center">
+                  {{ project.projectdesc|default_if_none:""|linebreaksbr }}
+                </span>
+              </td>
+              <td class="info"style="text-align: center;">
+                  {% if project.useyn %}<span>✔</span>
+                  {% endif %}
+              </td>
+              <td class="info"><span>{{project.llmmodelnm}}</span></td>
+              <td class="info"><span>{{project.dirpath}}</span></td>
+          </tr>
+          {% empty %}
+          <tr>
+              <td colspan="5" class="text-center text-muted py-4">등록된 프로젝트가 없습니다.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 오른쪽 -->
+  <div style="flex: 1.5; padding-left: 20px;">
+    <h3>프로젝트 상세</h3>
+    <form id="projects-detail-form" enctype="multipart/form-data">
+      <input id="projectid" name="projectid" type="text" hidden>
+      <input id="tenantid" name="tenantid" type="text" hidden>
+      
+      <div class="form-group-left">
+        <label>프로젝트명:</label>
+        <input id="projectnm" name="projectnm" type="text">
+      </div>
+
+      <div class="form-group-left">
+        <label>LLM모델명:</label>
+        <input id="llmmodelnm" name="llmmodelnm" type="text">
+      </div>
+
+      <div class="form-group-left">
+        <label>APIKey:</label>
+        <input id="apikey" name="apikey" type="text">
+      </div>
+
+      <div class="form-group-left">
+        <label>업로드폴더:</label>
+        <input id="dirpath" name="dirpath" type="text">
+      </div>
+
+      <div class="form-group-left">
+        <label>설명:</label>
+        <textarea class="form-control object_value" id="projectdesc" name="projectdesc" spellcheck="false" style="resize: none; height: 80%;"></textarea>
+      </div>
+
+      <div class="form-group-left"style = "display: block;">
+        <label>사용:</label>
+        <input id="useyn" name="useyn" type="checkbox" style="margin-left: 50px;">
+      </div>
+
+      <div class="button-group">
+        <button id="reset-btn" type="button" class="icon-btn">
+          <div class="icon-wrapper">
+            <img src="{% static 'icons/new.svg' %}" class="icon-img new-icon" title="신규">
+            <span class="icon-label">신규</span>
+          </div> 
+        </button>
+
+        <!-- 저장 버튼 -->
+        <button id="save-btn" type="button" class="icon-btn">
+          <div class="icon-wrapper">
+            <img src="{% static 'icons/save.svg' %}" class="icon-img save-icon" title="저장">
+            <span class="icon-label">저장</span>
+          </div>  
+        </button>
+
+        <!-- 삭제 버튼 -->
+        <button id="delete-btn" type="button" class="icon-btn">
+          <div class="icon-wrapper">
+            <img src="{% static 'icons/delete.svg' %}" class="icon-img del-icon" title="삭제">
+            <span class="icon-label">삭제</span>
+          </div>   
+        </button>
+      </div>
+      
+    </form>
+  </div>
+</div>
+
+<script>
+// 페이지 로드 시 초기화 진행
+window.addEventListener('load', function() {
+  document.getElementById("projects-detail-form").reset();
+    const params = new URLSearchParams(window.location.search);
+    const tenantId = params.get('tenantid');
+    
+    document.getElementById("tenantid").value = tenantId;
+});
+
+// 선택 클릭 → 행 클릭으로 변경
+document.querySelectorAll("tbody tr[data-projectid]").forEach(row => {
+  row.addEventListener("click", function () {
+    // 기존 form 채우기 로직
+    const tenantId = document.getElementById("tenantid").value;
+    document.getElementById("projectid").value = row.dataset.projectid;
+    document.getElementById("projectnm").value = row.dataset.projectnm;
+    document.getElementById("projectdesc").value = row.dataset.projectdesc;
+    document.getElementById("llmmodelnm").value = row.dataset.llmmodelnm;
+    document.getElementById("apikey").value = row.dataset.apikey;
+    document.getElementById("dirpath").value = row.dataset.dirpath;
+    document.getElementById("useyn").checked = row.dataset.useyn === "True";
+
+    showActionButtons(row.dataset.projectid);
+
+    // 선택된 행 강조
+    document.querySelectorAll("tbody tr").forEach(r => r.classList.remove('selected-row'));
+    row.classList.add('selected-row');
+  });
+});
+
+// 초기화 버튼
+document.getElementById("reset-btn").addEventListener("click", () => {
+  document.getElementById("projects-detail-form").reset();
+  document.getElementById("projectid").value = "";
+  const navButtons = document.getElementById("nav-buttons");
+  navButtons.hidden = true;
+  navButtons.style.display = "none";
+  if (selectedRow) selectedRow.classList.remove("selected-row");
+  selectedRow = null;
+});
+
+// 저장 버튼
+document.getElementById("save-btn").addEventListener("click", () => {
+  const form = document.getElementById("projects-detail-form");
+  const formData = new FormData(form);
+
+  // showLoading('save')
+
+  fetch("{% url 'master_rag_projects_save' %}", {
+    method: "POST",
+    credentials: "include", 
+    body: formData,
+    headers: {
+      "X-CSRFToken": getCookie("csrftoken")
+    }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.result === "success") {
+      alert(data.message);
+      // hideLoading('save')
+      location.reload();
+    } else {
+      alert("저장 실패: " + (data.message || "서버 오류"));
+      // hideLoading('save')
+    }
+  })
+  .catch(err => {
+    alert("오류 발생: " + err.message);
+    // hideLoading('save')
+  });
+});
+
+// 삭제 버튼
+document.getElementById("delete-btn").addEventListener("click", () => {
+  const projectid = document.getElementById("projectid").value;
+  
+  if (!projectid) {
+    alert("삭제할 프로젝트을 선택하세요.");
+    return;
+  }
+
+  if (!confirm("정말 삭제하시겠습니까?")) return;
+
+  // showLoading('delete')
+
+  fetch("{% url 'master_rag_projects_delete' %}", {
+    method: "POST",
+    credentials: "include", 
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken")
+    },
+    body: JSON.stringify({ projectid })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.result === "success") {
+      alert(data.message);
+      // hideLoading('delete')
+      location.reload();
+    } else {
+      alert("삭제 실패: " + (data.message || "서버 오류"));
+      // hideLoading('delete')
+    }
+  })
+  .catch(error => {
+    alert("오류 발생: " + error.message)
+    // hideLoading('delete')
+  });
+});
+
+// 쿠키 정보
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+</script>
+
+{% endblock %}

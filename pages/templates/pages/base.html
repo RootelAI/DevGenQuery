@@ -264,6 +264,29 @@ nav ul li .submenu-panel small {
                             </div>
                         </li>
                     {% endif %}
+
+                    {% if request.session.user.roleid == 7 %}
+                        <li>
+                            <a href="#"
+                            class="{% if '/master/rag_projects/' in request.path or '/master/rag_projecttags/' in request.path or '/master/rag_files/' in request.path %}active{% endif %}">
+                                RAG &#9663;
+                            </a>
+
+                            <div class="submenu-panel">
+                                <div class="menu-desc">
+                                    RAG 메뉴<br>
+                                    관리자만 접근가능 (System Admin)
+                                </div>
+                                <div class="submenu-list">
+                                    <ul>
+                                        <li><a href="/master/rag_projects/">프로젝트 관리</a></li>
+                                        <li><a href="/master/rag_projecttags/">Tag 관리</a></li>
+                                        <li><a href="/master/rag_files/">파일 관리</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </li>
+                    {% endif %}
                 {% endif %}
             </ul>
         </nav>
