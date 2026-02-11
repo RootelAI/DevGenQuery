@@ -70,14 +70,7 @@ def master_rag_files(request):
             # 대체 파일 CD
             if i.get('supersedes_filecd'):
                 try:
-                    supersedes_file = supabase.schema('rag').table('files').select('*').eq('filecd', i['supersedes_filecd']).execute().data
-                    
-                    supfilenm = supersedes_file[0]['filenm']
-                    extension = '.' + supersedes_file[0]['fileextension']
-                    version = supersedes_file[0]['version']
-                    supresedes_filenm = f'{supfilenm.replace(extension, "")}_{version}{extension}'
-
-                    i['supersedes_filenm'] = supresedes_filenm
+                    i['supersedes_filenm'] = supabase.schema('rag').table('files').select('*').eq('filecd', i['supersedes_filecd']).execute().data[0]['filenm']
                 except Exception as e:
                     i['supersedes_filenm'] = ''
 
@@ -263,9 +256,8 @@ def master_rag_files_save(request):
 
             existing = supabase.schema('rag').table('files').select('*').eq('filecd', filecd).execute().data
             if existing:
-                filenm = existing[0]['filenm']
-                version = existing[0]['version']
-                blob_name = f'{filenm}_{version}'
+                blob_name = existing[0]['filenm']
+                extension = existing[0]['fileextension']
 
             if uploaded_file:
                 # 파일 확장자 추출
@@ -276,16 +268,8 @@ def master_rag_files_save(request):
                 dirPath = supabase.schema('rag').table('projects').select('dirpath').eq('projectid', project_id).execute().data[0]['dirpath']
                 
                 # 기존 존재 시 삭제
-                if blob_name:
+                if extension:
                     delete_from_azure_blob(blob_name, dirPath)
-
-                # 원본 파일명과 확장자 분리
-                original_name = uploaded_file.name
-                name_without_ext, extension = os.path.splitext(original_name)
-
-                # 새로운 파일명 생성
-                uploaded_file.name = f'{name_without_ext}_{version}{extension}'
-
 
                 # Azure Blob Storage에 업로드
                 upload_result = upload_to_azure_blob(uploaded_file, dirPath)
@@ -392,15 +376,11 @@ def master_rag_files_delete(request):
             
             file_data = file_info.data[0]
             project_id = file_data['projectid']
-            filenm = file_data.get('filenm')
             fileextension = file_data.get('fileextension')
             
             # Azure Blob Storage에서 파일 삭제 (fileextension 이 있는 경우에만)
             if fileextension:
-                supfilenm = filenm
-                extension = '.' + fileextension
-                version = file_data.get('version')
-                blob_name = f'{supfilenm.replace(extension, "")}_{version}{extension}'
+                blob_name = file_data.get('filenm')
 
                 # 컨테이너
                 dirPath = supabase.schema('rag').table('projects').select('dirpath').eq('projectid', project_id).execute().data[0]['dirpath']

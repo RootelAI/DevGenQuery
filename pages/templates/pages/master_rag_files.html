@@ -200,9 +200,7 @@ const allFiles = [
   {% for file in files %}
   {
     filecd: "{{ file.filecd }}",
-    filenm: "{{ file.filenm }}",
-    fileextension: "{{ file.fileextension }}",
-    version: "{{ file.version }}"
+    filenm: "{{ file.filenm }}"
   }{% if not forloop.last %},{% endif %}
   {% endfor %}
 ];
@@ -223,7 +221,7 @@ function updateSupersedesDropdown(excludeFilecd = null) {
     if (!excludeFilecd || file.filecd !== excludeFilecd) {
       const option = document.createElement('option');
       option.value = file.filecd;
-      option.textContent = file.filenm.replace(extension, '') + '_' + file.version + extension;
+      option.textContent = file.filenm;
       select.appendChild(option);
     }
   });
