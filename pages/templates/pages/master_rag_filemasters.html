@@ -1,0 +1,462 @@
+{% extends 'pages/base.html' %}
+{% load static %}
+{% block title %}RAG 파일 마스터{% endblock %}
+
+{% block content %}
+
+<div class="page-title">
+  <div style="display: flex; align-items: center;">
+    <div class="gradient-bar"></div>
+    <div>RAG 파일 마스터</div>
+  </div>
+</div>
+
+<div style="display: flex; gap: 20px; min-height: 80%;">
+  <!-- 왼쪽 -->
+  <div style="flex: 2;" >
+    <h3>파일 마스터 목록</h3>
+    <div class="table-container">
+      <table class="table table-bordered table-sm">
+        <thead>
+          <tr>
+            <th style="width:  8%;">프로젝트명</th>
+            <th style="width:  8%;">파일<br>마스터CD</th>
+            <th style="width:  8%;">파일<br>마스터명</th>
+            <th class="info" style="width: 8%;">Tag1</th>
+            <th class="info" style="width: 8%;">Tag2</th>
+            <th class="info" style="width: 8%;">Tag3</th>
+            <th class="info" style="width: 8%;">Tag4</th>
+            <th class="info" style="width: 8%;">Tag5</th>
+            <th class="info" style="width: 8%;">주관부서</th>
+            <th class="info" style="width: 8%;">참조부서</th>
+            <th class="info" style="width: 8%;">승인부서</th>
+            <th class="info" style="width: 8%;">처리구분</th>
+            <th class="info" style="width: 8%;">처리일시</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for file in filemasters %}
+          <tr data-projectid="{{ file.projectid }}"
+              data-projectnm="{{ file.projectnm }}"
+              data-filemastercd="{{ file.filemastercd }}"
+              data-filemasternm="{{ file.filemasternm }}"
+              data-tag1value="{{ file.tag1value }}"
+              data-tag2value="{{ file.tag2value }}"
+              data-tag3value="{{ file.tag3value }}"
+              data-tag4value="{{ file.tag4value }}"
+              data-tag5value="{{ file.tag5value }}"
+              data-owner_dept="{{ file.owner_dept }}"
+              data-owner_deptnm="{{ file.owner_deptnm }}"
+              data-support_dept="{{ file.support_dept }}"
+              data-support_deptnm="{{ file.support_deptnm }}"
+              data-approver_dept="{{ file.approver_dept }}"
+              data-approver_deptnm="{{ file.approver_deptnm }}"
+              data-processcd="{{ file.processcd }}"
+              data-processdts="{{ file.processdts }}"
+              data-creator="{{ file.creator }}"
+              data-creatornm="{{ file.creatornm }}"
+              data-createdts="{{ file.createdts }}"
+              >
+              <td class="info" style="text-align: center;"><span>{{file.projectnm}}</span></td>
+              <td class="info" style="text-align: center;"><span>{{file.filemastercd}}</span></td>
+              <td class="info" style="text-align: center;"><span>{{file.filemasternm}}</span></td>
+              <td class="info" style="text-align: center;"><span>{{file.tag1valuenm}}</span></td>
+              <td class="info" style="text-align: center;"><span>{{file.tag2valuenm}}</span></td>
+              <td class="info" style="text-align: center;"><span>{{file.tag3valuenm}}</span></td>
+              <td class="info" style="text-align: center;"><span>{{file.tag4valuenm}}</span></td>
+              <td class="info" style="text-align: center;"><span>{{file.tag5valuenm}}</span></td>
+              <td class="info" style="text-align: center;"><span>{{file.owner_deptnm}}</span></td>
+              <td class="info" style="text-align: center;"><span>{{file.support_deptnm}}</span></td>
+              <td class="info" style="text-align: center;"><span>{{file.approver_deptnm}}</span></td>
+              <td class="info" style="text-align: center;"><span>
+                {% if file.processcd == 'Y' %}
+                    처리
+                {% elif file.processcd == 'D' %}
+                    삭제
+                {% else %}
+                    미처리
+                {% endif %}
+              </span></td>
+              <td class="info"><span>{{file.processdts|default_if_none:''}}</span></td>
+          </tr>
+          {% empty %}
+          <tr>
+              <td colspan="10" class="text-center text-muted py-4">등록된 파일이 없습니다.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 오른쪽 -->
+  <div style="flex: 0.5; padding-left: 20px;">
+    <h3>마스터 상세</h3>
+    <form id="filemasters-detail-form" enctype="multipart/form-data">
+      <input id="projectid" name="projectid" type="text" hidden>
+      
+      <div class="form-group-left">
+        <label>프로젝트명:</label>
+        <select id="projectnm" name="projectnm" required>
+          <option value="" selected disabled>프로젝트 를 선택하세요</option>
+          {% for project in projects %}
+            <option value="{{ project.projectid }}">{{ project.projectnm }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group-left">
+        <label>마스터코드:</label>
+        <input id="filemastercd" name="filemastercd" type="text">
+      </div>
+
+      <div class="form-group-left">
+        <label>마스터명:</label>
+        <input id="filemasternm" name="filemasternm" type="text">
+      </div>
+
+      <div class="form-group-left">
+        <label>Tag1:</label>
+        <select id="tag1" name="tag1" required>
+          <option value="" selected disabled>Tag1 을 선택하세요</option>
+        </select>
+      </div>
+
+      <div class="form-group-left">
+        <label>Tag2:</label>
+        <select id="tag2" name="tag2" required>
+          <option value="" selected disabled>Tag2 를 선택하세요</option>
+        </select>
+      </div>
+
+      <div class="form-group-left">
+        <label>Tag3:</label>
+        <select id="tag3" name="tag3" required>
+          <option value="" selected disabled>Tag3 을 선택하세요</option>
+        </select>
+      </div>
+
+      <div class="form-group-left">
+        <label>Tag4:</label>
+        <select id="tag4" name="tag4" required>
+          <option value="" selected disabled>Tag4 를 선택하세요</option>
+        </select>
+      </div>
+
+      <div class="form-group-left">
+        <label>Tag5:</label>
+        <select id="tag5" name="tag5" required>
+          <option value="" selected disabled>Tag5 을 선택하세요</option>
+        </select>
+      </div>
+
+      <div class="form-group-left">
+        <label>주관부서:</label>
+        <select id="owner_dept" name="owner_dept" required>
+          <option value="" selected disabled>주관부서 를 선택하세요</option>
+          {% for dept in departments %}
+            <option value="{{ dept.valuecd }}">{{ dept.valuenm }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group-left">
+        <label>참조부서:</label>
+        <select id="support_dept" name="support_dept" required>
+          <option value="" selected disabled>참조부서 를 선택하세요</option>
+          {% for dept in departments %}
+            <option value="{{ dept.valuecd }}">{{ dept.valuenm }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group-left">
+        <label>승인부서:</label>
+        <select id="approver_dept" name="approver_dept" required>
+          <option value="" selected disabled>주관부서 를 선택하세요</option>
+          {% for dept in departments %}
+            <option value="{{ dept.valuecd }}">{{ dept.valuenm }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group-left">
+        <label>작성자:</label>
+        <input id="creatornm" name="creatornm" type="text" disabled>
+      </div>
+
+      <div class="button-group">
+        <button id="reset-btn" type="button" class="icon-btn">
+          <div class="icon-wrapper">
+            <img src="{% static 'icons/new.svg' %}" class="icon-img new-icon" title="신규">
+            <span class="icon-label">신규</span>
+          </div> 
+        </button>
+
+        <button id="save-btn" type="button" class="icon-btn">
+          <div class="icon-wrapper">
+            <img src="{% static 'icons/save.svg' %}" class="icon-img save-icon" title="저장">
+            <span class="icon-label">저장</span>
+          </div>  
+        </button>
+
+        <button id="delete-btn" type="button" class="icon-btn" disabled>
+          <div class="icon-wrapper">
+            <img src="{% static 'icons/delete.svg' %}" class="icon-img del-icon" title="삭제">
+            <span class="icon-label">삭제</span>
+          </div>   
+        </button>
+      </div>
+      
+    </form>
+  </div>
+</div>
+
+<script>
+// Django에서 전달된 데이터를 JavaScript 변수로 저장
+const projectTagValues = {{ projecttagvalues_json|safe }};
+
+// 프로젝트 선택 시 태그 드롭다운 업데이트 함수
+function updateTagDropdowns(projectId, selectedValues = {}) {
+  const tag1Select = document.getElementById('tag1');
+  const tag2Select = document.getElementById('tag2');
+  const tag3Select = document.getElementById('tag3');
+  const tag4Select = document.getElementById('tag4');
+  const tag5Select = document.getElementById('tag5');
+  
+  // 드롭다운 초기화
+  tag1Select.innerHTML = '<option value="" selected disabled>Tag1 을 선택하세요</option>';
+  tag2Select.innerHTML = '<option value="" selected disabled>Tag2 를 선택하세요</option>';
+  tag3Select.innerHTML = '<option value="" selected disabled>Tag3 을 선택하세요</option>';
+  tag4Select.innerHTML = '<option value="" selected disabled>Tag4 를 선택하세요</option>';
+  tag5Select.innerHTML = '<option value="" selected disabled>Tag5 을 선택하세요</option>';
+  
+  if (!projectId) return;
+  
+  // Tag1 채우기
+  const tag1Key = `${projectId}_tag1`;
+  if (projectTagValues[tag1Key]) {
+    projectTagValues[tag1Key].forEach(item => {
+      const option = document.createElement('option');
+      option.value = item.valuecd;
+      option.textContent = item.valuenm;
+      tag1Select.appendChild(option);
+    });
+  }
+  
+  // Tag2 채우기
+  const tag2Key = `${projectId}_tag2`;
+  if (projectTagValues[tag2Key]) {
+    projectTagValues[tag2Key].forEach(item => {
+      const option = document.createElement('option');
+      option.value = item.valuecd;
+      option.textContent = item.valuenm;
+      tag2Select.appendChild(option);
+    });
+  }
+  
+  // Tag3 채우기
+  const tag3Key = `${projectId}_tag3`;
+  if (projectTagValues[tag3Key]) {
+    projectTagValues[tag3Key].forEach(item => {
+      const option = document.createElement('option');
+      option.value = item.valuecd;
+      option.textContent = item.valuenm;
+      tag3Select.appendChild(option);
+    });
+  
+  // Tag4 채우기
+  const tag4Key = `${projectId}_tag4`;
+  if (projectTagValues[tag4Key]) {
+    projectTagValues[tag4Key].forEach(item => {
+      const option = document.createElement('option');
+      option.value = item.valuecd;
+      option.textContent = item.valuenm;
+      tag4Select.appendChild(option);
+    });
+  }
+  
+  // Tag5 채우기
+  const tag5Key = `${projectId}_tag5`;
+  if (projectTagValues[tag5Key]) {
+    projectTagValues[tag5Key].forEach(item => {
+      const option = document.createElement('option');
+      option.value = item.valuecd;
+      option.textContent = item.valuenm;
+      tag5Select.appendChild(option);
+    });
+  }
+  }
+  
+  // 선택된 값이 있으면 설정
+  if (selectedValues.tag1) tag1Select.value = selectedValues.tag1;
+  if (selectedValues.tag2) tag2Select.value = selectedValues.tag2;
+  if (selectedValues.tag3) tag3Select.value = selectedValues.tag3;
+  if (selectedValues.tag4) tag4Select.value = selectedValues.tag4;
+  if (selectedValues.tag5) tag5Select.value = selectedValues.tag5;
+}
+
+// 페이지 로드 시 초기화
+window.addEventListener('load', function() {
+  document.getElementById("filemasters-detail-form").reset();
+});
+
+// 프로젝트 선택 변경 시 태그 드롭다운 업데이트
+document.getElementById('projectnm').addEventListener('change', function() {
+  const projectId = this.value;
+  document.getElementById('projectid').value = projectId;
+  updateTagDropdowns(projectId);
+});
+
+// 테이블 행 클릭 시
+document.querySelectorAll("tbody tr[data-projectid]").forEach(row => {
+  row.addEventListener("click", function () {
+    const projectId = row.dataset.projectid;
+    
+    // 폼 필드 채우기
+    document.getElementById("projectid").value = projectId;
+    document.getElementById("projectnm").value = projectId;
+    document.getElementById("filemastercd").value = row.dataset.filemastercd;
+    document.getElementById("filemasternm").value = row.dataset.filemasternm;
+    document.getElementById("creatornm").value = row.dataset.creatornm;
+    document.getElementById("owner_dept").value = row.dataset.owner_dept;
+    document.getElementById("support_dept").value = row.dataset.support_dept;
+    document.getElementById("approver_dept").value = row.dataset.approver_dept;
+    
+    // 태그 드롭다운 업데이트 및 선택된 값 설정
+    updateTagDropdowns(projectId, {
+      tag1: row.dataset.tag1value,
+      tag2: row.dataset.tag2value,
+      tag3: row.dataset.tag3value,
+      tag4: row.dataset.tag4value,
+      tag5: row.dataset.tag5value
+    });
+
+    // 선택된 행 강조
+    document.querySelectorAll("tbody tr").forEach(r => r.classList.remove('selected-row'));
+    row.classList.add('selected-row');
+  });
+});
+
+
+// 초기화 버튼
+document.getElementById("reset-btn").addEventListener("click", () => {
+  document.getElementById("filemasters-detail-form").reset();
+  document.getElementById("projectid").value = "";
+  document.getElementById("filemastercd").value = "";
+  
+  // 태그 드롭다운 초기화
+  updateTagDropdowns(null);
+  
+  const navButtons = document.getElementById("nav-buttons");
+  if (navButtons) {
+    navButtons.hidden = true;
+    navButtons.style.display = "none";
+  }
+  
+  document.querySelectorAll("tbody tr").forEach(r => r.classList.remove("selected-row"));
+});
+
+// 저장 버튼
+document.getElementById("save-btn").addEventListener("click", () => {
+  const form = document.getElementById("filemasters-detail-form");
+  const formData = new FormData(form);
+  
+  // 로딩 표시 (선택사항)
+  const saveBtn = document.getElementById("save-btn");
+  const originalText = saveBtn.querySelector('.icon-label').textContent;
+  saveBtn.querySelector('.icon-label').textContent = '저장중...';
+  saveBtn.disabled = true;
+
+  fetch("{% url 'master_rag_filemasters_save' %}", {
+    method: "POST",
+    credentials: "include", 
+    body: formData,
+    headers: {
+      "X-CSRFToken": getCookie("csrftoken")
+    }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.result === "success") {
+      alert(data.message);
+      location.reload();
+    } else {
+      alert("저장 실패: " + (data.message || "서버 오류"));
+      saveBtn.querySelector('.icon-label').textContent = originalText;
+      saveBtn.disabled = false;
+    }
+  })
+  .catch(err => {
+    alert("오류 발생: " + err.message);
+    saveBtn.querySelector('.icon-label').textContent = originalText;
+    saveBtn.disabled = false;
+  });
+});
+
+// 삭제 버튼
+document.getElementById("delete-btn").addEventListener("click", () => {
+  const filemastercd = document.getElementById("filemastercd").value;
+  const filemasternm = document.getElementById("filemasternm").value;
+  
+  if (!filemastercd) {
+    alert("삭제할 파일을 선택하세요.");
+    return;
+  }
+
+  if (!confirm(`"${filemasternm}" 파일을 정말 삭제하시겠습니까?\n(Azure Blob Storage의 파일도 함께 삭제됩니다)`)) {
+    return;
+  }
+
+  // 로딩 표시
+  const deleteBtn = document.getElementById("delete-btn");
+  const originalText = deleteBtn.querySelector('.icon-label').textContent;
+  deleteBtn.querySelector('.icon-label').textContent = '삭제중...';
+  deleteBtn.disabled = true;
+
+  fetch("{% url 'master_rag_filemasters_delete' %}", {
+    method: "POST",
+    credentials: "include", 
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken")
+    },
+    body: JSON.stringify({ filemastercd: filemastercd })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.result === "success") {
+      alert(data.message);
+      location.reload();
+    } else {
+      alert("삭제 실패: " + (data.message || "서버 오류"));
+      deleteBtn.querySelector('.icon-label').textContent = originalText;
+      deleteBtn.disabled = false;
+    }
+  })
+  .catch(error => {
+    alert("오류 발생: " + error.message);
+    deleteBtn.querySelector('.icon-label').textContent = originalText;
+    deleteBtn.disabled = false;
+  });
+});
+
+// 쿠키 정보
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+</script>
+
+{% endblock %}

@@ -19,42 +19,60 @@
       <table class="table table-bordered table-sm">
         <thead>
           <tr>
-            <th style="width: 10%;">프로젝트명</th>
-            <th style="width: 30%;">파일명</th>
-            <th class="info" style="width: 8%;">Tag1</th>
-            <th class="info" style="width: 8%;">Tag2</th>
-            <th class="info" style="width: 8%;">Tag3</th>
-            <th class="info" style="width: 8%;">처리구분</th>
-            <th class="info" style="width: 8%;">처리일시</th>
+            <th style="width:  8%;">마스터 명</th>
+            <th style="width:  8%;">버전</th>
+            <th style="width:  8%;">파일 명</th>
+            <th style="width:  8%;">파일 상태</th>
+            <th style="width:  8%;">리비전타입</th>
+            <th style="width:  8%;">대체파일</th>
+            <th style="width:  8%;">승인일</th>
+            <th style="width:  8%;">유효일</th>
+            <th style="width:  8%;">폐기일</th>
+            <th style="width:  8%;">변경사유</th>
+            <th style="width:  8%;">처리구분</th>
+            <th style="width:  8%;">처리일시</th>
           </tr>
         </thead>
         <tbody>
           {% for file in files %}
-          <tr data-fileuid="{{ file.fileuid }}"
-              data-projectid="{{ file.projectid }}"
-              data-projectnm="{{ file.projectnm }}"
+          <tr data-filecd="{{ file.filecd }}"
+              data-filemastercd="{{ file.filemastercd }}"
+              data-filemasternm="{{ file.filemasternm }}"              
+              data-version="{{ file.version }}"
               data-filenm="{{ file.filenm }}"
               data-fileextension="{{ file.fileextension }}"
-              data-tag1value="{{ file.tag1value }}"
-              data-tag2value="{{ file.tag2value }}"
-              data-tag3value="{{ file.tag3value }}"
+              data-filestatus="{{ file.filestatus }}"
+              data-filestatusnm="{{ file.filestatusnm }}"
+              data-revisiontype="{{ file.revisiontype }}"
+              data-revisiontypenm="{{ file.revisiontypenm }}"
+              data-supersedes_filecd="{{ file.supersedes_filecd }}"
+              data-supersedes_filenm="{{ file.supersedes_filenm }}"
+              data-approval_date="{{ file.approval_date }}"
+              data-effective_date="{{ file.effective_date }}"
+              data-obsolete_date="{{ file.obsolete_date }}"
+              data-change_reason="{{ file.change_reason }}"
               data-processcd="{{ file.processcd }}"
               data-processdts="{{ file.processdts }}"
               data-creator="{{ file.creator }}"
               data-creatornm="{{ file.creatornm }}"
               data-createdts="{{ file.createdts }}"
               >
-              <td class="info"><span>{{file.projectnm}}</span></td>
-              <td class="info"><span>{{file.filenm}}</span></td>
-              <td class="info" style="text-align: center;"><span>{{file.tag1valuenm}}</span></td>
-              <td class="info" style="text-align: center;"><span>{{file.tag2valuenm}}</span></td>
-              <td class="info" style="text-align: center;"><span>{{file.tag3valuenm}}</span></td>
+              <td class="info" style="text-align: center;"><span>{{file.filemasternm}}</span></td>
+              <td class="info" style="text-align: center;"><span>{{file.version}}</span></td>
+              <td class="info" style="text-align: center;"><span>{{file.filenm}}</span></td>
+              <td class="info" style="text-align: center;"><span>{{file.filestatusnm}}</span></td>
+              <td class="info" style="text-align: center;"><span>{{file.revisiontypenm}}</span></td>
+              <td class="info" style="text-align: center;"><span>{{file.supersedes_filenm}}</span></td>
+              <td class="info" style="text-align: center;"><span>{{file.approval_date|default_if_none:''}}</span></td>
+              <td class="info" style="text-align: center;"><span>{{file.effective_date|default_if_none:''}}</span></td>
+              <td class="info" style="text-align: center;"><span>{{file.obsolete_date|default_if_none:''}}</span></td>
+              <td class="info" style="text-align: center;"><span>{{file.change_reason}}</span></td>
               <td class="info" style="text-align: center;"><span>{% if file.processcd %}✔{% endif %}</span></td>
               <td class="info"><span>{{file.processdts|default_if_none:''}}</span></td>
           </tr>
           {% empty %}
           <tr>
-              <td colspan="7" class="text-center text-muted py-4">등록된 파일이 없습니다.</td>
+              <td colspan="12" class="text-center text-muted py-4">등록된 파일이 없습니다.</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -64,45 +82,75 @@
 
   <!-- 오른쪽 -->
   <div style="flex: 0.5; padding-left: 20px;">
-    <h3>프로젝트 상세</h3>
+    <h3>파일 상세</h3>
     <form id="files-detail-form" enctype="multipart/form-data">
-      <input id="projectid" name="projectid" type="text" hidden>
-      <input id="fileuid" name="fileuid" type="text" hidden>
+      <input id="filecd" name="filecd" type="text" hidden>
       
       <div class="form-group-left">
-        <label>프로젝트명:</label>
-        <select id="projectnm" name="projectnm" required>
-          <option value="" selected disabled>프로젝트 를 선택하세요</option>
-          {% for project in projects %}
-            <option value="{{ project.projectid }}">{{ project.projectnm }}</option>
+        <label>마스터 명:</label>
+        <select id="filemasternm" name="filemasternm" required>
+          <option value="" selected disabled>마스터 를 선택하세요</option>
+          {% for filemaster in filemasters %}
+            <option value="{{ filemaster.filemastercd }}">{{ filemaster.filemasternm }}</option>
           {% endfor %}
         </select>
+      </div>
+
+      <div class="form-group-left">
+        <label>버전명:</label>
+        <input id="version" name="version" type="text" placeholder="v1.0">
       </div>
 
       <div class="form-group-left">
         <label>파일명:</label>
         <input id="filenm" name="filenm" type="text" placeholder="확장자까지 전체 명 입력">
       </div>
-
+      
       <div class="form-group-left">
-        <label>Tag1:</label>
-        <select id="tag1" name="tag1" required>
-          <option value="" selected disabled>Tag1 을 선택하세요</option>
+        <label>파일상태:</label>
+        <select id="filestatus" name="filestatus" required>
+          <option value="" selected disabled>파일상태 를 선택하세요</option>
+          {% for filestat in filestatus %}
+            <option value="{{ filestat.valuecd }}">{{ filestat.valuenm }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      
+      <div class="form-group-left">
+        <label>리비전타입:</label>
+        <select id="revisiontype" name="revisiontype" required>
+          <option value="" selected disabled>리비전타입 을 선택하세요</option>
+          {% for revisiontype in revisiontypes %}
+            <option value="{{ revisiontype.valuecd }}">{{ revisiontype.valuenm }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      
+      <div class="form-group-left">
+        <label>대체 파일:</label>
+        <select id="supersedes_filecd" name="supersedes_filecd" required>
+          <option value="" selected disabled>대체 파일 을 선택하세요</option>
         </select>
       </div>
 
       <div class="form-group-left">
-        <label>Tag2:</label>
-        <select id="tag2" name="tag2" required>
-          <option value="" selected disabled>Tag2 을 선택하세요</option>
-        </select>
+        <label>승인일:</label>
+        <input id="approval_date" name="approval_date" type="date">
       </div>
 
       <div class="form-group-left">
-        <label>Tag3:</label>
-        <select id="tag3" name="tag3" required>
-          <option value="" selected disabled>Tag3 을 선택하세요</option>
-        </select>
+        <label>유효일:</label>
+        <input id="effective_date" name="effective_date" type="date">
+      </div>
+
+      <div class="form-group-left">
+        <label>폐기일:</label>
+        <input id="obsolete_date" name="obsolete_date" type="date">
+      </div>
+
+      <div class="form-group-left">
+        <label>변경사유:</label>
+        <input id="change_reason" name="change_reason" type="text">
       </div>
 
       <div class="form-group-left">
@@ -147,91 +195,73 @@
 </div>
 
 <script>
-// Django에서 전달된 데이터를 JavaScript 변수로 저장
-const projectTagValues = {{ projecttagvalues_json|safe }};
+// 전체 파일 목록을 JavaScript 변수로 저장
+const allFiles = [
+  {% for file in files %}
+  {
+    filecd: "{{ file.filecd }}",
+    filenm: "{{ file.filenm }}",
+    fileextension: "{{ file.fileextension }}",
+    version: "{{ file.version }}"
+  }{% if not forloop.last %},{% endif %}
+  {% endfor %}
+];
 
-// 프로젝트 선택 시 태그 드롭다운 업데이트 함수
-function updateTagDropdowns(projectId, selectedValues = {}) {
-  const tag1Select = document.getElementById('tag1');
-  const tag2Select = document.getElementById('tag2');
-  const tag3Select = document.getElementById('tag3');
-  
-  // 드롭다운 초기화
-  tag1Select.innerHTML = '<option value="" selected disabled>Tag1 을 선택하세요</option>';
-  tag2Select.innerHTML = '<option value="" selected disabled>Tag2 을 선택하세요</option>';
-  tag3Select.innerHTML = '<option value="" selected disabled>Tag3 을 선택하세요</option>';
-  
-  if (!projectId) return;
-  
-  // Tag1 채우기
-  const tag1Key = `${projectId}_tag1`;
-  if (projectTagValues[tag1Key]) {
-    projectTagValues[tag1Key].forEach(item => {
-      const option = document.createElement('option');
-      option.value = item.valuecd;
-      option.textContent = item.valuenm;
-      tag1Select.appendChild(option);
-    });
+// 대체 파일 드롭다운 업데이트 함수
+function updateSupersedesDropdown(excludeFilecd = null) {
+  const select = document.getElementById('supersedes_filecd');
+  console.log(select)
+  // 기존 옵션 모두 제거 (첫 번째 placeholder 옵션 제외)
+  while (select.options.length > 1) {
+    select.remove(1);
   }
   
-  // Tag2 채우기
-  const tag2Key = `${projectId}_tag2`;
-  if (projectTagValues[tag2Key]) {
-    projectTagValues[tag2Key].forEach(item => {
+  // 필터링된 파일 목록으로 옵션 추가
+  allFiles.forEach(file => {
+    extension = '.' + file.fileextension
+    // excludeFilecd가 있으면 해당 파일은 제외
+    if (!excludeFilecd || file.filecd !== excludeFilecd) {
       const option = document.createElement('option');
-      option.value = item.valuecd;
-      option.textContent = item.valuenm;
-      tag2Select.appendChild(option);
-    });
-  }
-  
-  // Tag3 채우기
-  const tag3Key = `${projectId}_tag3`;
-  if (projectTagValues[tag3Key]) {
-    projectTagValues[tag3Key].forEach(item => {
-      const option = document.createElement('option');
-      option.value = item.valuecd;
-      option.textContent = item.valuenm;
-      tag3Select.appendChild(option);
-    });
-  }
-  
-  // 선택된 값이 있으면 설정
-  if (selectedValues.tag1) tag1Select.value = selectedValues.tag1;
-  if (selectedValues.tag2) tag2Select.value = selectedValues.tag2;
-  if (selectedValues.tag3) tag3Select.value = selectedValues.tag3;
+      option.value = file.filecd;
+      option.textContent = file.filenm.replace(extension, '') + '_' + file.version + extension;
+      select.appendChild(option);
+    }
+  });
 }
+
 
 // 페이지 로드 시 초기화
 window.addEventListener('load', function() {
   document.getElementById("files-detail-form").reset();
-});
-
-// 프로젝트 선택 변경 시 태그 드롭다운 업데이트
-document.getElementById('projectnm').addEventListener('change', function() {
-  const projectId = this.value;
-  document.getElementById('projectid').value = projectId;
-  updateTagDropdowns(projectId);
+  updateSupersedesDropdown(); // 전체 목록 표시
 });
 
 // 테이블 행 클릭 시
-document.querySelectorAll("tbody tr[data-projectid]").forEach(row => {
+document.querySelectorAll("tbody tr[data-filecd]").forEach(row => {
   row.addEventListener("click", function () {
-    const projectId = row.dataset.projectid;
+    console.log('Click')
+    
+    const currentFilecd = row.dataset.filecd;
     
     // 폼 필드 채우기
-    document.getElementById("projectid").value = projectId;
-    document.getElementById("projectnm").value = projectId;
-    document.getElementById("fileuid").value = row.dataset.fileuid;
+    document.getElementById('filecd').value = row.dataset.filecd;
+    document.getElementById("filemasternm").value = row.dataset.filemastercd;
+    document.getElementById("version").value = row.dataset.version;
     document.getElementById("filenm").value = row.dataset.filenm;
+    document.getElementById("filestatus").value = row.dataset.filestatus;
+    document.getElementById("revisiontype").value = row.dataset.revisiontype;
+    document.getElementById("supersedes_filecd").value = row.dataset.supersedes_filecd;
+    document.getElementById("approval_date").value = row.dataset.approval_date;
+    document.getElementById("effective_date").value = row.dataset.effective_date;
+    document.getElementById("obsolete_date").value = row.dataset.obsolete_date;
+    document.getElementById("change_reason").value = row.dataset.change_reason;
     document.getElementById("creatornm").value = row.dataset.creatornm;
+
+    // 대체 파일 드롭다운 업데이트 (현재 파일 제외)
+    updateSupersedesDropdown(currentFilecd);
     
-    // 태그 드롭다운 업데이트 및 선택된 값 설정
-    updateTagDropdowns(projectId, {
-      tag1: row.dataset.tag1value,
-      tag2: row.dataset.tag2value,
-      tag3: row.dataset.tag3value
-    });
+    // 기존 대체 파일 값 설정
+    document.getElementById("supersedes_filecd").value = row.dataset.supersedes_filecd;
 
     // 선택된 행 강조
     document.querySelectorAll("tbody tr").forEach(r => r.classList.remove('selected-row'));
@@ -248,18 +278,10 @@ document.getElementById('file-upload').addEventListener('change', function(e) {
 // 초기화 버튼
 document.getElementById("reset-btn").addEventListener("click", () => {
   document.getElementById("files-detail-form").reset();
-  document.getElementById("projectid").value = "";
-  document.getElementById("fileuid").value = "";
   document.getElementById("file-name").textContent = "없음";
   
-  // 태그 드롭다운 초기화
-  updateTagDropdowns(null);
-  
-  const navButtons = document.getElementById("nav-buttons");
-  if (navButtons) {
-    navButtons.hidden = true;
-    navButtons.style.display = "none";
-  }
+  // 대체 파일 드롭다운 전체 목록으로 복원
+  updateSupersedesDropdown();
   
   document.querySelectorAll("tbody tr").forEach(r => r.classList.remove("selected-row"));
 });
@@ -309,10 +331,10 @@ document.getElementById("save-btn").addEventListener("click", () => {
 
 // 삭제 버튼
 document.getElementById("delete-btn").addEventListener("click", () => {
-  const fileuid = document.getElementById("fileuid").value;
+  const filecd = document.getElementById("filecd").value;
   const filenm = document.getElementById("filenm").value;
   
-  if (!fileuid) {
+  if (!filecd) {
     alert("삭제할 파일을 선택하세요.");
     return;
   }
@@ -334,7 +356,7 @@ document.getElementById("delete-btn").addEventListener("click", () => {
       "Content-Type": "application/json",
       "X-CSRFToken": getCookie("csrftoken")
     },
-    body: JSON.stringify({ fileuid: fileuid })
+    body: JSON.stringify({ filecd: filecd })
   })
   .then(res => res.json())
   .then(data => {

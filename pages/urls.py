@@ -37,8 +37,10 @@ from .views import (home, hide_popup, search_help
                   , master_columns, master_columns_save, master_columns_delete, master_values_save, master_value_delete
 
                   , master_rag_projects, master_rag_projects_save, master_rag_projects_delete
-                  , master_rag_files, master_rag_files_save, master_rag_files_delete
                   , master_rag_projecttags, master_rag_projecttags_save, master_rag_projecttags_delete
+
+                  , master_rag_files, master_rag_files_save, master_rag_files_delete
+                  , master_rag_filemasters, master_rag_filemasters_save, master_rag_filemasters_delete
                     )
                     
 # urls.py
@@ -130,11 +132,15 @@ urlpatterns = [
     path('master/rag_projects_save/', master_rag_projects_save, name = 'master_rag_projects_save'),
     path('master/rag_projects_delete/', master_rag_projects_delete, name = 'master_rag_projects_delete'),
 
+    path('master/rag_projecttags/', master_rag_projecttags, name = 'master_rag_projecttags'),
+    path('master/rag_projecttags_save/', master_rag_projecttags_save, name = 'master_rag_projecttags_save'),
+    path('master/rag_projecttags_delete/', master_rag_projecttags_delete, name = 'master_rag_projecttags_delete'),
+
     path('master/rag_files/', master_rag_files, name = 'master_rag_files'),
     path('master/rag_files_save/', master_rag_files_save, name = 'master_rag_files_save'),
     path('master/rag_files_delete/', master_rag_files_delete, name = 'master_rag_files_delete'),
 
-    path('master/rag_projecttags/', master_rag_projecttags, name = 'master_rag_projecttags'),
-    path('master/rag_projecttags_save/', master_rag_projecttags_save, name = 'master_rag_projecttags_save'),
-    path('master/rag_projecttags_delete/', master_rag_projecttags_delete, name = 'master_rag_projecttags_delete'),
+    path('master/rag_filemasters/', master_rag_filemasters, name = 'master_rag_filemasters'),
+    path('master/rag_filemasters_save/', master_rag_filemasters_save, name = 'master_rag_filemasters_save'),
+    path('master/rag_filemasters_delete/', master_rag_filemasters_delete, name = 'master_rag_filemasters_delete'),
 ]
