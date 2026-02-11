@@ -253,11 +253,19 @@ def master_rag_files_save(request):
             blob_url = None
             blob_name = None
             file_extension = None
+            extension = None  # 먼저 None으로 초기화
+            processcd = 'Y'
 
             existing = supabase.schema('rag').table('files').select('*').eq('filecd', filecd).execute().data
             if existing:
                 blob_name = existing[0]['filenm']
                 extension = existing[0]['fileextension']
+
+                old_data = existing[0]
+                
+                # Tag 값 변경 감지
+                if (old_data.get('filestatus') != filestatus):
+                    processcd = 'N'          
 
             if uploaded_file:
                 # 파일 확장자 추출
@@ -302,6 +310,7 @@ def master_rag_files_save(request):
                 'obsolete_date': obsolete_date,
                 'change_reason': change_reason,
                 'creator': user_id,  # 또는 적절한 사용자 정보
+                'processcd' : processcd,
             }
             
             # 파일이 업로드된 경우 추가 정보 저장

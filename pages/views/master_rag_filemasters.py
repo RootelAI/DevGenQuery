@@ -237,7 +237,8 @@ def master_rag_filemasters_save(request):
                         old_data.get('tag2value') != tag2 or 
                         old_data.get('tag3value') != tag3 or 
                         old_data.get('tag4value') != tag4 or 
-                        old_data.get('tag5value') != tag5):
+                        old_data.get('tag5value') != tag5 or 
+                        old_data.get('owner_dept') != owner_dept):
                         
                         # print('기존 값과 변경 감지')
                         # print(f'기존 Tag1: {old_data.get("tag1value")} -> 새로운 Tag1: {tag1}')

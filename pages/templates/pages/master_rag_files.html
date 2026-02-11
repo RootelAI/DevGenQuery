@@ -67,7 +67,15 @@
               <td class="info" style="text-align: center;"><span>{{file.effective_date|default_if_none:''}}</span></td>
               <td class="info" style="text-align: center;"><span>{{file.obsolete_date|default_if_none:''}}</span></td>
               <td class="info" style="text-align: center;"><span>{{file.change_reason}}</span></td>
-              <td class="info" style="text-align: center;"><span>{% if file.processcd %}✔{% endif %}</span></td>
+              <td class="info" style="text-align: center;"><span>
+                {% if file.processcd == 'Y' %}
+                    처리
+                {% elif file.processcd == 'D' %}
+                    삭제
+                {% else %}
+                    미처리
+                {% endif %}
+              </span></td>
               <td class="info"><span>{{file.processdts|default_if_none:''}}</span></td>
           </tr>
           {% empty %}
