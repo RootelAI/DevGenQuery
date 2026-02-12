@@ -265,7 +265,8 @@ table tr.selected-row {
 
 .form-group-left input,
 .form-group-left textarea,
-.form-group-left select {
+.form-group-left select,
+.form-group-left-input {
     flex: 1;    /* 가용 공간을 채우도록 설정 */
     /* margin: 4px 0 0 0 !important;  input 위쪽에 간격을 줍니다 */
     padding: 4px; 
@@ -281,6 +282,7 @@ table tr.selected-row {
     flex: 1 1 0;       /* 남는 공간 모두 차지 (basis 0) */
     min-width: 0;     /* flex-item의 기본 min-width 제약 해제 */
     width: auto !important; /* 혹시 다른 width 덮어쓰기 무시 */
+    min-height: 29px;
 }
 
 .form-group-left input[type="checkbox"]{

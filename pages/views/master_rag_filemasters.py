@@ -22,8 +22,6 @@ def master_rag_filemasters(request):
 
     user = request.session.get("user")
     if not user:
-        # return JsonResponse({"result": "Failed", "message": "로그인이 필요합니다. 로그인 부탁드립니다."})
-        # return redirect("login")
         code = 'login'
         text = '로그인이 필요합니다.'
         page = "master_rag_filemasters"
@@ -35,7 +33,8 @@ def master_rag_filemasters(request):
     })
     user_id = user.get("id")
 
-    try:# projects 테이블에서 데이터 조회
+    try:
+        # projects 테이블에서 데이터 조회
         projects = supabase.schema('rag').table('projects').select('*').order('createdts', desc=True).execute().data or []
         projecttags = supabase.schema('rag').table('projecttags').select('*').eq('useyn', True).execute().data or []
         projecttagvalues = supabase.schema('rag').table('projecttagvalues').select('*').eq('useyn', True).execute().data or []
@@ -90,39 +89,68 @@ def master_rag_filemasters(request):
                     i['processdts'] = ''
 
         def valuenm(projectid, tagcd, valuecd):
-            valuenm = supabase.schema('rag').table('projecttagvalues').select('valuenm').eq('projectid', projectid).eq('tagcd', tagcd).eq('valuecd', valuecd).execute().data[0]['valuenm']
-            return valuenm
+            """단일 값에 대한 valuenm 조회"""
+            try:
+                result = supabase.schema('rag').table('projecttagvalues').select('valuenm').eq('projectid', projectid).eq('tagcd', tagcd).eq('valuecd', valuecd).execute().data
+                return result[0]['valuenm'] if result else ''
+            except Exception as e:
+                return ''
+
+        def get_multi_valuenm(projectid, tagcd, value_str):
+            """🔥 콤마로 구분된 여러 값에 대한 valuenm 조회"""
+            if not value_str:
+                return ''
+            
+            # &로 구분된 값들을 리스트로 변환
+            values = [v.strip() for v in str(value_str).split('&') if v.strip()]
+            
+            # print(f'Tag: {tagcd} / values: {values}')
+
+            # 각 값에 대해 valuenm 조회
+            value_names = []
+            for val in values:
+                vname = valuenm(projectid, tagcd, val)
+                if vname:
+                    value_names.append(vname)
+            
+            # 콤마로 다시 결합
+            return ', '.join(value_names)
 
         # Tag 자료 매핑
         for i in filemasters:
+            # 🔥 Tag1 ~ 5 여러 값 처리
             if i.get("tag1value"):
                 try:
-                    i['tag1valuenm'] = valuenm(i['projectid'], 'tag1', i['tag1value'])
+                    i['tag1valuenm'] = get_multi_valuenm(i['projectid'], 'tag1', i['tag1value'])
                 except Exception as e:
+                    print(f'Tag1 Error: {e}')
                     i['tag1valuenm'] = ''
             if i.get("tag2value"):
                 try:
-                    i['tag2valuenm'] = valuenm(i['projectid'], 'tag2', i['tag2value'])
+                    i['tag2valuenm'] = get_multi_valuenm(i['projectid'], 'tag2', i['tag2value'])
                 except Exception as e:
+                    print(f'Tag2 Error: {e}')
                     i['tag2valuenm'] = ''
             if i.get("tag3value"):
                 try:
-                    i['tag3valuenm'] = valuenm(i['projectid'], 'tag3', i['tag3value'])
+                    i['tag3valuenm'] = get_multi_valuenm(i['projectid'], 'tag3', i['tag3value'])
                 except Exception as e:
+                    print(f'Tag3 Error: {e}')
                     i['tag3valuenm'] = ''
             if i.get("tag4value"):
                 try:
-                    i['tag4valuenm'] = valuenm(i['projectid'], 'tag4', i['tag4value'])
+                    i['tag4valuenm'] = get_multi_valuenm(i['projectid'], 'tag4', i['tag4value'])
                 except Exception as e:
+                    print(f'Tag4 Error: {e}')
                     i['tag4valuenm'] = ''
             if i.get("tag5value"):
                 try:
-                    i['tag5valuenm'] = valuenm(i['projectid'], 'tag5', i['tag5value'])
+                    i['tag5valuenm'] = get_multi_valuenm(i['projectid'], 'tag5', i['tag5value'])
                 except Exception as e:
+                    print(f'Tag5 Error: {e}')
                     i['tag5valuenm'] = ''
         
         # projecttagvalues를 JavaScript에서 사용하기 쉽게 구조화
-        # 형식: { "projectid_tagcd": [{ valuecd, valuenm, orderno }, ...] }
         projecttagvalues_dict = {}
         
         for value in projecttagvalues:
@@ -133,7 +161,7 @@ def master_rag_filemasters(request):
             projecttagvalues_dict[key].append({
                 'valuecd': value['valuecd'],
                 'valuenm': value['valuenm'],
-                'orderno': value.get('orderno', 0)  # orderno가 없을 경우 0으로 처리
+                'orderno': value.get('orderno', 0)
             })
         
         # orderno로 정렬
@@ -146,12 +174,12 @@ def master_rag_filemasters(request):
             'filemasters': filemasters,
             'projecttags': projecttags,
             'projecttagvalues': projecttagvalues,
-            'projecttagvalues': projecttagvalues,
             'projecttagvalues_json': json.dumps(projecttagvalues_dict, cls=DjangoJSONEncoder),
-            # 기존에 전달하던 tag1, tag2, tag3이 있다면 그대로 유지
             'departments': departments
         }
         
+        # print(f'FileMasters: {filemasters}')
+
         return render(request, 'pages/master_rag_filemasters.html', context)
         
     except Exception as e:
@@ -188,11 +216,24 @@ def master_rag_filemasters_save(request):
             project_id = request.POST.get('projectid')
             filemastercd = request.POST.get('filemastercd')
             filemasternm = request.POST.get('filemasternm')
-            tag1 = request.POST.get('tag1')
-            tag2 = request.POST.get('tag2')
-            tag3 = request.POST.get('tag3')
-            tag4 = request.POST.get('tag4')
-            tag5 = request.POST.get('tag5')
+            # tag1 = request.POST.get('tag1')
+            # tag2 = request.POST.get('tag2')
+            # tag3 = request.POST.get('tag3')
+            # tag4 = request.POST.get('tag4')
+            # tag5 = request.POST.get('tag5')
+            
+            tag1_list = request.POST.getlist('tag1')
+            tag1 = "&".join(tag1_list) if tag1_list else None
+            tag2_list = request.POST.getlist('tag2')
+            tag2 = "&".join(tag2_list) if tag2_list else None
+            tag3_list = request.POST.getlist('tag3')
+            tag3 = "&".join(tag3_list) if tag3_list else None
+            tag4_list = request.POST.getlist('tag4')
+            tag4 = "&".join(tag4_list) if tag4_list else None
+            tag5_list = request.POST.getlist('tag5')
+            tag5 = "&".join(tag5_list) if tag5_list else None
+
+            
             owner_dept = request.POST.get('owner_dept')
             support_dept = request.POST.get('support_dept')
             approver_dept = request.POST.get('approver_dept')
@@ -219,7 +260,6 @@ def master_rag_filemasters_save(request):
                 'support_dept': support_dept,
                 'approver_dept': approver_dept,
                 'creator': user_id,  # 또는 적절한 사용자 정보
-                'createdts': datetime.now().isoformat(),
             }
 
             # 기존 데이터 조회 (수정인 경우)

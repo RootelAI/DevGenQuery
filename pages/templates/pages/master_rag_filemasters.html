@@ -4,6 +4,44 @@
 
 {% block content %}
 
+<!-- ✅ 추가 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/virtual-select-plugin@1.0.45/dist/virtual-select.min.css">
+<script src="https://cdn.jsdelivr.net/npm/virtual-select-plugin@1.0.45/dist/virtual-select.min.js"></script>
+
+<style>
+  .tag {
+    max-height: 31px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0px !important;
+  }
+  
+  .vscomp-toggle-button {
+    padding: 2px 35px 2px 2px !important;
+    border: 1px solid !important;
+    min-height: 31px !important;
+  }
+  
+  /* 🔥 텍스트로 표시될 때 스타일 */
+  .vscomp-value {
+    display: block !important;
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    line-height: 1.5 !important;
+    padding: 0px 5px !important;
+    max-height: none !important;
+    color: #111 !important;
+  }
+
+  .vscomp-arrow::after{
+    border: 2px solid rgba(0,0,0,0) !important;
+    border-bottom-color: #111 !important;
+    border-right-color: #111 !important;
+    margin-right: 12% !important;
+    margin-left: auto !important;
+  }
+</style>
+
 <div class="page-title">
   <div style="display: flex; align-items: center;">
     <div class="gradient-bar"></div>
@@ -115,39 +153,35 @@
         <input id="filemasternm" name="filemasternm" type="text">
       </div>
 
+      <!-- 🔥 Tag1~5를 모두 VirtualSelect로 변경 -->
       <div class="form-group-left">
         <label>Tag1:</label>
-        <select id="tag1" name="tag1" required>
-          <option value="" selected disabled>Tag1 을 선택하세요</option>
-        </select>
+        <div id="tag1" class="form-group-left-input tag"></div>
+        <input type="hidden" name="tag1" id="tag1_hidden">
       </div>
 
       <div class="form-group-left">
         <label>Tag2:</label>
-        <select id="tag2" name="tag2" required>
-          <option value="" selected disabled>Tag2 를 선택하세요</option>
-        </select>
+        <div id="tag2" class="form-group-left-input tag"></div>
+        <input type="hidden" name="tag2" id="tag2_hidden">
       </div>
 
       <div class="form-group-left">
         <label>Tag3:</label>
-        <select id="tag3" name="tag3" required>
-          <option value="" selected disabled>Tag3 을 선택하세요</option>
-        </select>
+        <div id="tag3" class="form-group-left-input tag"></div>
+        <input type="hidden" name="tag3" id="tag3_hidden">
       </div>
 
       <div class="form-group-left">
         <label>Tag4:</label>
-        <select id="tag4" name="tag4" required>
-          <option value="" selected disabled>Tag4 를 선택하세요</option>
-        </select>
+        <div id="tag4" class="form-group-left-input tag"></div>
+        <input type="hidden" name="tag4" id="tag4_hidden">
       </div>
 
       <div class="form-group-left">
         <label>Tag5:</label>
-        <select id="tag5" name="tag5" required>
-          <option value="" selected disabled>Tag5 을 선택하세요</option>
-        </select>
+        <div id="tag5" class="form-group-left-input tag"></div>
+        <input type="hidden" name="tag5" id="tag5_hidden">
       </div>
 
       <div class="form-group-left">
@@ -216,89 +250,148 @@
 // Django에서 전달된 데이터를 JavaScript 변수로 저장
 const projectTagValues = {{ projecttagvalues_json|safe }};
 
-// 프로젝트 선택 시 태그 드롭다운 업데이트 함수
+// 🔥 전역 변수 - 각 태그의 VirtualSelect 인스턴스와 핸들러 저장
+const tagVirtualSelects = {
+  tag1: null,
+  tag2: null,
+  tag3: null,
+  tag4: null,
+  tag5: null
+};
+
+const tagChangeHandlers = {
+  tag1: null,
+  tag2: null,
+  tag3: null,
+  tag4: null,
+  tag5: null
+};
+
+/**
+ * 🔥 공통 함수: VirtualSelect 초기화 및 값 설정
+ * @param {string} tagName - 'tag1', 'tag2' 등
+ * @param {string} projectId - 프로젝트 ID (없으면 빈 VirtualSelect 생성)
+ * @param {string|array} selectedValue - 선택된 값
+ */
+function initTagVirtualSelect(tagName, projectId, selectedValue = null) {
+  const tagContainer = document.getElementById(tagName);
+  const hiddenInput = document.getElementById(`${tagName}_hidden`);
+  
+  // 1. 기존 인스턴스 제거
+  if (tagVirtualSelects[tagName]) {
+    tagVirtualSelects[tagName].destroy();
+    tagVirtualSelects[tagName] = null;
+  }
+  
+  // 2. 이전 이벤트 핸들러 제거
+  if (tagChangeHandlers[tagName]) {
+    tagContainer.removeEventListener('change', tagChangeHandlers[tagName]);
+    tagChangeHandlers[tagName] = null;
+  }
+
+  // 3. 컨테이너 초기화
+  tagContainer.innerHTML = "";
+  hiddenInput.value = '';
+  
+  // 🔥 4. options 가져오기 (projectId가 없으면 빈 배열)
+  let options = [];
+  if (projectId) {
+    const tagKey = `${projectId}_${tagName}`;
+    if (projectTagValues[tagKey]) {
+      options = projectTagValues[tagKey].map(item => ({
+        label: String(item.valuenm || '').trim(),
+        value: String(item.valuecd || '').trim()
+      }));
+    }
+  }
+
+  // 5. 선택할 값 미리 처리
+  let selectedVals = [];
+  if (selectedValue && options.length > 0) {
+    let values = selectedValue;
+    
+    if (!Array.isArray(values)) {
+      values = String(values).includes('&')
+        ? String(values).split('&').map(v => v.trim())
+        : [String(values).trim()];
+    }
+    
+    values = values.map(v => String(v).trim()).filter(v => v !== '');
+    const availableValues = options.map(opt => opt.value);
+    selectedVals = values.filter(v => availableValues.includes(v));
+  }
+
+  // 🔥 6. placeholder 텍스트 생성
+  const tagNumber = tagName.replace('tag', '');
+  const placeholder = `Tag${tagNumber} 을/를 선택하세요`;
+
+  // 7. VirtualSelect 초기화 (옵션이 없어도 생성)
+  const vsConfig = {
+    ele: `#${tagName}`,
+    options: options,
+    placeholder: placeholder,
+    search: true,
+    multiple: true,
+    showValueAsTags: false,
+    disableSelectAll: true,
+    maxValues: 0,
+    // 🔥 옵션이 없을 때 메시지
+    noOptionsText: '프로젝트를 먼저 선택하세요',
+    noSearchResultsText: '검색 결과가 없습니다'
+  };
+
+  // 초기값이 있으면 설정
+  if (selectedVals.length > 0) {
+    vsConfig.selectedValue = selectedVals;
+  }
+
+  tagVirtualSelects[tagName] = VirtualSelect.init(vsConfig);
+
+  // 8. hidden input 업데이트
+  hiddenInput.value = selectedVals.join('&');
+
+  // 9. change 이벤트 핸들러 등록
+  tagChangeHandlers[tagName] = function() {
+    const val = tagVirtualSelects[tagName].getValue();
+    const valueStr = Array.isArray(val) ? val.join('&') : (val || '');
+    hiddenInput.value = valueStr;
+    console.log(`${tagName} changed:`, valueStr);
+  };
+  
+  tagContainer.addEventListener('change', tagChangeHandlers[tagName]);
+}
+
+
+/**
+ * 🔥 모든 태그 초기화
+ */
+function resetAllTags() {
+  ['tag1', 'tag2', 'tag3', 'tag4', 'tag5'].forEach(tagName => {
+    if (tagVirtualSelects[tagName]) {
+      tagVirtualSelects[tagName].reset();
+      document.getElementById(`${tagName}_hidden`).value = '';
+    }
+  });
+}
+
+/**
+ * 프로젝트 선택 시 모든 태그 드롭다운 업데이트
+ */
 function updateTagDropdowns(projectId, selectedValues = {}) {
-  const tag1Select = document.getElementById('tag1');
-  const tag2Select = document.getElementById('tag2');
-  const tag3Select = document.getElementById('tag3');
-  const tag4Select = document.getElementById('tag4');
-  const tag5Select = document.getElementById('tag5');
-  
-  // 드롭다운 초기화
-  tag1Select.innerHTML = '<option value="" selected disabled>Tag1 을 선택하세요</option>';
-  tag2Select.innerHTML = '<option value="" selected disabled>Tag2 를 선택하세요</option>';
-  tag3Select.innerHTML = '<option value="" selected disabled>Tag3 을 선택하세요</option>';
-  tag4Select.innerHTML = '<option value="" selected disabled>Tag4 를 선택하세요</option>';
-  tag5Select.innerHTML = '<option value="" selected disabled>Tag5 을 선택하세요</option>';
-  
-  if (!projectId) return;
-  
-  // Tag1 채우기
-  const tag1Key = `${projectId}_tag1`;
-  if (projectTagValues[tag1Key]) {
-    projectTagValues[tag1Key].forEach(item => {
-      const option = document.createElement('option');
-      option.value = item.valuecd;
-      option.textContent = item.valuenm;
-      tag1Select.appendChild(option);
-    });
-  }
-  
-  // Tag2 채우기
-  const tag2Key = `${projectId}_tag2`;
-  if (projectTagValues[tag2Key]) {
-    projectTagValues[tag2Key].forEach(item => {
-      const option = document.createElement('option');
-      option.value = item.valuecd;
-      option.textContent = item.valuenm;
-      tag2Select.appendChild(option);
-    });
-  }
-  
-  // Tag3 채우기
-  const tag3Key = `${projectId}_tag3`;
-  if (projectTagValues[tag3Key]) {
-    projectTagValues[tag3Key].forEach(item => {
-      const option = document.createElement('option');
-      option.value = item.valuecd;
-      option.textContent = item.valuenm;
-      tag3Select.appendChild(option);
-    });
-  
-  // Tag4 채우기
-  const tag4Key = `${projectId}_tag4`;
-  if (projectTagValues[tag4Key]) {
-    projectTagValues[tag4Key].forEach(item => {
-      const option = document.createElement('option');
-      option.value = item.valuecd;
-      option.textContent = item.valuenm;
-      tag4Select.appendChild(option);
-    });
-  }
-  
-  // Tag5 채우기
-  const tag5Key = `${projectId}_tag5`;
-  if (projectTagValues[tag5Key]) {
-    projectTagValues[tag5Key].forEach(item => {
-      const option = document.createElement('option');
-      option.value = item.valuecd;
-      option.textContent = item.valuenm;
-      tag5Select.appendChild(option);
-    });
-  }
-  }
-  
-  // 선택된 값이 있으면 설정
-  if (selectedValues.tag1) tag1Select.value = selectedValues.tag1;
-  if (selectedValues.tag2) tag2Select.value = selectedValues.tag2;
-  if (selectedValues.tag3) tag3Select.value = selectedValues.tag3;
-  if (selectedValues.tag4) tag4Select.value = selectedValues.tag4;
-  if (selectedValues.tag5) tag5Select.value = selectedValues.tag5;
+  // 🔥 projectId가 없어도 placeholder를 보여주기 위해 VirtualSelect 생성
+  initTagVirtualSelect('tag1', projectId, selectedValues.tag1);
+  initTagVirtualSelect('tag2', projectId, selectedValues.tag2);
+  initTagVirtualSelect('tag3', projectId, selectedValues.tag3);
+  initTagVirtualSelect('tag4', projectId, selectedValues.tag4);
+  initTagVirtualSelect('tag5', projectId, selectedValues.tag5);
 }
 
 // 페이지 로드 시 초기화
 window.addEventListener('load', function() {
   document.getElementById("filemasters-detail-form").reset();
+  
+  // 🔥 모든 태그에 대해 빈 VirtualSelect 생성 (placeholder만 표시)
+  updateTagDropdowns(null);
 });
 
 // 프로젝트 선택 변경 시 태그 드롭다운 업데이트
@@ -338,14 +431,13 @@ document.querySelectorAll("tbody tr[data-projectid]").forEach(row => {
   });
 });
 
-
 // 초기화 버튼
 document.getElementById("reset-btn").addEventListener("click", () => {
   document.getElementById("filemasters-detail-form").reset();
   document.getElementById("projectid").value = "";
   document.getElementById("filemastercd").value = "";
   
-  // 태그 드롭다운 초기화
+  // 🔥 모든 태그 초기화 (빈 VirtualSelect로 재생성하여 placeholder 표시)
   updateTagDropdowns(null);
   
   const navButtons = document.getElementById("nav-buttons");
@@ -362,7 +454,7 @@ document.getElementById("save-btn").addEventListener("click", () => {
   const form = document.getElementById("filemasters-detail-form");
   const formData = new FormData(form);
   
-  // 로딩 표시 (선택사항)
+  // 로딩 표시
   const saveBtn = document.getElementById("save-btn");
   const originalText = saveBtn.querySelector('.icon-label').textContent;
   saveBtn.querySelector('.icon-label').textContent = '저장중...';

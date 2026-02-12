@@ -238,6 +238,9 @@ def master_rag_files_save(request):
             effective_date = request.POST.get('effective_date') or None
             obsolete_date = request.POST.get('obsolete_date') or None
             change_reason = request.POST.get('change_reason')
+            uploaded_file = request.FILES.get('file')
+            if uploaded_file:
+                filenm = uploaded_file.name
             
             # 이미 동일한 프로젝트에 동일한 파일명 있으면 삽입 불가
             # print(f'FileMasterCd: {filemastercd}')
@@ -249,7 +252,6 @@ def master_rag_files_save(request):
                 })
 
             # 파일 업로드 처리
-            uploaded_file = request.FILES.get('file')
             blob_url = None
             blob_name = None
             file_extension = None

@@ -111,7 +111,7 @@
 
       <div class="form-group-left">
         <label>파일명:</label>
-        <input id="filenm" name="filenm" type="text" placeholder="확장자까지 전체 명 입력">
+        <input id="filenm" name="filenm" type="text" disabled>
       </div>
       
       <div class="form-group-left">
@@ -135,9 +135,9 @@
       </div>
       
       <div class="form-group-left">
-        <label>대체 파일:</label>
+        <label>이전 파일:</label>
         <select id="supersedes_filecd" name="supersedes_filecd" required>
-          <option value="" selected disabled>대체 파일 을 선택하세요</option>
+          <option value="" selected disabled>이전 파일 을 선택하세요</option>
         </select>
       </div>
 
@@ -208,15 +208,17 @@ const allFiles = [
   {% for file in files %}
   {
     filecd: "{{ file.filecd }}",
-    filenm: "{{ file.filenm }}"
+    filenm: "{{ file.filenm }}",
+    filemastercd: "{{ file.filemastercd }}",
+    fileextension: "{{ file.fileextension }}"
   }{% if not forloop.last %},{% endif %}
   {% endfor %}
 ];
 
-// 대체 파일 드롭다운 업데이트 함수
-function updateSupersedesDropdown(excludeFilecd = null) {
+// 이전 파일 드롭다운 업데이트 함수
+function updateSupersedesDropdown(filemastercd = null, excludeFilecd = null) {
   const select = document.getElementById('supersedes_filecd');
-  console.log(select)
+  
   // 기존 옵션 모두 제거 (첫 번째 placeholder 옵션 제외)
   while (select.options.length > 1) {
     select.remove(1);
@@ -224,9 +226,12 @@ function updateSupersedesDropdown(excludeFilecd = null) {
   
   // 필터링된 파일 목록으로 옵션 추가
   allFiles.forEach(file => {
-    extension = '.' + file.fileextension
+    // filemastercd 필터링 (선택된 마스터의 파일만)
+    const matchesMaster = !filemastercd || file.filemastercd === filemastercd;
     // excludeFilecd가 있으면 해당 파일은 제외
-    if (!excludeFilecd || file.filecd !== excludeFilecd) {
+    const notExcluded = !excludeFilecd || file.filecd !== excludeFilecd;
+    
+    if (matchesMaster && notExcluded) {
       const option = document.createElement('option');
       option.value = file.filecd;
       option.textContent = file.filenm;
@@ -242,12 +247,29 @@ window.addEventListener('load', function() {
   updateSupersedesDropdown(); // 전체 목록 표시
 });
 
+// 마스터 명 선택 변경 시 이전 파일 드롭다운 업데이트
+document.getElementById('filemasternm').addEventListener('change', function() {
+  const selectedMasterCd = this.value;
+  const currentFilecd = document.getElementById('filecd').value;
+  
+  // 선택된 마스터에 해당하는 파일만 표시 (현재 파일 제외)
+  updateSupersedesDropdown(selectedMasterCd, currentFilecd);
+  
+  // 이전에 선택된 값이 필터링된 목록에 없으면 초기화
+  const supersedesSelect = document.getElementById('supersedes_filecd');
+  const currentValue = supersedesSelect.value;
+  const isValueInList = Array.from(supersedesSelect.options).some(opt => opt.value === currentValue);
+  
+  if (!isValueInList) {
+    supersedesSelect.value = '';
+  }
+});
+
 // 테이블 행 클릭 시
 document.querySelectorAll("tbody tr[data-filecd]").forEach(row => {
   row.addEventListener("click", function () {
-    console.log('Click')
-    
     const currentFilecd = row.dataset.filecd;
+    const currentMastercd = row.dataset.filemastercd;
     
     // 폼 필드 채우기
     document.getElementById('filecd').value = row.dataset.filecd;
@@ -263,10 +285,10 @@ document.querySelectorAll("tbody tr[data-filecd]").forEach(row => {
     document.getElementById("change_reason").value = row.dataset.change_reason;
     document.getElementById("creatornm").value = row.dataset.creatornm;
 
-    // 대체 파일 드롭다운 업데이트 (현재 파일 제외)
-    updateSupersedesDropdown(currentFilecd);
+    // 이전 파일 드롭다운 업데이트 (같은 마스터의 파일만, 현재 파일 제외)
+    updateSupersedesDropdown(currentMastercd, currentFilecd);
     
-    // 기존 대체 파일 값 설정
+    // 기존 이전 파일 값 설정
     document.getElementById("supersedes_filecd").value = row.dataset.supersedes_filecd;
 
     // 선택된 행 강조
@@ -286,7 +308,7 @@ document.getElementById("reset-btn").addEventListener("click", () => {
   document.getElementById("files-detail-form").reset();
   document.getElementById("file-name").textContent = "없음";
   
-  // 대체 파일 드롭다운 전체 목록으로 복원
+  // 이전 파일 드롭다운 전체 목록으로 복원
   updateSupersedesDropdown();
   
   document.querySelectorAll("tbody tr").forEach(r => r.classList.remove("selected-row"));
