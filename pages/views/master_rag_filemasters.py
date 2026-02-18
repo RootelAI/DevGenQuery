@@ -101,8 +101,8 @@ def master_rag_filemasters(request):
             if not value_str:
                 return ''
             
-            # &로 구분된 값들을 리스트로 변환
-            values = [v.strip() for v in str(value_str).split('&') if v.strip()]
+            # &&&로 구분된 값들을 리스트로 변환
+            values = [v.strip() for v in str(value_str).split('&&&') if v.strip()]
             
             # print(f'Tag: {tagcd} / values: {values}')
 
@@ -223,15 +223,15 @@ def master_rag_filemasters_save(request):
             # tag5 = request.POST.get('tag5')
             
             tag1_list = request.POST.getlist('tag1')
-            tag1 = "&".join(tag1_list) if tag1_list else None
+            tag1 = "&&&".join(tag1_list) if tag1_list else None
             tag2_list = request.POST.getlist('tag2')
-            tag2 = "&".join(tag2_list) if tag2_list else None
+            tag2 = "&&&".join(tag2_list) if tag2_list else None
             tag3_list = request.POST.getlist('tag3')
-            tag3 = "&".join(tag3_list) if tag3_list else None
+            tag3 = "&&&".join(tag3_list) if tag3_list else None
             tag4_list = request.POST.getlist('tag4')
-            tag4 = "&".join(tag4_list) if tag4_list else None
+            tag4 = "&&&".join(tag4_list) if tag4_list else None
             tag5_list = request.POST.getlist('tag5')
-            tag5 = "&".join(tag5_list) if tag5_list else None
+            tag5 = "&&&".join(tag5_list) if tag5_list else None
 
             
             owner_dept = request.POST.get('owner_dept')

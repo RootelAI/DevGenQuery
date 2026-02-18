@@ -57,19 +57,19 @@
       <table class="table table-bordered table-sm">
         <thead>
           <tr>
-            <th style="width:  8%;">프로젝트명</th>
-            <th style="width:  8%;">파일<br>마스터CD</th>
-            <th style="width:  8%;">파일<br>마스터명</th>
-            <th class="info" style="width: 8%;">Tag1</th>
-            <th class="info" style="width: 8%;">Tag2</th>
-            <th class="info" style="width: 8%;">Tag3</th>
-            <th class="info" style="width: 8%;">Tag4</th>
-            <th class="info" style="width: 8%;">Tag5</th>
-            <th class="info" style="width: 8%;">주관부서</th>
-            <th class="info" style="width: 8%;">참조부서</th>
-            <th class="info" style="width: 8%;">승인부서</th>
-            <th class="info" style="width: 8%;">처리구분</th>
-            <th class="info" style="width: 8%;">처리일시</th>
+            <th style="width: 77px;">프로젝트명</th>
+            <th style="width: 77px;">파일<br>마스터CD</th>
+            <th style="width: 77px;">파일<br>마스터명</th>
+            <th class="info" style="width: 77px;">Tag1</th>
+            <th class="info" style="width: 77px;">Tag2</th>
+            <th class="info" style="width: 77px;">Tag3</th>
+            <th class="info" style="width: 77px;">Tag4</th>
+            <th class="info" style="width: 77px;">Tag5</th>
+            <th class="info" style="width: 77px;">주관부서</th>
+            <th class="info" style="width: 77px;">참조부서</th>
+            <th class="info" style="width: 77px;">승인부서</th>
+            <th class="info" style="width: 77px;">처리구분</th>
+            <th class="info" style="width: 77px;">처리일시</th>
           </tr>
         </thead>
         <tbody>
@@ -311,8 +311,8 @@ function initTagVirtualSelect(tagName, projectId, selectedValue = null) {
     let values = selectedValue;
     
     if (!Array.isArray(values)) {
-      values = String(values).includes('&')
-        ? String(values).split('&').map(v => v.trim())
+      values = String(values).includes('&&&')
+        ? String(values).split('&&&').map(v => v.trim())
         : [String(values).trim()];
     }
     
@@ -348,12 +348,12 @@ function initTagVirtualSelect(tagName, projectId, selectedValue = null) {
   tagVirtualSelects[tagName] = VirtualSelect.init(vsConfig);
 
   // 8. hidden input 업데이트
-  hiddenInput.value = selectedVals.join('&');
+  hiddenInput.value = selectedVals.join('&&&');
 
   // 9. change 이벤트 핸들러 등록
   tagChangeHandlers[tagName] = function() {
     const val = tagVirtualSelects[tagName].getValue();
-    const valueStr = Array.isArray(val) ? val.join('&') : (val || '');
+    const valueStr = Array.isArray(val) ? val.join('&&&') : (val || '');
     hiddenInput.value = valueStr;
     console.log(`${tagName} changed:`, valueStr);
   };
