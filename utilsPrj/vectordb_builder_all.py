@@ -48,8 +48,8 @@ def rebuild_vectordb(dirpath: str):
     if not dirpath:
         raise ValueError("dirpath가 필요합니다.")
 
-    if dirpath not in ["law", "medicine"]:
-        raise ValueError(f"지원하지 않는 dirpath 입니다: {dirpath}")
+    # if dirpath not in ["law", "medicine"]:
+    #     raise ValueError(f"지원하지 않는 dirpath 입니다: {dirpath}")
 
     container_name = dirpath
 

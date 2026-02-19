@@ -145,15 +145,40 @@
 </div>
 
 <!-- 로딩 오버레이 -->
-<!-- <div id="formatLoading">
+<div id="formatLoading">
   <div class="loading-content">
     <div class="spinner"></div>
     <div id="loading-text" style="text-align: center;"></div>
     <div >잠시만 기다려 주세요.</div>
   </div>
-</div> -->
+</div>
 
 <script>
+  // 로딩 상태 관리 함수들
+  function showLoading(type) {
+    const overlay = document.getElementById('formatLoading');
+    const text = document.getElementById('loading-text');
+
+    
+    // 오버레이 숨기기
+    overlay.style.display = 'flex';
+    if (type == 'save'){
+      text.textContent = '적재 중입니다...';
+    } else{
+      text.textContent = '진행 중입니다...';
+    } 
+  }
+    
+  function hideLoading() {
+    const overlay = document.getElementById('formatLoading');
+    const text = document.getElementById('loading-text');
+    
+    // 오버레이 숨기기
+    overlay.style.display = 'none';
+    text.textContent = '';
+  }
+    
+
 // 페이지 로드 시 초기화 진행
 window.addEventListener('load', function() {
   document.getElementById("projects-detail-form").reset();
@@ -179,7 +204,7 @@ document.querySelectorAll("tbody tr[data-projectid]").forEach(row => {
     document.getElementById("dirpath").value = row.dataset.dirpath;
     document.getElementById("useyn").checked = row.dataset.useyn === "True";
 
-    showActionButtons(row.dataset.projectid);
+    // showActionButtons(row.dataset.projectid);
 
     // 선택된 행 강조
     document.querySelectorAll("tbody tr").forEach(r => r.classList.remove('selected-row'));
@@ -281,7 +306,7 @@ document.getElementById("vectordb-all-btn").addEventListener("click", () => {
 
   if (!confirm("정말 재적재하시겠습니까?")) return;
 
-  // showLoading('delete')
+  showLoading('save')
 
   fetch("{% url 'master_rag_vectordb_all' %}", {
     method: "POST",
@@ -296,22 +321,56 @@ document.getElementById("vectordb-all-btn").addEventListener("click", () => {
   .then(data => {
     if (data.result === "success") {
       alert(data.message);
-      // hideLoading('delete')
+      hideLoading('save')
       location.reload();
     } else {
       alert("적재 실패: " + (data.message || "서버 오류"));
-      // hideLoading('delete')
+      hideLoading('save')
     }
   })
   .catch(error => {
     alert("오류 발생: " + error.message)
-    // hideLoading('delete')
+    hideLoading('save')
   });
 });
 
 // vectordb 증분 적재 버튼 클릭 시 알림만
 document.getElementById("vectordb-btn").addEventListener("click", () => {
-  alert("작업 예정입니다.");
+  const projectid = document.getElementById("projectid").value;
+  
+  if (!projectid) {
+    alert("프로젝트을 선택하세요.");
+    return;
+  }
+
+  if (!confirm("정말 재적재하시겠습니까?")) return;
+
+  showLoading('save')
+
+  fetch("{% url 'master_rag_vectordb_incremental' %}", {
+    method: "POST",
+    credentials: "include", 
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken")
+    },
+    body: JSON.stringify({ projectid })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.result === "success") {
+      alert(data.message);
+      hideLoading('save')
+      location.reload();
+    } else {
+      alert("적재 실패: " + (data.message || "서버 오류"));
+      hideLoading('save')
+    }
+  })
+  .catch(error => {
+    alert("오류 발생: " + error.message)
+    hideLoading('save')
+  });
 });
 
 

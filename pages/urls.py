@@ -36,7 +36,7 @@ from .views import (home, hide_popup, search_help
                   , master_tables, master_tables_save, master_tables_delete
                   , master_columns, master_columns_save, master_columns_delete, master_values_save, master_value_delete
 
-                  , master_rag_projects, master_rag_projects_save, master_rag_projects_delete, master_rag_vectordb_all
+                  , master_rag_projects, master_rag_projects_save, master_rag_projects_delete, master_rag_vectordb_all, master_rag_vectordb_incremental
                   , master_rag_projecttags, master_rag_projecttags_save, master_rag_projecttags_delete
 
                   , master_rag_files, master_rag_files_save, master_rag_files_delete
@@ -132,6 +132,7 @@ urlpatterns = [
     path('master/rag_projects_save/', master_rag_projects_save, name = 'master_rag_projects_save'),
     path('master/rag_projects_delete/', master_rag_projects_delete, name = 'master_rag_projects_delete'),
     path('master/rag_vectordb_all', master_rag_vectordb_all, name = 'master_rag_vectordb_all'),
+    path('master/rag_vectordb_incremental', master_rag_vectordb_incremental, name = 'master_rag_vectordb_incremental'),
 
     path('master/rag_projecttags/', master_rag_projecttags, name = 'master_rag_projecttags'),
     path('master/rag_projecttags_save/', master_rag_projecttags_save, name = 'master_rag_projecttags_save'),
