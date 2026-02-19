@@ -9,6 +9,7 @@ from utilsPrj.crypto_helper import encrypt_value, decrypt_value
 import os
 import re
 from azure.storage.blob import BlobServiceClient
+from utilsPrj.vectordb_builder_all import rebuild_vectordb
 
 def master_rag_projects(request):
     """프로젝트 관리 메인 페이지"""
@@ -231,3 +232,52 @@ def master_rag_projects_delete(request):
             'result': 'Failed',
             'message': f'삭제 중 오류가 발생했습니다: {str(e)}'
         })
+
+@require_http_methods(["POST"])
+def master_rag_vectordb_all(request):
+    """프로젝트 단위로 vectordb 재적재"""
+    try:
+        access_token = request.session.get("access_token")
+        refresh_token = request.session.get("refresh_token")
+        supabase = get_supabase_client(access_token, refresh_token)
+
+        user = request.session.get("user")
+        if not user:
+            code = 'login'
+            text = '로그인이 필요합니다.'
+            page = "master_rag_projects"
+            return render(request, "pages/home.html", {
+                "code": code,
+                "text": text,
+                "page": page,
+                "request": request
+            })
+        user_id = user.get("id")
+
+        # POST 데이터에서 projectid 추출
+        data = json.loads(request.body)
+        projectid = data.get('projectid')
+        if not projectid:
+            return JsonResponse({'result': 'Failed', 'message': 'projectid가 없습니다.'})
+
+        # 프로젝트 조회 (dirpath 확보)
+        project_resp = supabase.schema('rag').table('projects') \
+            .select('dirpath') \
+            .eq('projectid', projectid) \
+            .execute()
+
+        if not project_resp.data:
+            return JsonResponse({'result': 'Failed', 'message': '프로젝트를 찾을 수 없습니다.'})
+
+        dirpath = project_resp.data[0]['dirpath']
+        # print("dirpath", dirpath)
+
+        # =========================
+        # 🔥 핵심: vectordb 재적재 호출
+        # =========================
+        rebuild_vectordb(dirpath)
+
+        return JsonResponse({'result': 'success', 'message': f'{dirpath} vectordb 재적재 완료'})
+
+    except Exception as e:
+        return JsonResponse({'result': 'Failed', 'message': f'적재 중 오류가 발생했습니다: {str(e)}'})

@@ -268,6 +268,8 @@ def master_rag_files_save(request):
                 # Tag 값 변경 감지
                 if (old_data.get('filestatus') != filestatus):
                     processcd = 'N'          
+            else:
+                processcd = 'N'
 
             if uploaded_file:
                 # 파일 확장자 추출
