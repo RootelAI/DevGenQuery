@@ -13,7 +13,7 @@ from langchain_core.documents import Document
 
 from supabase import create_client
 from datetime import datetime, timezone, timedelta
-
+from docx import Document as DocxDocument
 
 # ==============================
 # 1. 환경변수 로드
@@ -67,10 +67,9 @@ def rebuild_vectordb(dirpath: str):
     blob_list = container_client.list_blobs(name_starts_with=SOURCE_PREFIX)
 
     for blob in blob_list:
-        if not blob.name.endswith(".pdf"):
-            continue
-
         filename = os.path.basename(blob.name)
+        blob_client = container_client.get_blob_client(blob.name)
+        blob_data = blob_client.download_blob().readall()
         # print(f"Processing Blob: {blob.name}")
 
         # --------------------------------
@@ -132,45 +131,65 @@ def rebuild_vectordb(dirpath: str):
             if tag_value is not None:
                 metadata_tags[tagnm] = tag_value
 
-        # --------------------------------
-        # 3. PDF 열기
-        # --------------------------------
-        blob_client = container_client.get_blob_client(blob.name)
-        blob_data = blob_client.download_blob().readall()
-        pdf_stream = io.BytesIO(blob_data)
-
-        try:
-            doc = fitz.open(stream=pdf_stream, filetype="pdf")
-        except Exception as e:
-            # print(f"PDF 열기 실패: {e}")
-            continue
-
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,
             chunk_overlap=100
         )
 
         # --------------------------------
-        # 4. PDF → Chunk
+        # 3. PDF 처리
         # --------------------------------
-        for page_number, page in enumerate(doc):
-            page_text = page.get_text()
+        if blob.name.endswith(".pdf"):
+            pdf_stream = io.BytesIO(blob_data)
 
-            chunks = text_splitter.create_documents([page_text])
+            try:
+                doc = fitz.open(stream=pdf_stream, filetype="pdf")
+            except Exception as e:
+                # print(f"PDF 열기 실패: {e}")
+                continue
 
-            for chunk in chunks:
+            for page_number, page in enumerate(doc):
+                page_text = page.get_text()
+
+                chunks = text_splitter.create_documents([page_text])
+
+                for chunk in chunks:
+                    documents.append(
+                        Document(
+                            page_content=chunk.page_content,
+                            metadata={
+                                "source": blob.name,
+                                "page": page_number,
+                                **metadata_tags
+                            }
+                        )
+                    )
+
+            doc.close()
+
+        # --------------------------------
+        # 4. DOCX 처리
+        # --------------------------------
+        elif blob.name.endswith(".docx"):
+            try:
+                docx_stream = io.BytesIO(blob_data)
+                docx_doc = DocxDocument(docx_stream)
+                full_text = "\n".join([p.text for p in docx_doc.paragraphs])
+            except Exception:
+                continue
+
+            chunks = text_splitter.create_documents([full_text])
+            for i, chunk in enumerate(chunks):
                 documents.append(
                     Document(
                         page_content=chunk.page_content,
-                        metadata={
-                            "source": blob.name,
-                            "page": page_number,
-                            **metadata_tags
-                        }
+                        metadata={"source": blob.name, "page": i, **metadata_tags}
                     )
                 )
 
-        doc.close()
+        else:
+            # PDF, DOCX 외 파일은 건너뜀
+            continue
 
     # print(f"{container_name} → 총 문서 청크 수: {len(documents)}")
 

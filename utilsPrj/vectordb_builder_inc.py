@@ -3,6 +3,7 @@ import os
 import io
 import tempfile
 import fitz  # PyMuPDF
+from docx import Document as DocxDocument
 from dotenv import load_dotenv, dotenv_values
 
 from azure.storage.blob import BlobServiceClient
@@ -113,6 +114,11 @@ def rebuild_vectordb_incremental(dirpath: str):
     if not files_to_process:
         return
 
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000,
+        chunk_overlap=100
+    )
+    
     # -------------------------
     # 5️⃣ PDF 읽기 + Chunk 생성
     # -------------------------
@@ -151,32 +157,51 @@ def rebuild_vectordb_incremental(dirpath: str):
         blob_client = container_client.get_blob_client(f"{SOURCE_PREFIX}{filename}")
         blob_data = blob_client.download_blob().readall()
 
-        pdf_stream = io.BytesIO(blob_data)
+        if filename.lower().endswith(".pdf"):
+            try:
+                pdf_stream = io.BytesIO(blob_data)
+                doc = fitz.open(stream=pdf_stream, filetype="pdf")
+            except Exception:
+                continue
 
-        try:
-            doc = fitz.open(stream=pdf_stream, filetype="pdf")
-        except Exception:
-            continue
+            for page_number, page in enumerate(doc):
+                chunks = text_splitter.create_documents([page.get_text()])
+                for chunk in chunks:
+                    documents.append(
+                        Document(
+                            page_content=chunk.page_content,
+                            metadata={
+                                "source": filename,
+                                "page": page_number,
+                                **metadata_tags,
+                            },
+                        )
+                    )
+            doc.close()
+        # ---------------- DOCX ----------------
+        elif filename.lower().endswith(".docx"):
+            try:
+                docx_stream = io.BytesIO(blob_data)
+                docx_doc = DocxDocument(docx_stream)
+                full_text = "\n".join([p.text for p in docx_doc.paragraphs])
+            except Exception:
+                continue
 
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000,
-            chunk_overlap=100
-        )
-
-        for page_number, page in enumerate(doc):
-            chunks = text_splitter.create_documents([page.get_text()])
-            for chunk in chunks:
+            chunks = text_splitter.create_documents([full_text])
+            for idx, chunk in enumerate(chunks):
                 documents.append(
                     Document(
                         page_content=chunk.page_content,
                         metadata={
                             "source": filename,
-                            "page": page_number,
+                            "page": idx,
                             **metadata_tags,
                         },
                     )
                 )
-        doc.close()
+
+        else:
+            continue
 
     if not documents:
         return
