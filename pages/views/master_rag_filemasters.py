@@ -36,7 +36,7 @@ def master_rag_filemasters(request):
     try:
         # projects 테이블에서 데이터 조회
         projects = supabase.schema('rag').table('projects').select('*').order('createdts', desc=True).execute().data or []
-        projecttags = supabase.schema('rag').table('projecttags').select('*').eq('useyn', True).execute().data or []
+        projecttags = supabase.schema('rag').rpc('fn_projecttags__r', {}).execute().data or []
         projecttagvalues = supabase.schema('rag').table('projecttagvalues').select('*').eq('useyn', True).execute().data or []
         filemasters = supabase.schema('rag').table('filemasters').select("*").order("createdts", desc=True).execute().data or []
         department = supabase.schema('rag').table('codemasters').select("*").eq('codenm', 'Departments').eq('useyn', True).execute().data or []
@@ -122,30 +122,45 @@ def master_rag_filemasters(request):
             if i.get("tag1value"):
                 try:
                     i['tag1valuenm'] = get_multi_valuenm(i['projectid'], 'tag1', i['tag1value'])
+                    # 전체 일시 처리
+                    if i['tag1value'] == 'All':
+                        i['tag1valuenm'] = 'All'
                 except Exception as e:
                     print(f'Tag1 Error: {e}')
                     i['tag1valuenm'] = ''
             if i.get("tag2value"):
                 try:
                     i['tag2valuenm'] = get_multi_valuenm(i['projectid'], 'tag2', i['tag2value'])
+                    # 전체 일시 처리
+                    if i['tag2value'] == 'All':
+                        i['tag2valuenm'] = 'All'
                 except Exception as e:
                     print(f'Tag2 Error: {e}')
                     i['tag2valuenm'] = ''
             if i.get("tag3value"):
                 try:
                     i['tag3valuenm'] = get_multi_valuenm(i['projectid'], 'tag3', i['tag3value'])
+                    # 전체 일시 처리
+                    if i['tag3value'] == 'All':
+                        i['tag3valuenm'] = 'All'
                 except Exception as e:
                     print(f'Tag3 Error: {e}')
                     i['tag3valuenm'] = ''
             if i.get("tag4value"):
                 try:
                     i['tag4valuenm'] = get_multi_valuenm(i['projectid'], 'tag4', i['tag4value'])
+                    # 전체 일시 처리
+                    if i['tag4value'] == 'All':
+                        i['tag4valuenm'] = 'All'
                 except Exception as e:
                     print(f'Tag4 Error: {e}')
                     i['tag4valuenm'] = ''
             if i.get("tag5value"):
                 try:
                     i['tag5valuenm'] = get_multi_valuenm(i['projectid'], 'tag5', i['tag5value'])
+                    # 전체 일시 처리
+                    if i['tag5value'] == 'All':
+                        i['tag5valuenm'] = 'All'
                 except Exception as e:
                     print(f'Tag5 Error: {e}')
                     i['tag5valuenm'] = ''
@@ -168,11 +183,13 @@ def master_rag_filemasters(request):
         for key in projecttagvalues_dict:
             projecttagvalues_dict[key].sort(key=lambda x: x['orderno'])
             
+        # print(f'ProjectTags: {projecttags}')
 
         context = {
             'projects': projects,
             'filemasters': filemasters,
             'projecttags': projecttags,
+            'projecttags_json': json.dumps(projecttags),
             'projecttagvalues': projecttagvalues,
             'projecttagvalues_json': json.dumps(projecttagvalues_dict, cls=DjangoJSONEncoder),
             'departments': departments
@@ -201,7 +218,7 @@ def master_rag_filemasters_save(request):
     if not user:
         code = 'login'
         text = '로그인이 필요합니다.'
-        page = "master_rag_projects"
+        page = "master_rag_filemasters"
         return render(request, "pages/home.html", {
         "code": code,
         "text": text,
@@ -319,14 +336,13 @@ def master_rag_filemasters_delete(request):
     if not user:
         code = 'login'
         text = '로그인이 필요합니다.'
-        page = "master_rag_projects"
+        page = "master_rag_filemasters"
         return render(request, "pages/home.html", {
         "code": code,
         "text": text,
         "page": page,
         "request": request
     })
-    user_id = user.get("id")
 
     if request.method == 'POST':
         try:
@@ -337,7 +353,7 @@ def master_rag_filemasters_delete(request):
             if not filemastercd:
                 return JsonResponse({
                     'result': 'error',
-                    'message': '파일 UID가 필요합니다.'
+                    'message': '파일 마스터 코드가 필요합니다.'
                 })
             
             # Supabase에서 메타데이터 삭제
@@ -345,7 +361,7 @@ def master_rag_filemasters_delete(request):
             
             return JsonResponse({
                 'result': 'success',
-                'message': '파일이 삭제되었습니다.'
+                'message': '파일 마스터가 삭제되었습니다.'
             })
             
         except json.JSONDecodeError:

@@ -10,7 +10,7 @@
 
 <style>
   .tag {
-    max-height: 31px !important;
+    max-height: 70px !important;
     width: 100% !important;
     max-width: 100% !important;
     padding: 0px !important;
@@ -40,6 +40,14 @@
     margin-right: 12% !important;
     margin-left: auto !important;
   }
+
+  .table td, .table th {
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    white-space: normal !important;
+    vertical-align: middle !important;
+    padding: 3px 8px !important;
+  }
 </style>
 
 <div class="page-title">
@@ -54,22 +62,22 @@
   <div style="flex: 2;" >
     <h3>파일 마스터 목록</h3>
     <div class="table-container">
-      <table class="table table-bordered table-sm">
+      <table class="table table-bordered table-sm" style="table-layout: fixed; width: 100%;">
         <thead>
           <tr>
-            <th style="width: 77px;">프로젝트명</th>
-            <th style="width: 77px;">파일<br>마스터CD</th>
-            <th style="width: 77px;">파일<br>마스터명</th>
-            <th class="info" style="width: 77px;">Tag1</th>
-            <th class="info" style="width: 77px;">Tag2</th>
-            <th class="info" style="width: 77px;">Tag3</th>
-            <th class="info" style="width: 77px;">Tag4</th>
-            <th class="info" style="width: 77px;">Tag5</th>
-            <th class="info" style="width: 77px;">주관부서</th>
-            <th class="info" style="width: 77px;">참조부서</th>
-            <th class="info" style="width: 77px;">승인부서</th>
-            <th class="info" style="width: 77px;">처리구분</th>
-            <th class="info" style="width: 77px;">처리일시</th>
+            <th style="width: 70px;">프로젝트명</th>
+            <th style="width: 70px;">파일<br>마스터CD</th>
+            <th style="width: 70px;">파일<br>마스터명</th>
+            <th style="width: 90px;">Tag1</th>
+            <th style="width: 90px;">Tag2</th>
+            <th style="width: 90px;">Tag3</th>
+            <th style="width: 90px;">Tag4</th>
+            <th style="width: 90px;">Tag5</th>
+            <th style="width: 65px;">주관부서</th>
+            <th style="width: 65px;">참조부서</th>
+            <th style="width: 65px;">승인부서</th>
+            <th style="width: 60px;">처리구분</th>
+            <th style="width: 60px;">처리일시</th>
           </tr>
         </thead>
         <tbody>
@@ -95,18 +103,18 @@
               data-creatornm="{{ file.creatornm }}"
               data-createdts="{{ file.createdts }}"
               >
-              <td class="info" style="text-align: center;"><span>{{file.projectnm}}</span></td>
-              <td class="info" style="text-align: center;"><span>{{file.filemastercd}}</span></td>
-              <td class="info" style="text-align: center;"><span>{{file.filemasternm}}</span></td>
-              <td class="info" style="text-align: center;"><span>{{file.tag1valuenm}}</span></td>
-              <td class="info" style="text-align: center;"><span>{{file.tag2valuenm}}</span></td>
-              <td class="info" style="text-align: center;"><span>{{file.tag3valuenm}}</span></td>
-              <td class="info" style="text-align: center;"><span>{{file.tag4valuenm}}</span></td>
-              <td class="info" style="text-align: center;"><span>{{file.tag5valuenm}}</span></td>
-              <td class="info" style="text-align: center;"><span>{{file.owner_deptnm}}</span></td>
-              <td class="info" style="text-align: center;"><span>{{file.support_deptnm}}</span></td>
-              <td class="info" style="text-align: center;"><span>{{file.approver_deptnm}}</span></td>
-              <td class="info" style="text-align: center;"><span>
+              <td style="text-align: center;">{{file.projectnm}}</td>
+              <td style="text-align: center;">{{file.filemastercd}}</td>
+              <td style="text-align: center;">{{file.filemasternm}}</td>
+              <td style="text-align: center;">{{file.tag1valuenm}}</td>
+              <td style="text-align: center;">{{file.tag2valuenm}}</td>
+              <td style="text-align: center;">{{file.tag3valuenm}}</td>
+              <td style="text-align: center;">{{file.tag4valuenm}}</td>
+              <td style="text-align: center;">{{file.tag5valuenm}}</td>
+              <td style="text-align: center;">{{file.owner_deptnm}}</td>
+              <td style="text-align: center;">{{file.support_deptnm}}</td>
+              <td style="text-align: center;">{{file.approver_deptnm}}</td>
+              <td style="text-align: center;">
                 {% if file.processcd == 'Y' %}
                     처리
                 {% elif file.processcd == 'D' %}
@@ -114,12 +122,12 @@
                 {% else %}
                     미처리
                 {% endif %}
-              </span></td>
-              <td class="info"><span>{{file.processdts|default_if_none:''}}</span></td>
+              </td>
+              <td >{{file.processdts|default_if_none:''}}</td>
           </tr>
           {% empty %}
           <tr>
-              <td colspan="10" class="text-center text-muted py-4">등록된 파일이 없습니다.</td>
+              <td colspan="13" class="text-center text-muted py-4">등록된 파일 마스터가 없습니다.</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -128,13 +136,13 @@
   </div>
 
   <!-- 오른쪽 -->
-  <div style="flex: 0.5; padding-left: 20px;">
+  <div style="flex: 0.7; padding-left: 20px;">
     <h3>마스터 상세</h3>
     <form id="filemasters-detail-form" enctype="multipart/form-data">
       <input id="projectid" name="projectid" type="text" hidden>
       
       <div class="form-group-left">
-        <label>프로젝트명:</label>
+        <label>프로젝트명</label>
         <select id="projectnm" name="projectnm" required>
           <option value="" selected disabled>프로젝트 를 선택하세요</option>
           {% for project in projects %}
@@ -144,48 +152,48 @@
       </div>
 
       <div class="form-group-left">
-        <label>마스터코드:</label>
+        <label>마스터코드</label>
         <input id="filemastercd" name="filemastercd" type="text">
       </div>
 
       <div class="form-group-left">
-        <label>마스터명:</label>
+        <label>마스터명</label>
         <input id="filemasternm" name="filemasternm" type="text">
       </div>
 
       <!-- 🔥 Tag1~5를 모두 VirtualSelect로 변경 -->
       <div class="form-group-left">
-        <label>Tag1:</label>
+        <label>Tag1</label>
         <div id="tag1" class="form-group-left-input tag"></div>
         <input type="hidden" name="tag1" id="tag1_hidden">
       </div>
 
       <div class="form-group-left">
-        <label>Tag2:</label>
+        <label>Tag2</label>
         <div id="tag2" class="form-group-left-input tag"></div>
         <input type="hidden" name="tag2" id="tag2_hidden">
       </div>
 
       <div class="form-group-left">
-        <label>Tag3:</label>
+        <label>Tag3</label>
         <div id="tag3" class="form-group-left-input tag"></div>
         <input type="hidden" name="tag3" id="tag3_hidden">
       </div>
 
       <div class="form-group-left">
-        <label>Tag4:</label>
+        <label>Tag4</label>
         <div id="tag4" class="form-group-left-input tag"></div>
         <input type="hidden" name="tag4" id="tag4_hidden">
       </div>
 
       <div class="form-group-left">
-        <label>Tag5:</label>
+        <label>Tag5</label>
         <div id="tag5" class="form-group-left-input tag"></div>
         <input type="hidden" name="tag5" id="tag5_hidden">
       </div>
 
       <div class="form-group-left">
-        <label>주관부서:</label>
+        <label>주관부서</label>
         <select id="owner_dept" name="owner_dept" required>
           <option value="" selected disabled>주관부서 를 선택하세요</option>
           {% for dept in departments %}
@@ -195,7 +203,7 @@
       </div>
 
       <div class="form-group-left">
-        <label>참조부서:</label>
+        <label>참조부서</label>
         <select id="support_dept" name="support_dept" required>
           <option value="" selected disabled>참조부서 를 선택하세요</option>
           {% for dept in departments %}
@@ -205,9 +213,9 @@
       </div>
 
       <div class="form-group-left">
-        <label>승인부서:</label>
+        <label>승인부서</label>
         <select id="approver_dept" name="approver_dept" required>
-          <option value="" selected disabled>주관부서 를 선택하세요</option>
+          <option value="" selected disabled>승인부서 를 선택하세요</option>
           {% for dept in departments %}
             <option value="{{ dept.valuecd }}">{{ dept.valuenm }}</option>
           {% endfor %}
@@ -215,7 +223,7 @@
       </div>
 
       <div class="form-group-left">
-        <label>작성자:</label>
+        <label>작성자</label>
         <input id="creatornm" name="creatornm" type="text" disabled>
       </div>
 
@@ -223,21 +231,21 @@
         <button id="reset-btn" type="button" class="icon-btn">
           <div class="icon-wrapper">
             <img src="{% static 'icons/new.svg' %}" class="icon-img new-icon" title="신규">
-            <span class="icon-label">신규</span>
+            <span class="icon-label">신규
           </div> 
         </button>
 
         <button id="save-btn" type="button" class="icon-btn">
           <div class="icon-wrapper">
             <img src="{% static 'icons/save.svg' %}" class="icon-img save-icon" title="저장">
-            <span class="icon-label">저장</span>
+            <span class="icon-label">저장
           </div>  
         </button>
 
         <button id="delete-btn" type="button" class="icon-btn" disabled>
           <div class="icon-wrapper">
             <img src="{% static 'icons/delete.svg' %}" class="icon-img del-icon" title="삭제">
-            <span class="icon-label">삭제</span>
+            <span class="icon-label">삭제
           </div>   
         </button>
       </div>
@@ -248,7 +256,9 @@
 
 <script>
 // Django에서 전달된 데이터를 JavaScript 변수로 저장
-const projectTagValues = {{ projecttagvalues_json|safe }};
+const projectTagValues = {{ projecttagvalues_json|safe }}
+
+const projectTags = {{projecttags_json|safe }}
 
 // 🔥 전역 변수 - 각 태그의 VirtualSelect 인스턴스와 핸들러 저장
 const tagVirtualSelects = {
@@ -273,27 +283,32 @@ const tagChangeHandlers = {
  * @param {string} projectId - 프로젝트 ID (없으면 빈 VirtualSelect 생성)
  * @param {string|array} selectedValue - 선택된 값
  */
-function initTagVirtualSelect(tagName, projectId, selectedValue = null) {
+// projectTags에서 특정 projectId + tagName의 uicomponent 가져오기
+function getTagUiComponent(projectId, tagName) {
+  if (!projectId) return 'DS'; // 기본값
+  const tagInfo = projectTags.find(t => String(t.projectid) === String(projectId) && t.tagcd === tagName);
+  return tagInfo ? tagInfo.uicomponent : 'DS';
+}
+
+/**
+ * 🔥 uicomponent에 따라 태그 UI를 동적으로 렌더링
+ */
+function initTagComponent(tagName, projectId, selectedValue = null) {
   const tagContainer = document.getElementById(tagName);
   const hiddenInput = document.getElementById(`${tagName}_hidden`);
-  
-  // 1. 기존 인스턴스 제거
+
   if (tagVirtualSelects[tagName]) {
     tagVirtualSelects[tagName].destroy();
     tagVirtualSelects[tagName] = null;
   }
-  
-  // 2. 이전 이벤트 핸들러 제거
   if (tagChangeHandlers[tagName]) {
     tagContainer.removeEventListener('change', tagChangeHandlers[tagName]);
     tagChangeHandlers[tagName] = null;
   }
 
-  // 3. 컨테이너 초기화
-  tagContainer.innerHTML = "";
+  tagContainer.innerHTML = '';
   hiddenInput.value = '';
-  
-  // 🔥 4. options 가져오기 (projectId가 없으면 빈 배열)
+
   let options = [];
   if (projectId) {
     const tagKey = `${projectId}_${tagName}`;
@@ -305,62 +320,265 @@ function initTagVirtualSelect(tagName, projectId, selectedValue = null) {
     }
   }
 
-  // 5. 선택할 값 미리 처리
   let selectedVals = [];
   if (selectedValue && options.length > 0) {
-    let values = selectedValue;
-    
-    if (!Array.isArray(values)) {
-      values = String(values).includes('&&&')
-        ? String(values).split('&&&').map(v => v.trim())
-        : [String(values).trim()];
-    }
-    
-    values = values.map(v => String(v).trim()).filter(v => v !== '');
-    const availableValues = options.map(opt => opt.value);
-    selectedVals = values.filter(v => availableValues.includes(v));
+    let values = Array.isArray(selectedValue)
+      ? selectedValue
+      : String(selectedValue).includes('&&&')
+        ? String(selectedValue).split('&&&').map(v => v.trim())
+        : [String(selectedValue).trim()];
+    const availableValues = [...options.map(opt => opt.value), 'All'];
+    selectedVals = values.filter(v => v !== '' && availableValues.includes(v));
   }
 
-  // 🔥 6. placeholder 텍스트 생성
+  const uiComponent = getTagUiComponent(projectId, tagName);
   const tagNumber = tagName.replace('tag', '');
   const placeholder = `Tag${tagNumber} 을/를 선택하세요`;
 
-  // 7. VirtualSelect 초기화 (옵션이 없어도 생성)
-  const vsConfig = {
-    ele: `#${tagName}`,
-    options: options,
-    placeholder: placeholder,
-    search: true,
-    multiple: true,
-    showValueAsTags: false,
-    disableSelectAll: true,
-    maxValues: 0,
-    // 🔥 옵션이 없을 때 메시지
-    noOptionsText: '프로젝트를 먼저 선택하세요',
-    noSearchResultsText: '검색 결과가 없습니다'
-  };
+  switch (uiComponent) {
 
-  // 초기값이 있으면 설정
-  if (selectedVals.length > 0) {
-    vsConfig.selectedValue = selectedVals;
+    // ─── Radio ───────────────────────────────────────────────
+    case 'R': {
+      tagContainer.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;align-items:center;overflow-y:auto;height:70px;border:1px solid;padding:4px;';
+
+      if (options.length === 0) {
+        tagContainer.innerHTML = `<span style="color:#999;font-size:12px;">프로젝트를 먼저 선택하세요`;
+        break;
+      }
+
+      // ✅ 전체 라디오 먼저 추가
+      const allOptions = [{ label: '전체', value: 'All' }, ...options];
+      const isAllSelected = selectedVals.length === 0 || selectedVals.includes('All');
+
+      allOptions.forEach(opt => {
+        const lbl = document.createElement('label');
+        lbl.style.cssText = 'display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer;min-width:auto;';
+
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = `${tagName}_radio`;
+        radio.value = opt.value;
+        radio.style.cssText = 'flex: 0 !important; margin: 3px 7px;'
+        if (opt.value === 'All') {
+          radio.checked = isAllSelected;
+        } else {
+          radio.checked = selectedVals.includes(opt.value);
+        }
+
+        radio.addEventListener('change', () => {
+          hiddenInput.value = radio.value; // 'All' 이거나 특정 값
+        });
+
+        lbl.appendChild(radio);
+        lbl.appendChild(document.createTextNode(opt.label));
+        tagContainer.appendChild(lbl);
+      });
+
+      hiddenInput.value = isAllSelected ? 'All' : (selectedVals[0] || 'All');
+      break;
+    }
+
+    // ─── CheckBox ────────────────────────────────────────────
+    case 'C': {
+      tagContainer.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;align-items:center;overflow-y:auto;height:70px;border:1px solid;padding:4px;';
+
+      if (options.length === 0) {
+        tagContainer.innerHTML = `<span style="color:#999;font-size:12px;">프로젝트를 먼저 선택하세요`;
+        break;
+      }
+
+      const isAllSelected = selectedVals.length === 0 || selectedVals.includes('All');
+
+      // ✅ 전체 체크박스 먼저 생성
+      const allLbl = document.createElement('label');
+      allLbl.style.cssText = 'display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer;font-weight:bold;min-width:auto;';
+      const allCb = document.createElement('input');
+      allCb.type = 'checkbox';
+      allCb.value = 'All';
+      allCb.checked = isAllSelected;
+      allCb.style.cssText = 'flex: 0 !important; margin: 3px 7px;'
+      allLbl.appendChild(allCb);
+      allLbl.appendChild(document.createTextNode('전체'));
+      tagContainer.appendChild(allLbl);
+
+      // 일반 체크박스 생성
+      const itemCheckboxes = [];
+      options.forEach(opt => {
+        const lbl = document.createElement('label');
+        lbl.style.cssText = 'display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer;';
+
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.value = opt.value;
+        cb.checked = !isAllSelected && selectedVals.includes(opt.value);
+
+        lbl.appendChild(cb);
+        lbl.appendChild(document.createTextNode(opt.label));
+        tagContainer.appendChild(lbl);
+        itemCheckboxes.push(cb);
+      });
+
+      const updateHidden = () => {
+        if (allCb.checked) {
+          hiddenInput.value = 'All';
+        } else {
+          const checked = itemCheckboxes.filter(cb => cb.checked).map(cb => cb.value);
+          hiddenInput.value = checked.join('&&&');
+        }
+      };
+
+      // ✅ 전체 클릭 시 나머지 해제
+      allCb.addEventListener('change', () => {
+        if (allCb.checked) {
+          itemCheckboxes.forEach(cb => cb.checked = false);
+        }
+        updateHidden();
+      });
+
+      // ✅ 일반 항목 클릭 시 전체 해제
+      itemCheckboxes.forEach(cb => {
+        cb.addEventListener('change', () => {
+          if (cb.checked) allCb.checked = false;
+          // 아무것도 선택 안 되면 전체로 되돌리기
+          if (!itemCheckboxes.some(c => c.checked)) allCb.checked = true;
+          updateHidden();
+        });
+      });
+
+      hiddenInput.value = isAllSelected ? 'All' : selectedVals.join('&&&');
+      break;
+    }
+
+    // ─── Dropdown Single Select ───────────────────────────────
+    case 'DS': {
+      tagContainer.style.cssText = 'overflow-y:;height:29px;border:none;';
+
+      // ✅ 전체 옵션 맨 앞에 추가
+      const dsOptions = [{ label: '전체', value: 'All' }, ...options];
+      const dsSelected = selectedVals.includes('All') || selectedVals.length === 0 ? 'All' : selectedVals[0];
+
+      const vsConfig = {
+        ele: `#${tagName}`,
+        options: dsOptions,
+        placeholder,
+        search: true,
+        multiple: false,
+        disableSelectAll: true,
+        selectedValue: dsSelected,
+        noOptionsText: '프로젝트를 먼저 선택하세요',
+        noSearchResultsText: '검색 결과가 없습니다'
+      };
+
+      tagVirtualSelects[tagName] = VirtualSelect.init(vsConfig);
+      hiddenInput.value = dsSelected;
+
+      // ✅ init 후 명시적 setValue
+      document.getElementById(tagName).setValue(dsSelected);
+
+      tagChangeHandlers[tagName] = function () {
+        const val = tagVirtualSelects[tagName].getValue();
+        hiddenInput.value = val || 'All';
+      };
+      tagContainer.addEventListener('change', tagChangeHandlers[tagName]);
+      break;
+    }
+
+    // ─── Dropdown Multi Select ────────────────────────────────
+    case 'DM':
+    default: {
+      tagContainer.style.cssText = 'overflow-y:;height:29px;border:none;';
+
+      const dmOptions = [{ label: '전체', value: 'All' }, ...options];
+      const isAllDm = selectedVals.length === 0 || selectedVals.includes('All');
+      const dmSelected = isAllDm ? ['All'] : selectedVals;
+
+      const vsConfig = {
+        ele: `#${tagName}`,
+        options: dmOptions,
+        placeholder,
+        search: true,
+        multiple: true,
+        showValueAsTags: false,
+        disableSelectAll: true,
+        maxValues: 0,
+        selectedValue: dmSelected,
+        noOptionsText: '프로젝트를 먼저 선택하세요',
+        noSearchResultsText: '검색 결과가 없습니다'
+      };
+
+      tagVirtualSelects[tagName] = VirtualSelect.init(vsConfig);
+
+      // ✅ getValue는 인스턴스에서, setValue는 DOM에서
+      const afterInit = tagVirtualSelects[tagName].getValue();
+      document.getElementById(tagName).setValue(dmSelected);
+
+      const afterSetValue = tagVirtualSelects[tagName].getValue();
+      hiddenInput.value = isAllDm ? 'All' : dmSelected.join('&&&');
+
+      let prevVal = isAllDm ? ['All'] : [...dmSelected];
+
+      tagChangeHandlers[tagName] = function () {
+      let val = tagVirtualSelects[tagName].getValue();
+      if (!Array.isArray(val)) val = val ? [val] : [];
+
+      const prevHadAll = prevVal.includes('All');
+      const currHasAll = val.includes('All');
+
+      if (currHasAll && !prevHadAll) {
+        tagContainer.removeEventListener('change', tagChangeHandlers[tagName]);
+        const ele = document.getElementById(tagName);
+        ele.close();
+        ele.setValue(['All']);
+        hiddenInput.value = 'All';
+        prevVal = ['All'];
+        setTimeout(() => {
+          tagContainer.addEventListener('change', tagChangeHandlers[tagName]);
+        }, 100);
+
+      } else if (currHasAll && prevHadAll) {
+        const newVal = val.filter(v => v !== 'All');
+        tagContainer.removeEventListener('change', tagChangeHandlers[tagName]);
+        const ele = document.getElementById(tagName);
+        ele.setValue(newVal);
+        hiddenInput.value = newVal.join('&&&');
+        prevVal = newVal;
+        setTimeout(() => {
+          tagContainer.addEventListener('change', tagChangeHandlers[tagName]);
+        }, 100);
+
+      } else if (val.length === 0) {
+        tagContainer.removeEventListener('change', tagChangeHandlers[tagName]);
+        const ele = document.getElementById(tagName);
+        ele.setValue(['All']);
+        hiddenInput.value = 'All';
+        prevVal = ['All'];
+        setTimeout(() => {
+          tagContainer.addEventListener('change', tagChangeHandlers[tagName]);
+        }, 100);
+
+      } else {
+        hiddenInput.value = val.join('&&&');
+        prevVal = [...val];
+      }
+    };
+
+    // ✅ isAllDm이면 리스너 없이 setValue 후 등록
+    if (isAllDm) {
+      setTimeout(() => {
+        document.getElementById(tagName).setValue(['All']); // 리스너 없는 상태에서 호출
+        tagContainer.addEventListener('change', tagChangeHandlers[tagName]); // 그 다음 등록
+      }, 0);
+    } else {
+      tagContainer.addEventListener('change', tagChangeHandlers[tagName]);
+    }
+
+      tagContainer.addEventListener('change', tagChangeHandlers[tagName]);
+      break;
+    }
   }
-
-  tagVirtualSelects[tagName] = VirtualSelect.init(vsConfig);
-
-  // 8. hidden input 업데이트
-  hiddenInput.value = selectedVals.join('&&&');
-
-  // 9. change 이벤트 핸들러 등록
-  tagChangeHandlers[tagName] = function() {
-    const val = tagVirtualSelects[tagName].getValue();
-    const valueStr = Array.isArray(val) ? val.join('&&&') : (val || '');
-    hiddenInput.value = valueStr;
-    console.log(`${tagName} changed:`, valueStr);
-  };
-  
-  tagContainer.addEventListener('change', tagChangeHandlers[tagName]);
 }
 
+ 
 
 /**
  * 🔥 모든 태그 초기화
@@ -374,17 +592,52 @@ function resetAllTags() {
   });
 }
 
+// 7자 초과 시 ... 처리하는 헬퍼 함수
+function truncateLabel(text, maxLength = 7) {
+  return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+}
+
+/**
+ * 🔥 projectId에 따라 tag 라벨명 동적 변경
+ */
+function updateTagLabels(projectId) {
+  // form-group-left 의 label들을 순서대로 가져오기 (tag1~5 순서)
+  const tagLabels = {
+    tag1: document.querySelector('#tag1').closest('.form-group-left').querySelector('label'),
+    tag2: document.querySelector('#tag2').closest('.form-group-left').querySelector('label'),
+    tag3: document.querySelector('#tag3').closest('.form-group-left').querySelector('label'),
+    tag4: document.querySelector('#tag4').closest('.form-group-left').querySelector('label'),
+    tag5: document.querySelector('#tag5').closest('.form-group-left').querySelector('label'),
+  };
+
+  if (!projectId) {
+    // projectId 없으면 기본값 복원
+    Object.keys(tagLabels).forEach((tagName, i) => {
+      if (tagLabels[tagName]) tagLabels[tagName].textContent = `Tag${i + 1}:`;
+    });
+    return;
+  }
+
+  // projectTags에서 해당 projectId의 태그명 찾기
+  const filtered = projectTags.filter(t => String(t.projectid) === String(projectId));
+
+  ['tag1', 'tag2', 'tag3', 'tag4', 'tag5'].forEach((tagName, i) => {
+    const tagInfo = filtered.find(t => t.tagcd === tagName);
+    if (tagLabels[tagName]) {
+      tagLabels[tagName].textContent = tagInfo ? `${truncateLabel(tagInfo.tagnm)}` : `Tag${i + 1}`;
+      tagLabels[tagName].title = tagInfo ? tagInfo.tagnm : '';  // ✅ hover 시 전체 이름 표시
+    }
+  });
+}
+
 /**
  * 프로젝트 선택 시 모든 태그 드롭다운 업데이트
  */
 function updateTagDropdowns(projectId, selectedValues = {}) {
-  // 🔥 projectId가 없어도 placeholder를 보여주기 위해 VirtualSelect 생성
-  initTagVirtualSelect('tag1', projectId, selectedValues.tag1);
-  initTagVirtualSelect('tag2', projectId, selectedValues.tag2);
-  initTagVirtualSelect('tag3', projectId, selectedValues.tag3);
-  initTagVirtualSelect('tag4', projectId, selectedValues.tag4);
-  initTagVirtualSelect('tag5', projectId, selectedValues.tag5);
-}
+  ['tag1', 'tag2', 'tag3', 'tag4', 'tag5'].forEach(tagName => {
+    initTagComponent(tagName, projectId, selectedValues[tagName] || null);
+  })
+};
 
 // 페이지 로드 시 초기화
 window.addEventListener('load', function() {
@@ -399,6 +652,7 @@ document.getElementById('projectnm').addEventListener('change', function() {
   const projectId = this.value;
   document.getElementById('projectid').value = projectId;
   updateTagDropdowns(projectId);
+  updateTagLabels(projectId);
 });
 
 // 테이블 행 클릭 시
@@ -424,6 +678,7 @@ document.querySelectorAll("tbody tr[data-projectid]").forEach(row => {
       tag4: row.dataset.tag4value,
       tag5: row.dataset.tag5value
     });
+    updateTagLabels(projectId);
 
     // 선택된 행 강조
     document.querySelectorAll("tbody tr").forEach(r => r.classList.remove('selected-row'));
@@ -439,6 +694,7 @@ document.getElementById("reset-btn").addEventListener("click", () => {
   
   // 🔥 모든 태그 초기화 (빈 VirtualSelect로 재생성하여 placeholder 표시)
   updateTagDropdowns(null);
+  updateTagLabels(null);
   
   const navButtons = document.getElementById("nav-buttons");
   if (navButtons) {
@@ -496,7 +752,7 @@ document.getElementById("delete-btn").addEventListener("click", () => {
     return;
   }
 
-  if (!confirm(`"${filemasternm}" 파일을 정말 삭제하시겠습니까?\n(Azure Blob Storage의 파일도 함께 삭제됩니다)`)) {
+  if (!confirm(`"${filemasternm}" 파일을 정말 삭제하시겠습니까?`)) {
     return;
   }
 
