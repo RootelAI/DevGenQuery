@@ -4,10 +4,78 @@
 
 {% block content %}
 
+<!-- ✅ 추가 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/virtual-select-plugin@1.0.45/dist/virtual-select.min.css">
+<script src="https://cdn.jsdelivr.net/npm/virtual-select-plugin@1.0.45/dist/virtual-select.min.js"></script>
+
+<style>
+  input[readonly] {
+    background-color: var(--secondary-200);
+    cursor: not-allowed;
+    border: 1px solid #767676;
+  }
+
+  .multiselect {
+    max-height: 70px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0px !important;
+  }
+  
+  .vscomp-toggle-button {
+    padding: 2px 35px 2px 2px !important;
+    border: 1px solid !important;
+    min-height: 31px !important;
+  }
+  
+  /* 🔥 텍스트로 표시될 때 스타일 */
+  .vscomp-value {
+    display: block !important;
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    line-height: 1.5 !important;
+    padding: 0px 5px !important;
+    max-height: none !important;
+    color: #111 !important;
+  }
+
+  .vscomp-arrow::after{
+    border: 2px solid rgba(0,0,0,0) !important;
+    border-bottom-color: #111 !important;
+    border-right-color: #111 !important;
+    margin-right: 12% !important;
+    margin-left: auto !important;
+  }
+</style>
+
 <div class="page-title">
   <div style="display: flex; align-items: center;">
     <div class="gradient-bar"></div>
     <div>RAG 파일</div>
+  </div>
+</div>
+
+<!-- 프로젝트 선택 및 처리 현황 -->
+<div class="page-title" style="margin-bottom: 10px;">
+  <div class="filter-item">
+    <form method="GET" action="" class="filter-item" multiple style="gap: 20px;" >
+      <!-- 작성기간 필터 -->
+      <div class="form-group-left" style="width: 300px !important;">
+        <label>프로젝트:</label>
+        <div id="projectid" class="form-group-left-input multiselect"></div>
+        <input type="hidden" name="projectid" id="projectid_hidden">
+      </div>
+      
+      <div class="form-group-left" style="width: 300px !important;">
+        <label>처리구분:</label>
+        <div id="processcd" class="form-group-left-input multiselect"></div>
+        <input type="hidden" name="processcd" id="processcd_hidden">
+      </div>
+
+      <div class="filter-item">
+        <button type="submit" class="icon-btn" style="margin-bottom: 10px; border: none; background-color: transparent;"><img src="{% static 'icons/search.svg' %}" class="icon-img config-icon" title="조회"/></button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -57,26 +125,18 @@
               data-creatornm="{{ file.creatornm }}"
               data-createdts="{{ file.createdts }}"
               >
-              <td class="info" style="text-align: center;"><span>{{file.filemasternm}}</span></td>
-              <td class="info" style="text-align: center;"><span>{{file.version}}</span></td>
-              <td class="info" style="text-align: center;"><span>{{file.filenm}}</span></td>
-              <td class="info" style="text-align: center;"><span>{{file.filestatusnm}}</span></td>
-              <td class="info" style="text-align: center;"><span>{{file.revisiontypenm}}</span></td>
-              <td class="info" style="text-align: center;"><span>{{file.supersedes_filenm}}</span></td>
-              <td class="info" style="text-align: center;"><span>{{file.approval_date|default_if_none:''}}</span></td>
-              <td class="info" style="text-align: center;"><span>{{file.effective_date|default_if_none:''}}</span></td>
-              <td class="info" style="text-align: center;"><span>{{file.obsolete_date|default_if_none:''}}</span></td>
-              <td class="info" style="text-align: center;"><span>{{file.change_reason}}</span></td>
-              <td class="info" style="text-align: center;"><span>
-                {% if file.processcd == 'Y' %}
-                    처리
-                {% elif file.processcd == 'D' %}
-                    삭제
-                {% else %}
-                    미처리
-                {% endif %}
-              </span></td>
-              <td class="info"><span>{{file.processdts|default_if_none:''}}</span></td>
+              <td class="info" style="text-align: center;">{{file.filemasternm}}</td>
+              <td class="info" style="text-align: center;">{{file.version}}</td>
+              <td class="info" style="text-align: center;">{{file.filenm}}</td>
+              <td class="info" style="text-align: center;">{{file.filestatusnm}}</td>
+              <td class="info" style="text-align: center;">{{file.revisiontypenm}}</td>
+              <td class="info" style="text-align: center;">{{file.supersedes_filenm}}</td>
+              <td class="info" style="text-align: center;">{{file.approval_date|default_if_none:''}}</td>
+              <td class="info" style="text-align: center;">{{file.effective_date|default_if_none:''}}</td>
+              <td class="info" style="text-align: center;">{{file.obsolete_date|default_if_none:''}}</td>
+              <td class="info" style="text-align: center;">{{file.change_reason}}</td>
+              <td class="info" style="text-align: center;">{{file.processcd_nm}}</td>
+              <td class="info">{{file.processdts|default_if_none:''}}</td>
           </tr>
           {% empty %}
           <tr>
@@ -97,7 +157,7 @@
       <div class="form-group-left">
         <label>마스터 명:</label>
         <select id="filemasternm" name="filemasternm" required>
-          <option value="" selected disabled>마스터 를 선택하세요</option>
+          <option value="" selected disabled>-- 마스터 선택 --</option>
           {% for filemaster in filemasters %}
             <option value="{{ filemaster.filemastercd }}">{{ filemaster.filemasternm }}</option>
           {% endfor %}
@@ -111,13 +171,13 @@
 
       <div class="form-group-left">
         <label>파일명:</label>
-        <input id="filenm" name="filenm" type="text" disabled>
+        <input id="filenm" name="filenm" type="text">
       </div>
       
       <div class="form-group-left">
         <label>파일상태:</label>
         <select id="filestatus" name="filestatus" required>
-          <option value="" selected disabled>파일상태 를 선택하세요</option>
+          <option value="" selected disabled>-- 파일상태 선택 --</option>
           {% for filestat in filestatus %}
             <option value="{{ filestat.valuecd }}">{{ filestat.valuenm }}</option>
           {% endfor %}
@@ -127,7 +187,7 @@
       <div class="form-group-left">
         <label>리비전타입:</label>
         <select id="revisiontype" name="revisiontype" required>
-          <option value="" selected disabled>리비전타입 을 선택하세요</option>
+          <option value="" selected disabled>-- 리비전타입 선택 --</option>
           {% for revisiontype in revisiontypes %}
             <option value="{{ revisiontype.valuecd }}">{{ revisiontype.valuenm }}</option>
           {% endfor %}
@@ -137,7 +197,7 @@
       <div class="form-group-left">
         <label>이전 파일:</label>
         <select id="supersedes_filecd" name="supersedes_filecd" required>
-          <option value="" selected disabled>이전 파일 을 선택하세요</option>
+          <option value="" selected disabled>-- 이전 파일 선택 --</option>
         </select>
       </div>
 
@@ -171,7 +231,7 @@
         <label>파일 첨부:</label>
         <input id="file-upload" name="file" type="file" accept=".pdf,.docx,.txt,.xlsx,.pptx">
         <small style="display: block; margin-top: 5px; color: #666;">
-          선택된 파일: <span id="file-name">없음</span>
+          선택된 파일: <span id="file-name">없음
         </small>
       </div>
 
@@ -179,21 +239,21 @@
         <button id="reset-btn" type="button" class="icon-btn">
           <div class="icon-wrapper">
             <img src="{% static 'icons/new.svg' %}" class="icon-img new-icon" title="신규">
-            <span class="icon-label">신규</span>
+            <span class="icon-label">신규
           </div> 
         </button>
 
         <button id="save-btn" type="button" class="icon-btn">
           <div class="icon-wrapper">
             <img src="{% static 'icons/save.svg' %}" class="icon-img save-icon" title="저장">
-            <span class="icon-label">저장</span>
+            <span class="icon-label">저장
           </div>  
         </button>
 
         <button id="delete-btn" type="button" class="icon-btn" disabled>
           <div class="icon-wrapper">
             <img src="{% static 'icons/delete.svg' %}" class="icon-img del-icon" title="삭제">
-            <span class="icon-label">삭제</span>
+            <span class="icon-label">삭제
           </div>   
         </button>
       </div>
@@ -203,7 +263,13 @@
 </div>
 
 <script>
-// 전체 파일 목록을 JavaScript 변수로 저장
+// ─────────────────────────────────────────────
+// VirtualSelect 인스턴스 저장
+// ─────────────────────────────────────────────
+let vsProject = null;
+let vsProcess = null;
+
+// 전체 파일 목록
 const allFiles = [
   {% for file in files %}
   {
@@ -215,22 +281,22 @@ const allFiles = [
   {% endfor %}
 ];
 
-// 이전 파일 드롭다운 업데이트 함수
+// readonly 토글
+function setFormReadonly(isReadonly) {
+  ['filenm', 'creatornm'].forEach(id => {
+    const el = document.getElementById(id);
+    if (isReadonly) el.setAttribute('readonly', true);
+    else el.removeAttribute('readonly');
+  });
+}
+
+// 이전 파일 드롭다운 업데이트
 function updateSupersedesDropdown(filemastercd = null, excludeFilecd = null) {
   const select = document.getElementById('supersedes_filecd');
-  
-  // 기존 옵션 모두 제거 (첫 번째 placeholder 옵션 제외)
-  while (select.options.length > 1) {
-    select.remove(1);
-  }
-  
-  // 필터링된 파일 목록으로 옵션 추가
+  while (select.options.length > 1) select.remove(1);
   allFiles.forEach(file => {
-    // filemastercd 필터링 (선택된 마스터의 파일만)
     const matchesMaster = !filemastercd || file.filemastercd === filemastercd;
-    // excludeFilecd가 있으면 해당 파일은 제외
-    const notExcluded = !excludeFilecd || file.filecd !== excludeFilecd;
-    
+    const notExcluded   = !excludeFilecd  || file.filecd !== excludeFilecd;
     if (matchesMaster && notExcluded) {
       const option = document.createElement('option');
       option.value = file.filecd;
@@ -240,186 +306,282 @@ function updateSupersedesDropdown(filemastercd = null, excludeFilecd = null) {
   });
 }
 
+// ─────────────────────────────────────────────
+// Django 템플릿 데이터
+// ─────────────────────────────────────────────
+const projectOptions = [
+  { label: '전체', value: 'all' },
+  {% for project in projects %}
+  { label: '{{ project.projectnm }}', value: '{{ project.projectid }}' }{% if not forloop.last %},{% endif %}
+  {% endfor %}
+];
 
-// 페이지 로드 시 초기화
-window.addEventListener('load', function() {
+const processCdOptions = [
+  { label: '전체', value: 'all' },
+  {% for process in processcd %}
+  { label: '{{ process.valuenm }}', value: '{{ process.valuecd }}' }{% if not forloop.last %},{% endif %}
+  {% endfor %}
+];
+
+// 조회 후 선택값 복원
+const savedProjectIds = {{ selected_projectid|safe }};
+const savedProcessCds = {{ selected_processcd|safe }};
+
+// ─────────────────────────────────────────────
+// VirtualSelect 초기화
+// ─────────────────────────────────────────────
+function initVirtualSelects() {
+  const totalProjectCount = projectOptions.filter(o => o.value !== 'all').length;
+  const totalProcessCount = processCdOptions.filter(o => o.value !== 'all').length;
+
+  vsProject = VirtualSelect.init({
+    ele: '#projectid',
+    options: projectOptions,
+    placeholder: '-- 프로젝트 선택 --',
+    search: true,
+    multiple: true,
+    showValueAsTags: false,
+    disableSelectAll: true,
+    maxValues: 0,
+    noOptionsText: '선택 가능한 프로젝트가 없습니다',
+    noSearchResultsText: '검색 결과가 없습니다'
+  });
+
+  const initProject = (savedProjectIds && savedProjectIds.length > 0 && !savedProjectIds.includes('all'))
+    ? savedProjectIds : ['all'];
+  document.getElementById('projectid').setValue(initProject);
+  document.getElementById('projectid_hidden').value = initProject.join(',');
+
+  let prevProjectVal = [...initProject];
+  let projectUpdating = false;
+
+  document.getElementById('projectid').addEventListener('change', function () {
+    if (projectUpdating) return;
+    projectUpdating = true;
+
+    let val = vsProject.getValue();
+    if (!Array.isArray(val)) val = val ? [val] : [];
+
+    let newVal;
+    if (val.length === 0) {
+      newVal = ['all'];
+    } else if (val.includes('all') && !prevProjectVal.includes('all')) {
+      newVal = ['all'];
+    } else if (prevProjectVal.includes('all') && val.includes('all')) {
+      newVal = val.filter(v => v !== 'all');
+    } else {
+      newVal = val;
+    }
+
+    // ✅ 전체 제외 모든 항목 선택 → 전체로
+    if (!newVal.includes('all') && newVal.length === totalProjectCount) {
+      newVal = ['all'];
+    }
+
+    if (JSON.stringify(newVal) !== JSON.stringify(val)) {
+      document.getElementById('projectid').setValue(newVal);
+    }
+    prevProjectVal = [...newVal];
+    document.getElementById('projectid_hidden').value = newVal.join(',');
+
+    setTimeout(() => { projectUpdating = false; }, 50);
+  });
+
+  // ─────────────────────────────────────────────
+
+  vsProcess = VirtualSelect.init({
+    ele: '#processcd',
+    options: processCdOptions,
+    placeholder: '-- 처리구분 선택 --',
+    search: true,
+    multiple: true,
+    showValueAsTags: false,
+    disableSelectAll: true,
+    maxValues: 0,
+    noOptionsText: '선택 가능한 처리구분이 없습니다',
+    noSearchResultsText: '검색 결과가 없습니다'
+  });
+
+  const initProcess = (savedProcessCds && savedProcessCds.length > 0 && !savedProcessCds.includes('all'))
+    ? savedProcessCds : ['all'];
+  document.getElementById('processcd').setValue(initProcess);
+  document.getElementById('processcd_hidden').value = initProcess.join(',');
+
+  let prevProcessVal = [...initProcess];
+  let processUpdating = false;
+
+  document.getElementById('processcd').addEventListener('change', function () {
+    if (processUpdating) return;
+    processUpdating = true;
+
+    let val = vsProcess.getValue();
+    if (!Array.isArray(val)) val = val ? [val] : [];
+
+    let newVal;
+    if (val.length === 0) {
+      newVal = ['all'];
+    } else if (val.includes('all') && !prevProcessVal.includes('all')) {
+      newVal = ['all'];
+    } else if (prevProcessVal.includes('all') && val.includes('all')) {
+      newVal = val.filter(v => v !== 'all');
+    } else {
+      newVal = val;
+    }
+
+    // ✅ 전체 제외 모든 항목 선택 → 전체로
+    if (!newVal.includes('all') && newVal.length === totalProcessCount) {
+      newVal = ['all'];
+    }
+
+    if (JSON.stringify(newVal) !== JSON.stringify(val)) {
+      document.getElementById('processcd').setValue(newVal);
+    }
+    prevProcessVal = [...newVal];
+    document.getElementById('processcd_hidden').value = newVal.join(',');
+
+    setTimeout(() => { processUpdating = false; }, 50);
+  });
+}
+
+// ─────────────────────────────────────────────
+// 페이지 로드
+// ─────────────────────────────────────────────
+window.addEventListener('load', function () {
   document.getElementById("files-detail-form").reset();
-  updateSupersedesDropdown(); // 전체 목록 표시
+  updateSupersedesDropdown();
+  initVirtualSelects();
 });
 
-// 마스터 명 선택 변경 시 이전 파일 드롭다운 업데이트
-document.getElementById('filemasternm').addEventListener('change', function() {
+// 폼 제출 → URL 파라미터 변환
+document.querySelector('form[method="GET"]').addEventListener('submit', function (e) {
+  e.preventDefault();
+
+  const projectVals = vsProject ? vsProject.getValue() : ['all'];
+  const processVals = vsProcess  ? vsProcess.getValue()  : ['all'];
+
+  const params = new URLSearchParams();
+  (projectVals || ['all']).forEach(v => params.append('projectid', v));
+  (processVals  || ['all']).forEach(v => params.append('processcd', v));
+
+  window.location.href = '?' + params.toString();
+});
+
+// 마스터 명 변경 시 이전 파일 드롭다운 갱신
+document.getElementById('filemasternm').addEventListener('change', function () {
   const selectedMasterCd = this.value;
-  const currentFilecd = document.getElementById('filecd').value;
-  
-  // 선택된 마스터에 해당하는 파일만 표시 (현재 파일 제외)
+  const currentFilecd    = document.getElementById('filecd').value;
   updateSupersedesDropdown(selectedMasterCd, currentFilecd);
-  
-  // 이전에 선택된 값이 필터링된 목록에 없으면 초기화
+
   const supersedesSelect = document.getElementById('supersedes_filecd');
-  const currentValue = supersedesSelect.value;
-  const isValueInList = Array.from(supersedesSelect.options).some(opt => opt.value === currentValue);
-  
-  if (!isValueInList) {
-    supersedesSelect.value = '';
-  }
+  const currentValue     = supersedesSelect.value;
+  const isValueInList    = Array.from(supersedesSelect.options).some(opt => opt.value === currentValue);
+  if (!isValueInList) supersedesSelect.value = '';
 });
 
-// 테이블 행 클릭 시
+// 테이블 행 클릭
 document.querySelectorAll("tbody tr[data-filecd]").forEach(row => {
   row.addEventListener("click", function () {
-    const currentFilecd = row.dataset.filecd;
+    const currentFilecd   = row.dataset.filecd;
     const currentMastercd = row.dataset.filemastercd;
-    
-    // 폼 필드 채우기
-    document.getElementById('filecd').value = row.dataset.filecd;
-    document.getElementById("filemasternm").value = row.dataset.filemastercd;
-    document.getElementById("version").value = row.dataset.version;
-    document.getElementById("filenm").value = row.dataset.filenm;
-    document.getElementById("filestatus").value = row.dataset.filestatus;
-    document.getElementById("revisiontype").value = row.dataset.revisiontype;
-    document.getElementById("supersedes_filecd").value = row.dataset.supersedes_filecd;
-    document.getElementById("approval_date").value = row.dataset.approval_date;
-    document.getElementById("effective_date").value = row.dataset.effective_date;
-    document.getElementById("obsolete_date").value = row.dataset.obsolete_date;
-    document.getElementById("change_reason").value = row.dataset.change_reason;
-    document.getElementById("creatornm").value = row.dataset.creatornm;
 
-    // 이전 파일 드롭다운 업데이트 (같은 마스터의 파일만, 현재 파일 제외)
+    document.getElementById('filecd').value             = row.dataset.filecd;
+    document.getElementById("filemasternm").value       = row.dataset.filemastercd;
+    document.getElementById("version").value            = row.dataset.version;
+    document.getElementById("filenm").value             = row.dataset.filenm;
+    document.getElementById("filestatus").value         = row.dataset.filestatus;
+    document.getElementById("revisiontype").value       = row.dataset.revisiontype;
+    document.getElementById("approval_date").value      = row.dataset.approval_date;
+    document.getElementById("effective_date").value     = row.dataset.effective_date;
+    document.getElementById("obsolete_date").value      = row.dataset.obsolete_date;
+    document.getElementById("change_reason").value      = row.dataset.change_reason;
+    document.getElementById("creatornm").value          = row.dataset.creatornm;
+
     updateSupersedesDropdown(currentMastercd, currentFilecd);
-    
-    // 기존 이전 파일 값 설정
-    document.getElementById("supersedes_filecd").value = row.dataset.supersedes_filecd;
+    document.getElementById("supersedes_filecd").value  = row.dataset.supersedes_filecd;
 
-    // 선택된 행 강조
     document.querySelectorAll("tbody tr").forEach(r => r.classList.remove('selected-row'));
     row.classList.add('selected-row');
+    setFormReadonly(true);
   });
 });
 
-// 파일 선택 시 파일명 표시
-document.getElementById('file-upload').addEventListener('change', function(e) {
-  const fileName = e.target.files[0] ? e.target.files[0].name : '없음';
-  document.getElementById('file-name').textContent = fileName;
+// 파일 선택 표시
+document.getElementById('file-upload').addEventListener('change', function (e) {
+  document.getElementById('file-name').textContent = e.target.files[0] ? e.target.files[0].name : '없음';
 });
 
-// 초기화 버튼
+// 신규 버튼
 document.getElementById("reset-btn").addEventListener("click", () => {
   document.getElementById("files-detail-form").reset();
   document.getElementById("file-name").textContent = "없음";
-  
-  // 이전 파일 드롭다운 전체 목록으로 복원
   updateSupersedesDropdown();
-  
   document.querySelectorAll("tbody tr").forEach(r => r.classList.remove("selected-row"));
+  setFormReadonly(false);
 });
 
 // 저장 버튼
 document.getElementById("save-btn").addEventListener("click", () => {
-  const form = document.getElementById("files-detail-form");
+  const form     = document.getElementById("files-detail-form");
   const formData = new FormData(form);
-  
-  // 파일이 선택되었는지 확인
   const fileInput = document.getElementById('file-upload');
-  if (fileInput.files.length > 0) {
-    formData.append('file', fileInput.files[0]);
-  }
+  if (fileInput.files.length > 0) formData.append('file', fileInput.files[0]);
 
-  // 로딩 표시 (선택사항)
-  const saveBtn = document.getElementById("save-btn");
-  const originalText = saveBtn.querySelector('.icon-label').textContent;
-  saveBtn.querySelector('.icon-label').textContent = '저장중...';
+  const saveBtn    = document.getElementById("save-btn");
+  const labelEl    = saveBtn.querySelector('.icon-label');
+  const originalTx = labelEl.textContent;
+  labelEl.textContent = '저장중...';
   saveBtn.disabled = true;
 
   fetch("{% url 'master_rag_files_save' %}", {
     method: "POST",
-    credentials: "include", 
+    credentials: "include",
     body: formData,
-    headers: {
-      "X-CSRFToken": getCookie("csrftoken")
-    }
+    headers: { "X-CSRFToken": getCookie("csrftoken") }
   })
   .then(res => res.json())
   .then(data => {
-    if (data.result === "success") {
-      alert(data.message);
-      location.reload();
-    } else {
-      alert("저장 실패: " + (data.message || "서버 오류"));
-      saveBtn.querySelector('.icon-label').textContent = originalText;
-      saveBtn.disabled = false;
-    }
+    if (data.result === "success") { alert(data.message); location.reload(); }
+    else { alert("저장 실패: " + (data.message || "서버 오류")); labelEl.textContent = originalTx; saveBtn.disabled = false; }
   })
-  .catch(err => {
-    alert("오류 발생: " + err.message);
-    saveBtn.querySelector('.icon-label').textContent = originalText;
-    saveBtn.disabled = false;
-  });
+  .catch(err => { alert("오류 발생: " + err.message); labelEl.textContent = originalTx; saveBtn.disabled = false; });
 });
 
 // 삭제 버튼
 document.getElementById("delete-btn").addEventListener("click", () => {
   const filecd = document.getElementById("filecd").value;
   const filenm = document.getElementById("filenm").value;
-  
-  if (!filecd) {
-    alert("삭제할 파일을 선택하세요.");
-    return;
-  }
+  if (!filecd) { alert("삭제할 파일을 선택하세요."); return; }
+  if (!confirm(`"${filenm}" 파일을 정말 삭제하시겠습니까?\n(Azure Blob Storage의 파일도 함께 삭제됩니다)`)) return;
 
-  if (!confirm(`"${filenm}" 파일을 정말 삭제하시겠습니까?\n(Azure Blob Storage의 파일도 함께 삭제됩니다)`)) {
-    return;
-  }
-
-  // 로딩 표시
-  const deleteBtn = document.getElementById("delete-btn");
-  const originalText = deleteBtn.querySelector('.icon-label').textContent;
-  deleteBtn.querySelector('.icon-label').textContent = '삭제중...';
+  const deleteBtn  = document.getElementById("delete-btn");
+  const labelEl    = deleteBtn.querySelector('.icon-label');
+  const originalTx = labelEl.textContent;
+  labelEl.textContent = '삭제중...';
   deleteBtn.disabled = true;
 
   fetch("{% url 'master_rag_files_delete' %}", {
     method: "POST",
-    credentials: "include", 
-    headers: {
-      "Content-Type": "application/json",
-      "X-CSRFToken": getCookie("csrftoken")
-    },
-    body: JSON.stringify({ filecd: filecd })
+    credentials: "include",
+    headers: { "Content-Type": "application/json", "X-CSRFToken": getCookie("csrftoken") },
+    body: JSON.stringify({ filecd })
   })
   .then(res => res.json())
   .then(data => {
-    if (data.result === "success") {
-      alert(data.message);
-      location.reload();
-    } else {
-      alert("삭제 실패: " + (data.message || "서버 오류"));
-      deleteBtn.querySelector('.icon-label').textContent = originalText;
-      deleteBtn.disabled = false;
-    }
+    if (data.result === "success") { alert(data.message); location.reload(); }
+    else { alert("삭제 실패: " + (data.message || "서버 오류")); labelEl.textContent = originalTx; deleteBtn.disabled = false; }
   })
-  .catch(error => {
-    alert("오류 발생: " + error.message);
-    deleteBtn.querySelector('.icon-label').textContent = originalText;
-    deleteBtn.disabled = false;
-  });
+  .catch(err => { alert("오류 발생: " + err.message); labelEl.textContent = originalTx; deleteBtn.disabled = false; });
 });
 
-// 쿠키 정보
+// CSRF 쿠키
 function getCookie(name) {
-  let cookieValue = null;
-  if (document.cookie && document.cookie !== '') {
-    const cookies = document.cookie.split(';');
-    for (let cookie of cookies) {
-      cookie = cookie.trim();
-      if (cookie.startsWith(name + '=')) {
-        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-        break;
-      }
-    }
+  if (!document.cookie) return null;
+  for (let cookie of document.cookie.split(';')) {
+    cookie = cookie.trim();
+    if (cookie.startsWith(name + '=')) return decodeURIComponent(cookie.substring(name.length + 1));
   }
-  return cookieValue;
+  return null;
 }
-
 </script>
 
 {% endblock %}

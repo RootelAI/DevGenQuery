@@ -144,7 +144,7 @@
       <div class="form-group-left">
         <label>프로젝트명</label>
         <select id="projectnm" name="projectnm" required>
-          <option value="" selected disabled>프로젝트 를 선택하세요</option>
+          <option value="" selected disabled>-- 프로젝트 선택 --</option>
           {% for project in projects %}
             <option value="{{ project.projectid }}">{{ project.projectnm }}</option>
           {% endfor %}
@@ -195,7 +195,7 @@
       <div class="form-group-left">
         <label>주관부서</label>
         <select id="owner_dept" name="owner_dept" required>
-          <option value="" selected disabled>주관부서 를 선택하세요</option>
+          <option value="" selected disabled>-- 주관부서 선택 --</option>
           {% for dept in departments %}
             <option value="{{ dept.valuecd }}">{{ dept.valuenm }}</option>
           {% endfor %}
@@ -205,7 +205,7 @@
       <div class="form-group-left">
         <label>참조부서</label>
         <select id="support_dept" name="support_dept" required>
-          <option value="" selected disabled>참조부서 를 선택하세요</option>
+          <option value="" selected disabled>-- 참조부서 선택 --</option>
           {% for dept in departments %}
             <option value="{{ dept.valuecd }}">{{ dept.valuenm }}</option>
           {% endfor %}
@@ -215,7 +215,7 @@
       <div class="form-group-left">
         <label>승인부서</label>
         <select id="approver_dept" name="approver_dept" required>
-          <option value="" selected disabled>승인부서 를 선택하세요</option>
+          <option value="" selected disabled>-- 승인부서 선택 --</option>
           {% for dept in departments %}
             <option value="{{ dept.valuecd }}">{{ dept.valuenm }}</option>
           {% endfor %}
@@ -333,7 +333,7 @@ function initTagComponent(tagName, projectId, selectedValue = null) {
 
   const uiComponent = getTagUiComponent(projectId, tagName);
   const tagNumber = tagName.replace('tag', '');
-  const placeholder = `Tag${tagNumber} 을/를 선택하세요`;
+  const placeholder = `-- Tag${tagNumber} 선택 --`;
 
   switch (uiComponent) {
 

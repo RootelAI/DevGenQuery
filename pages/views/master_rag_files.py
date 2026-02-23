@@ -12,6 +12,34 @@ from utilsPrj.supabase_client import get_supabase_client
 from utilsPrj.crypto_helper import encrypt_value, decrypt_value
 from azure.storage.blob import BlobServiceClient
 
+def find_value(supabase, codeuid, valuecd):
+    if valuecd:
+        result = supabase.schema('rag').table('codevalues').select('*').eq('codeuid', codeuid).eq('valuecd', valuecd).eq('useyn', True).order('orderno').execute().data or []
+    else:
+        result = supabase.schema('rag').table('codevalues').select('*').eq('codeuid', codeuid).eq('useyn', True).order('orderno').execute().data or []
+
+    return result
+
+def search_files(supabase, projectids, filestatuses):
+    is_all_project = 'all' in projectids
+    is_all_status = 'all' in filestatuses
+
+    if is_all_project:
+        filemasters = supabase.schema('rag').table('filemasters').select("*").order("createdts", desc=True).execute().data or []
+    else:
+        filemasters = supabase.schema('rag').table('filemasters').select("*").in_("projectid", projectids).order("createdts", desc=True).execute().data or []
+
+    filemaster_cds = [fm["filemastercd"] for fm in filemasters if fm.get("filemastercd")]
+    query = supabase.schema('rag').table('files').select("*")
+    
+    if not is_all_project:
+        query = query.in_("filemastercd", filemaster_cds)
+        
+    if not is_all_status:
+        query = query.in_("processcd", filestatuses)
+        
+    files = query.order("createdts").execute().data or []
+    return filemasters, files
 
 def master_rag_files(request):
     """프로젝트 관리 메인 페이지"""
@@ -35,17 +63,25 @@ def master_rag_files(request):
     })
     user_id = user.get("id")
 
-    try:# projects 테이블에서 데이터 조회
-        filemasters = supabase.schema('rag').table('filemasters').select("*").order("createdts", desc=True).execute().data or []
-        files = supabase.schema('rag').table('files').select("*").order("createdts").execute().data or []
+    try:
+        # GET 파라미터로 값 찾기
+        p_project = request.GET.getlist("projectid") or ['all']
+        p_filestatus = request.GET.getlist("processcd") or ['N', 'C']
+
+        projects = supabase.schema('rag').table('projects').select("*").execute().data or []
+        processcd_cd = supabase.schema('rag').table('codemasters').select("*").eq('codenm', 'ProcessCd').eq('useyn', True).execute().data or []
+        processcduid = processcd_cd[0]['codeuid']
+        processcds = find_value(supabase, processcduid, None)
+
+        filemasters, files = search_files(supabase, p_project, p_filestatus)
 
         filestatus_cd = supabase.schema('rag').table('codemasters').select("*").eq('codenm', 'FileStatus').eq('useyn', True).execute().data or []
         filestatusuid = filestatus_cd[0]['codeuid']
-        filestatus = supabase.schema('rag').table('codevalues').select('*').eq('codeuid', filestatusuid).eq('useyn', True).order('orderno').execute().data
+        filestatus = find_value(supabase, filestatusuid, None)
 
         revisiontype = supabase.schema('rag').table('codemasters').select("*").eq('codenm', 'RevisionTypes').eq('useyn', True).execute().data or []
         revisionuid = revisiontype[0]['codeuid']
-        revisiontypes = supabase.schema('rag').table('codevalues').select('*').eq('codeuid', revisionuid).eq('useyn', True).order('orderno').execute().data
+        revisiontypes = find_value(supabase, revisionuid, None)
 
         # 기초 자료 매핑
         for i in files:
@@ -58,13 +94,13 @@ def master_rag_files(request):
             # 파일상태
             if i.get('filestatus'):
                 try:
-                    i['filestatusnm'] = supabase.schema('rag').table('codevalues').select('*').eq('codeuid', filestatusuid).eq('valuecd', i['filestatus']).execute().data[0]['valuenm']
+                    i['filestatusnm'] = find_value(supabase, filestatusuid, i['filestatus'])[0]['valuenm']
                 except Exception as e:
                     i['filestatusnm'] = ''
             # 리비젼타입
             if i.get('revisiontype'):
                 try:
-                    i['revisiontypenm'] = supabase.schema('rag').table('codevalues').select('*').eq('codeuid', revisionuid).eq('valuecd', i['revisiontype']).execute().data[0]['valuenm']
+                    i['revisiontypenm'] = find_value(supabase, revisionuid, i['revisiontype'])[0]['valuenm']
                 except Exception as e:
                     i['revisiontypenm'] = ''
             # 대체 파일 CD
@@ -73,6 +109,12 @@ def master_rag_files(request):
                     i['supersedes_filenm'] = supabase.schema('rag').table('files').select('*').eq('filecd', i['supersedes_filecd']).execute().data[0]['filenm']
                 except Exception as e:
                     i['supersedes_filenm'] = ''
+            # 처리구분
+            if i.get('processcd'):
+                try:
+                    i['processcd_nm'] = find_value(supabase, processcduid, i['processcd'])[0]['valuenm']
+                except Exception as e:
+                    i['processcd_nm'] = ''
 
             # 사용자명
             if i.get('creator'):
@@ -96,6 +138,10 @@ def master_rag_files(request):
                     i['processdts'] = ''
 
         context = {
+            'projects': projects,
+            'selected_projectid': p_project,
+            'processcd': processcds,
+            'selected_processcd': p_filestatus,
             'filemasters': filemasters,
             'files': files,
             'filestatus': filestatus,
@@ -241,7 +287,7 @@ def master_rag_files_save(request):
             uploaded_file = request.FILES.get('file')
             if uploaded_file:
                 filenm = uploaded_file.name
-            
+
             # 이미 동일한 프로젝트에 동일한 파일명 있으면 삽입 불가
             # print(f'FileMasterCd: {filemastercd}')
             existing_filenm = supabase.schema('rag').table('files').select('*').eq('filemastercd', filemastercd).neq('filecd', filecd).eq('version', version).eq('filenm', filenm).execute().data
@@ -267,9 +313,9 @@ def master_rag_files_save(request):
                 
                 # Tag 값 변경 감지
                 if (old_data.get('filestatus') != filestatus):
-                    processcd = 'N'          
+                    processcd = 'C'
             else:
-                processcd = 'N'
+                processcd = 'N'     
 
             if uploaded_file:
                 # 파일 확장자 추출
