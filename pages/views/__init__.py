@@ -41,6 +41,8 @@ from .master_rag_projecttags import master_rag_projecttags, master_rag_projectta
 from .master_rag_files import master_rag_files, master_rag_files_save, master_rag_files_delete
 from .master_rag_filemasters import master_rag_filemasters, master_rag_filemasters_save, master_rag_filemasters_delete
 
+from .master_rag_file_compare import master_rag_file_compare, proxy_pdf
+
 __all__ = [
      "home"
    , "hide_popup"
@@ -139,4 +141,7 @@ __all__ = [
   , "master_rag_filemasters"
   , "master_rag_filemasters_save"
   , "master_rag_filemasters_delete"
+
+  , "master_rag_file_compare"
+  , "proxy_pdf"
 ]

@@ -1,0 +1,110 @@
+{% extends 'pages/base.html' %}
+{% load static %}
+{% block title %}RAG 파일 비교{% endblock %}
+
+{% block content %}
+<div class="page-title">
+  <div style="display: flex; align-items: center;">
+    <div class="gradient-bar"></div>
+    <div>RAG 파일 비교</div>
+  </div>
+</div>
+
+<div style="display: flex; gap: 10px; height: 85vh;">
+
+  <!-- 좌 PDF -->
+  <div style="flex:1; border:1px solid #ddd; border-radius:8px; overflow:auto;">
+    <h3>과거 문서</h3>
+    <canvas id="pdf_left_canvas"></canvas>
+  </div>
+
+  <!-- 중앙 변경 요약 -->
+  <div style="flex:0.6; border:1px solid #ccc; border-radius:8px; overflow:auto; padding:10px; background:#f9f9f9;">
+    <h3>변경 요약</h3>
+
+    {% for item in diff_list %}
+      <div style="margin-bottom:15px; border-bottom:1px solid #ddd; padding-bottom:10px;">
+        
+        <div style="font-weight:bold; color:#1a73e8; cursor:pointer;"
+             onclick="scrollToPage({{ item.left_page }}, {{ item.right_page }})">
+          [과거 {{ item.left_page }} / 현재 {{ item.right_page }}]
+        </div>
+
+        <ul style="list-style: disc inside; padding-left:10px;">
+          {% for line in item.summary_list %}
+            <li style="color:#1a73e8; font-size:14px; cursor:pointer;"
+                onclick="scrollToPage({{ item.left_page }}, {{ item.right_page }})">
+              {{ line }}
+            </li>
+          {% endfor %}
+        </ul>
+
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- 우 PDF -->
+  <div style="flex:1; border:1px solid #ddd; border-radius:8px; overflow:auto;">
+    <h3>현재 문서</h3>
+    <canvas id="pdf_right_canvas"></canvas>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+const pdfLeftUrl = "/pdf_proxy/?file={{ pdf_url1_b64 }}";
+const pdfRightUrl = "/pdf_proxy/?file={{ pdf_url2_b64 }}";
+
+let pdfLeftDoc = null;
+let pdfRightDoc = null;
+
+const leftCanvas = document.getElementById("pdf_left_canvas");
+const rightCanvas = document.getElementById("pdf_right_canvas");
+
+const leftCtx = leftCanvas.getContext("2d");
+const rightCtx = rightCanvas.getContext("2d");
+
+pdfjsLib.getDocument(pdfLeftUrl).promise.then(pdf => {
+    pdfLeftDoc = pdf;
+    renderPage(pdfLeftDoc, 1, leftCanvas, leftCtx);
+});
+
+pdfjsLib.getDocument(pdfRightUrl).promise.then(pdf => {
+    pdfRightDoc = pdf;
+    renderPage(pdfRightDoc, 1, rightCanvas, rightCtx);
+});
+
+function renderPage(pdfDoc, pageNumber, canvas, ctx) {
+    pdfDoc.getPage(pageNumber).then(page => {
+        const viewport = page.getViewport({ scale: 1.3 });
+
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        page.render({
+            canvasContext: ctx,
+            viewport: viewport
+        });
+    });
+}
+
+function scrollToPage(leftPageNumber, rightPageNumber) {
+
+    if (pdfLeftDoc) {
+        renderPage(pdfLeftDoc, leftPageNumber, leftCanvas, leftCtx);
+    }
+
+    if (pdfRightDoc) {
+        renderPage(pdfRightDoc, rightPageNumber, rightCanvas, rightCtx);
+    }
+}
+</script>
+
+{% endblock %}
