@@ -8,48 +8,61 @@ import re
 from django.shortcuts import render
 from django.http import HttpResponse
 from azure.storage.blob import BlobServiceClient
-import fitz  # PyMuPDF
+import fitz
 from sentence_transformers import SentenceTransformer, util
-
 from utilsPrj.supabase_client import get_supabase_client
 
 # 서버 시작 시 1회만 모델 로딩
 model = SentenceTransformer('all-MiniLM-L6-v2')
 
-
-# 🔥 제목 기반 섹션 추출 + 시작 페이지 추적
+# ==============================
+# 1️⃣ 섹션 추출
+# ==============================
 def extract_sections_from_pdf(blob_path):
     doc = fitz.open(blob_path)
-    section_pattern = re.compile(r'^\s*(제\s*\d+\s*[장조항절]\s*.*|\d+(\.\d+)*\s+.*)')
+
+    section_pattern = re.compile(
+        r'^\s*(제\s*\d+\s*[장조항절]\s*.*|\d+(\.\d+)*\s+.*)'
+    )
 
     sections = {}
     current_title = "PREAMBLE"
-    sections[current_title] = {"text": "", "start_page": 1}
+    current_number = "0"
+    sections[current_title] = {"text": "", "start_page": 1, "number": current_number}
 
     for page_number, page in enumerate(doc):
         text = page.get_text()
         if not text.strip():
             continue
 
-        # 줄바꿈 제거 + 공백 정리
-        text = " ".join([line.strip() for line in text.splitlines() if line.strip()])
+        lines = [line.strip() for line in text.splitlines() if line.strip()]
 
-        lines = text.split("\n")
         for line in lines:
-            stripped = line.strip()
-            if not stripped:
-                continue
-
-            if section_pattern.match(stripped):
-                current_title = stripped
-                sections[current_title] = {"text": "", "start_page": page_number + 1}
+            match = section_pattern.match(line)
+            if match:
+                number_match = re.match(r'제?\s*(\d+)', line)
+                current_number = number_match.group(1) if number_match else "0"
+                current_title = line
+                sections[current_title] = {
+                    "text": "",
+                    "start_page": page_number + 1,
+                    "number": current_number
+                }
             else:
-                sections[current_title]["text"] += stripped + " "
+                sections[current_title]["text"] += line + "\n"
 
     return sections
 
+# ==============================
+# 2️⃣ 문장 분리
+# ==============================
+def split_into_sentences(text):
+    sentences = re.split(r'(?<=[.?!])\s+', text)
+    return [s.strip() for s in sentences if s.strip()]
 
-# 🔹 PDF Proxy
+# ==============================
+# 3️⃣ PDF Proxy
+# ==============================
 def proxy_pdf(request):
     file_b64 = request.GET.get('file')
     if not file_b64:
@@ -80,13 +93,12 @@ def proxy_pdf(request):
         return response
 
     except Exception as e:
-        print("Exception in proxy_pdf:", e)
         traceback.print_exc()
         return HttpResponse(f"Error fetching PDF: {str(e)}", status=500)
 
-
-# 🔹 섹션 기반 비교 (전체 PDF)
-# 🔹 섹션 기반 비교 (전체 PDF) + 전처리 강화
+# ==============================
+# 4️⃣ 3단계 비교: 번호 + 제목 + 본문 + 문장
+# ==============================
 def master_rag_file_compare(request):
     access_token = request.session.get("access_token")
     refresh_token = request.session.get("refresh_token")
@@ -103,13 +115,13 @@ def master_rag_file_compare(request):
         blob_service_client = BlobServiceClient.from_connection_string(
             os.getenv("AZURE_STORAGE_CONNECTION_STRING")
         )
+
         project_id = 1
         supabase = get_supabase_client(access_token, refresh_token)
         dirPath = supabase.schema('rag').table('projects') \
             .select('dirpath').eq('projectid', project_id) \
             .execute().data[0]['dirpath']
 
-        # 비교 대상 PDF
         file1 = "source/완제의약품 제조 및 품질관리기준(GMP) 가이던스(제2개정판 및 추보).pdf"
         file2 = "source/완제의약품_제조_및_품질관리기준(GMP)_가이던스.pdf"
 
@@ -120,7 +132,6 @@ def master_rag_file_compare(request):
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp1:
             tmp1.write(blob1)
             tmp_path1 = tmp1.name
-
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp2:
             tmp2.write(blob2)
             tmp_path2 = tmp2.name
@@ -128,100 +139,105 @@ def master_rag_file_compare(request):
         sections1 = extract_sections_from_pdf(tmp_path1)
         sections2 = extract_sections_from_pdf(tmp_path2)
 
-        threshold = 0.85
         diff_list = []
 
-        # 공통 섹션 비교
-        common_titles = set(sections1.keys()).intersection(set(sections2.keys()))
-        for title in common_titles:
-            left_page = sections1[title]["start_page"]
-            right_page = sections2[title]["start_page"]
+        # 섹션 번호 기준 매칭
+        numbers1 = {v["number"]: k for k, v in sections1.items()}
+        numbers2 = {v["number"]: k for k, v in sections2.items()}
 
-            # 텍스트 전처리
-            text1 = re.sub(r'\[\S+\]', '', sections1[title]["text"])  # [별첨2] 등 제거
-            text2 = re.sub(r'\[\S+\]', '', sections2[title]["text"])
-            text1 = re.sub(r'\s+', ' ', text1).strip()
-            text2 = re.sub(r'\s+', ' ', text2).strip()
+        for num, title1 in numbers1.items():
+            rows = []
+            if num in numbers2:
+                title2 = numbers2[num]
 
-            # 문장 단위 분리 (한글 + 영어 + 숫자 고려)
-            sents1 = re.split(r'(?<=[.!?])\s+(?=[A-Z가-힣0-9])', text1)
-            sents2 = re.split(r'(?<=[.!?])\s+(?=[A-Z가-힣0-9])', text2)
+                # 제목 embedding 비교
+                emb_title1 = model.encode(title1, convert_to_tensor=True)
+                emb_title2 = model.encode(title2, convert_to_tensor=True)
+                title_sim = util.cos_sim(emb_title1, emb_title2).item()
 
-            if not sents1 or not sents2:
-                continue
+                # 본문 문장 단위 비교
+                left_sentences = split_into_sentences(sections1[title1]["text"])
+                right_sentences = split_into_sentences(sections2[title2]["text"])
 
-            embeddings1 = model.encode(sents1, convert_to_tensor=True)
-            embeddings2 = model.encode(sents2, convert_to_tensor=True)
+                if left_sentences and right_sentences:
+                    emb_left = model.encode(left_sentences, convert_to_tensor=True)
+                    emb_right = model.encode(right_sentences, convert_to_tensor=True)
+                    cos_scores = util.cos_sim(emb_left, emb_right)
 
-            matched_r = set()
-            html_rows = []
+                    # 각 문장별 최대 유사도 비교
+                    for i, sent in enumerate(left_sentences):
+                        max_idx = cos_scores[i].argmax().item()
+                        max_sim = cos_scores[i, max_idx].item()
+                        if max_sim < 0.85:
+                            rows.append({
+                                "side": "과거",
+                                "sentence": sent,
+                                "compare_sentence": right_sentences[max_idx],
+                                "similarity": f"{max_sim:.3f}"
+                            })
+                    for j, sent in enumerate(right_sentences):
+                        if cos_scores[:, j].max().item() < 0.85:
+                            rows.append({
+                                "side": "현재",
+                                "sentence": sent,
+                                "compare_sentence": "",
+                                "similarity": "-"
+                            })
+                    low_sim_mean = cos_scores.min(dim=1).values.mean().item()
+                else:
+                    low_sim_mean = 1.0
 
-            # Left → Right 비교
-            for idx1, emb1 in enumerate(embeddings1):
-                cos_scores = util.cos_sim(emb1, embeddings2)[0]
-                max_score = cos_scores.max().item()
-                idx2 = cos_scores.argmax().item()
-                if max_score < threshold:
-                    html_rows.append({
-                        "side": "Left 삭제/변경",
-                        "sentence": sents1[idx1],
-                        "compare_sentence": sents2[idx2],
-                        "similarity": f"{max_score:.3f}"
+                # 변경 여부 판단
+                if title_sim < 0.85 or low_sim_mean < 0.75:
+                    diff_list.append({
+                        "section_title_old": title1,
+                        "section_title_new": title2,
+                        "left_page": sections1[title1]["start_page"],
+                        "right_page": sections2[title2]["start_page"],
+                        "similarity": f"{low_sim_mean:.3f}",
+                        "change_type": "내용 변경",
+                        "rows": rows
                     })
-                matched_r.add(idx2)
-
-            # Right → Left 비교 (아직 매칭 안 된 문장만)
-            for idx2, emb2 in enumerate(embeddings2):
-                if idx2 in matched_r:
-                    continue
-                cos_scores = util.cos_sim(emb2, embeddings1)[0]
-                max_score = cos_scores.max().item()
-                idx1 = cos_scores.argmax().item()
-                if max_score < threshold:
-                    html_rows.append({
-                        "side": "Right 추가/변경",
-                        "sentence": sents2[idx2],
-                        "compare_sentence": sents1[idx1],
-                        "similarity": f"{max_score:.3f}"
-                    })
-
-            if html_rows:
+            else:
+                # 번호 없음 → 신규 섹션
                 diff_list.append({
-                    "section_title": title,
-                    "left_page": left_page,
-                    "right_page": right_page,
-                    "rows": html_rows
+                    "section_title_old": "-",
+                    "section_title_new": title1,
+                    "left_page": "-",
+                    "right_page": sections1[title1]["start_page"],
+                    "similarity": "-",
+                    "change_type": "신규 섹션",
+                    "rows": []
                 })
 
-        # 신설 섹션
-        added_sections = set(sections2.keys()) - set(sections1.keys())
-        for title in added_sections:
-            diff_list.append({
-                "section_title": title,
-                "left_page": None,
-                "right_page": sections2[title]["start_page"],
-                "rows": [{"side":"신설 섹션","sentence":"-","compare_sentence":"-","similarity":"-"}]
-            })
+        # 번호로 못 찾은 섹션 (신규)
+        for num, title2 in numbers2.items():
+            if num not in numbers1:
+                diff_list.append({
+                    "section_title_old": "-",
+                    "section_title_new": title2,
+                    "left_page": "-",
+                    "right_page": sections2[title2]["start_page"],
+                    "similarity": "-",
+                    "change_type": "신규 섹션",
+                    "rows": []
+                })
 
-        # 삭제 섹션
-        deleted_sections = set(sections1.keys()) - set(sections2.keys())
-        for title in deleted_sections:
-            diff_list.append({
-                "section_title": title,
-                "left_page": sections1[title]["start_page"],
-                "right_page": None,
-                "rows": [{"side":"삭제 섹션","sentence":"-","compare_sentence":"-","similarity":"-"}]
-            })
+        # 페이지 순으로 정렬
+        diff_list = sorted(
+            diff_list,
+            key=lambda x: (x["left_page"] if isinstance(x["left_page"], int) else 9999,
+                           x["right_page"] if isinstance(x["right_page"], int) else 9999)
+        )
 
-        context = {
+        return render(request, "pages/master_rag_file_compare.html", {
+            "diff_list": diff_list,
             "pdf_url1_b64": base64.urlsafe_b64encode(file1.encode()).decode(),
             "pdf_url2_b64": base64.urlsafe_b64encode(file2.encode()).decode(),
-            "diff_list": diff_list
-        }
-
-        return render(request, "pages/master_rag_file_compare.html", context)
+        })
 
     except Exception as e:
-        print("Error:", str(e))
         traceback.print_exc()
-        return render(request, "pages/master_rag_file_compare.html", {"error": str(e)})
+        return render(request, "pages/master_rag_file_compare.html", {
+            "error": str(e)
+        })
