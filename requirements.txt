@@ -39,3 +39,4 @@ azure-storage-blob
 PyMuPDF 
 langchain-openai
 langchain-community
+sentence_transformers
