@@ -42,7 +42,7 @@ from .views import (home, hide_popup, search_help
                   , master_rag_files, master_rag_files_save, master_rag_files_delete
                   , master_rag_filemasters, master_rag_filemasters_save, master_rag_filemasters_delete
 
-                  , master_rag_file_compare, proxy_pdf
+                  , master_rag_file_compare
                     )
                     
 # urls.py
@@ -149,6 +149,5 @@ urlpatterns = [
     path('master/rag_filemasters_delete/', master_rag_filemasters_delete, name = 'master_rag_filemasters_delete'),
 
     path('master/rag_file_compare/', master_rag_file_compare, name = 'master_rag_file_compare'),
-    path('pdf_proxy/', proxy_pdf, name='pdf_proxy'),
 
 ]

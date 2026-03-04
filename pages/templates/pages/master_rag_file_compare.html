@@ -1,34 +1,33 @@
 {% extends 'pages/base.html' %}
 {% load static %}
-{% block title %}RAG 파일 비교{% endblock %}
+{% block title %}Word 문서 비교{% endblock %}
 
 {% block content %}
 <div class="page-title">
   <div style="display: flex; align-items: center;">
     <div class="gradient-bar"></div>
-    <div>RAG 파일 비교</div>
+    <div>Word 문서 비교</div>
   </div>
 </div>
 
 <div style="display: flex; gap: 10px; height: 85vh;">
 
-  <!-- 좌 PDF -->
-  <div style="flex:1; border:1px solid #ddd; border-radius:8px; overflow:auto;">
+  <!-- 좌 Word -->
+  <div style="flex:1; border:1px solid #ddd; border-radius:8px; overflow:auto; padding:10px;">
     <h3>과거 문서</h3>
-    <canvas id="pdf_left_canvas"></canvas>
+    <div id="left_doc" style="white-space: pre-wrap;">{{ html_left|safe }}</div>
   </div>
 
   <!-- 중앙 변경 요약 -->
   <div style="flex:0.7; border:1px solid #ccc; border-radius:8px; overflow:auto; padding:10px; background:#f9f9f9;">
-    <h3>343페이지 변경 요약</h3>
-    
+    <h3>변경 요약</h3>
     {% for diff in diff_list %}
     <div style="margin-bottom:15px; border-bottom:1px solid #ddd; padding-bottom:10px;">
-        <div style="font-weight:bold; color:#1a73e8; cursor:pointer;"
-            onclick="scrollToPage({{ diff.left_page }}, {{ diff.right_page }})">
-          [과거 {{ diff.left_page }} / 현재 {{ diff.right_page }}] {{ diff.section_title }}
+        <div style="font-weight:bold; color:#1a73e8;">
+          {{ diff.section_title_old }} → {{ diff.section_title_new }} ({{ diff.change_type }})
         </div>
 
+        {% if diff.rows %}
         <table border="1" cellpadding="4" style="width:100%; margin-top:5px; border-collapse: collapse;">
           <tr style="background:#e8f0fe;">
             <th>Side</th>
@@ -45,65 +44,16 @@
           </tr>
           {% endfor %}
         </table>
+        {% endif %}
     </div>
     {% endfor %}
-
   </div>
 
-  <!-- 우 PDF -->
-  <div style="flex:1; border:1px solid #ddd; border-radius:8px; overflow:auto;">
+  <!-- 우 Word -->
+  <div style="flex:1; border:1px solid #ddd; border-radius:8px; overflow:auto; padding:10px;">
     <h3>현재 문서</h3>
-    <canvas id="pdf_right_canvas"></canvas>
+    <div id="right_doc" style="white-space: pre-wrap;">{{ html_right|safe }}</div>
   </div>
 
 </div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-
-<script>
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-
-const pdfLeftUrl = "/pdf_proxy/?file={{ pdf_url1_b64 }}";
-const pdfRightUrl = "/pdf_proxy/?file={{ pdf_url2_b64 }}";
-
-let pdfLeftDoc = null;
-let pdfRightDoc = null;
-
-const leftCanvas = document.getElementById("pdf_left_canvas");
-const rightCanvas = document.getElementById("pdf_right_canvas");
-
-const leftCtx = leftCanvas.getContext("2d");
-const rightCtx = rightCanvas.getContext("2d");
-
-pdfjsLib.getDocument(pdfLeftUrl).promise.then(pdf => {
-    pdfLeftDoc = pdf;
-    renderPage(pdfLeftDoc, 1, leftCanvas, leftCtx);
-});
-
-pdfjsLib.getDocument(pdfRightUrl).promise.then(pdf => {
-    pdfRightDoc = pdf;
-    renderPage(pdfRightDoc, 1, rightCanvas, rightCtx);
-});
-
-function renderPage(pdfDoc, pageNumber, canvas, ctx) {
-    pdfDoc.getPage(pageNumber).then(page => {
-        const viewport = page.getViewport({ scale: 1.3 });
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        page.render({ canvasContext: ctx, viewport: viewport });
-    });
-}
-
-function scrollToPage(leftPageNumber, rightPageNumber) {
-    if (pdfLeftDoc) {
-        renderPage(pdfLeftDoc, leftPageNumber, leftCanvas, leftCtx);
-    }
-    if (pdfRightDoc) {
-        renderPage(pdfRightDoc, rightPageNumber, rightCanvas, rightCtx);
-    }
-}
-</script>
-
 {% endblock %}
