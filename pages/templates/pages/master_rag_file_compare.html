@@ -1,59 +1,79 @@
+<!-- master_rag_file_compare.html -->
 {% extends 'pages/base.html' %}
 {% load static %}
-{% block title %}Word 문서 비교{% endblock %}
+{% block title %}PDF 문서 비교{% endblock %}
 
 {% block content %}
 <div class="page-title">
   <div style="display: flex; align-items: center;">
     <div class="gradient-bar"></div>
-    <div>Word 문서 비교</div>
+    <div>PDF 문서 비교</div>
   </div>
 </div>
 
 <div style="display: flex; gap: 10px; height: 85vh;">
 
-  <!-- 좌 Word -->
-  <div style="flex:1; border:1px solid #ddd; border-radius:8px; overflow:auto; padding:10px;">
-    <h3>과거 문서</h3>
-    <div id="left_doc" style="white-space: pre-wrap;">{{ html_left|safe }}</div>
-  </div>
+  <!-- 좌측 PDF -->
+  <div id="left_pdf" style="flex:1; border:1px solid #ddd; overflow:auto;"></div>
 
-  <!-- 중앙 변경 요약 -->
+  <!-- 중앙: 변경 요약 -->
   <div style="flex:0.7; border:1px solid #ccc; border-radius:8px; overflow:auto; padding:10px; background:#f9f9f9;">
-    <h3>변경 요약</h3>
+    <h3>변경 요약 (문장 단위)</h3>
     {% for diff in diff_list %}
     <div style="margin-bottom:15px; border-bottom:1px solid #ddd; padding-bottom:10px;">
-        <div style="font-weight:bold; color:#1a73e8;">
+        <div style="font-weight:bold; color:#1a73e8; cursor:pointer;"
+             onclick="goToPage({{ diff.page_number|default:1 }})">
           {{ diff.section_title_old }} → {{ diff.section_title_new }} ({{ diff.change_type }})
         </div>
 
         {% if diff.rows %}
-        <table border="1" cellpadding="4" style="width:100%; margin-top:5px; border-collapse: collapse;">
-          <tr style="background:#e8f0fe;">
-            <th>Side</th>
-            <th>문장</th>
-            <th>비교 문장</th>
-            <th>유사도</th>
-          </tr>
           {% for row in diff.rows %}
-          <tr>
-            <td style="color:#1a73e8;">{{ row.side }}</td>
-            <td>{{ row.sentence }}</td>
-            <td>{{ row.compare_sentence }}</td>
-            <td>{{ row.similarity }}</td>
-          </tr>
+          <div style="margin-top:5px;">
+            <div style="font-size:0.9em; color:#d93025;">이전 문장: {{ row.old }}</div>
+            <div style="font-size:0.9em; color:#188038;">이후 문장: {{ row.new }}</div>
+          </div>
           {% endfor %}
-        </table>
+        {% else %}
+          <p style="color:#888; font-style:italic;">(내용 변경됨, 비교 가능한 텍스트 없음)</p>
         {% endif %}
     </div>
     {% endfor %}
   </div>
 
-  <!-- 우 Word -->
-  <div style="flex:1; border:1px solid #ddd; border-radius:8px; overflow:auto; padding:10px;">
-    <h3>현재 문서</h3>
-    <div id="right_doc" style="white-space: pre-wrap;">{{ html_right|safe }}</div>
-  </div>
+  <!-- 우측 PDF -->
+  <div id="right_pdf" style="flex:1; border:1px solid #ddd; overflow:auto;"></div>
 
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.10.111/pdf.min.js"></script>
+<script>
+const urlLeft = "{{ url_left }}";
+const urlRight = "{{ url_right }}";
+
+// PDF 렌더링
+async function renderPDF(url, containerId){
+    const pdf = await pdfjsLib.getDocument(url).promise;
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    for(let i=1; i<=pdf.numPages; i++){
+        const page = await pdf.getPage(i);
+        const viewport = page.getViewport({scale:1.2});
+        const canvas = document.createElement('canvas');
+        canvas.id = containerId+'_page_'+i;
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        container.appendChild(canvas);
+        const context = canvas.getContext('2d');
+        await page.render({canvasContext: context, viewport: viewport}).promise;
+    }
+}
+renderPDF(urlLeft, 'left_pdf');
+renderPDF(urlRight, 'right_pdf');
+
+// 중앙 클릭 시 PDF 페이지 이동
+function goToPage(pageNum){
+    document.getElementById('left_pdf_page_'+pageNum)?.scrollIntoView({behavior:'smooth'});
+    document.getElementById('right_pdf_page_'+pageNum)?.scrollIntoView({behavior:'smooth'});
+}
+</script>
 {% endblock %}
