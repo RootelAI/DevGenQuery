@@ -16,6 +16,8 @@ from langchain_core.documents import Document
 from supabase import create_client
 from datetime import datetime, timezone, timedelta
 
+from utilsPrj import pdf_preprocess
+
 # ==============================
 # 1. 환경변수 로드
 # ==============================
@@ -156,28 +158,41 @@ def rebuild_vectordb_incremental(dirpath: str):
 
         blob_client = container_client.get_blob_client(f"{SOURCE_PREFIX}{filename}")
         blob_data = blob_client.download_blob().readall()
-
+            
         if filename.lower().endswith(".pdf"):
+
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
+                tmp_pdf.write(blob_data)
+                tmp_pdf_path = tmp_pdf.name
+
             try:
-                pdf_stream = io.BytesIO(blob_data)
-                doc = fitz.open(stream=pdf_stream, filetype="pdf")
+                pages = pdf_preprocess.preprocess_pdf(tmp_pdf_path)
             except Exception:
+                os.remove(tmp_pdf_path)
                 continue
 
-            for page_number, page in enumerate(doc):
-                chunks = text_splitter.create_documents([page.get_text()])
+            for p in pages:
+
+                page_text = p["merged"]
+
+                chunks = text_splitter.create_documents([page_text])
+
                 for chunk in chunks:
+
                     documents.append(
                         Document(
                             page_content=chunk.page_content,
                             metadata={
+                                **p["metadata"],
                                 "source": filename,
-                                "page": page_number,
-                                **metadata_tags,
-                            },
+                                "page": p["metadata"].get("page"),
+                                **metadata_tags
+                            }
                         )
                     )
-            doc.close()
+
+            os.remove(tmp_pdf_path)
+
         # ---------------- DOCX ----------------
         elif filename.lower().endswith(".docx"):
             try:

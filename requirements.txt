@@ -40,3 +40,6 @@ PyMuPDF
 langchain-openai
 langchain-community
 sentence_transformers
+
+pdfplumber
+pymupdf

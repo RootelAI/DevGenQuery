@@ -15,6 +15,8 @@ from supabase import create_client
 from datetime import datetime, timezone, timedelta
 from docx import Document as DocxDocument
 
+from utilsPrj import pdf_preprocess
+
 # ==============================
 # 1. 환경변수 로드
 # ==============================
@@ -140,32 +142,38 @@ def rebuild_vectordb(dirpath: str):
         # 3. PDF 처리
         # --------------------------------
         if blob.name.endswith(".pdf"):
-            pdf_stream = io.BytesIO(blob_data)
+
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
+                tmp_pdf.write(blob_data)
+                tmp_pdf_path = tmp_pdf.name
 
             try:
-                doc = fitz.open(stream=pdf_stream, filetype="pdf")
-            except Exception as e:
-                # print(f"PDF 열기 실패: {e}")
+                pages = pdf_preprocess.preprocess_pdf(tmp_pdf_path)
+            except Exception:
+                os.remove(tmp_pdf_path)
                 continue
 
-            for page_number, page in enumerate(doc):
-                page_text = page.get_text()
+            for p in pages:
+
+                page_text = p["merged"]
 
                 chunks = text_splitter.create_documents([page_text])
 
                 for chunk in chunks:
+
                     documents.append(
                         Document(
                             page_content=chunk.page_content,
                             metadata={
+                                **p["metadata"],
                                 "source": blob.name,
-                                "page": page_number,
+                                "page": p["metadata"].get("page"),
                                 **metadata_tags
                             }
                         )
                     )
 
-            doc.close()
+            os.remove(tmp_pdf_path)
 
         # --------------------------------
         # 4. DOCX 처리
